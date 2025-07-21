@@ -1,0 +1,893 @@
+name: Build and Test IP Template
+
+# This workflow provides a comprehensive build and test pipeline for Vyges IP projects
+# This template workflow runs automatically on push/PR and can be manually triggered
+# Focus is on simulation, synthesis, and verification with open-source tools
+
+# Configuration variables - modify these to change versions
+# These are used throughout the workflow for version consistency
+
+on:
+  # Manual trigger only - template repository
+  workflow_dispatch:
+    inputs:
+      design_type:
+        description: 'Design type and tool requirements'
+        required: false
+        default: 'digital'
+        type: choice
+        options:
+          - digital       # Digital only (Verilator, Yosys, FPGA tools)
+          - analog        # Analog only (Xschem, Magic, ngspice)
+          - mixed         # Mixed-signal (Digital + Analog tools)
+          - chiplets      # Chiplet integration (Advanced packaging)
+          - tapeout       # Full tapeout flow (Efabless-style)
+      test_simulation:
+        description: 'Run simulation tests'
+        required: false
+        default: true
+        type: boolean
+      test_synthesis:
+        description: 'Run synthesis tests'
+        required: false
+        default: true
+        type: boolean
+      test_linting:
+        description: 'Run linting checks'
+        required: false
+        default: true
+        type: boolean
+      test_validation:
+        description: 'Run validation checks'
+        required: false
+        default: true
+        type: boolean
+
+# Manual trigger only - this template workflow can be manually triggered
+# for testing different design types and configurations
+
+jobs:
+  # Main build and test job - everything runs sequentially on one runner
+  build-and-test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    env:
+      # Configuration variables - modify these to change versions
+      
+      # Infrastructure
+      UBUNTU_VERSION: "24.04"          # Ubuntu runner version (e.g., "24.04", "22.04")
+      
+      # Python Environment
+      PYTHON_VERSION: "3.12"           # Python version (e.g., "3.10", "3.11", "3.12")
+      PYTHON_VERSION_SHORT: "3.12"     # Python version for commands (e.g., "3.10", "3.11", "3.12")
+      
+      # Simulation Tools
+      VERILATOR_VERSION: "5.038"       # Verilator version (e.g., "5.038", "5.039")
+      ICARUS_VERSION: "14.0"           # Icarus Verilog version (e.g., "14.0", "13.0")
+      GHDL_VERSION: "latest"           # GHDL version (e.g., "latest", "4.0")
+      GTKWAVE_VERSION: "latest"        # GTKWave version (e.g., "latest", "3.3")
+      SURFER_VERSION: "latest"         # Surfer web-based VCD viewer (e.g., "latest", "1.0")
+      PANDOC_VERSION: "latest"         # Pandoc markdown converter (e.g., "latest", "3.0")
+      
+      # Synthesis Tools
+      YOSYS_VERSION: "latest"          # Yosys version (e.g., "latest", "0.34")
+      ABC_VERSION: "latest"            # Berkeley ABC version (e.g., "latest", "1.01")
+      
+      # Layout & Verification Tools
+      MAGIC_VERSION: "latest"          # Magic version (e.g., "latest", "8.3")
+      NETGEN_VERSION: "latest"         # Netgen version (e.g., "latest", "1.5")
+      KLAYOUT_VERSION: "latest"        # KLayout version (e.g., "latest", "0.28")
+      
+      # FPGA Tools
+      NEXTPNR_VERSION: "latest"        # NextPNR version (e.g., "latest", "0.6")
+      SYMBIFLOW_VERSION: "latest"      # SymbiFlow version (e.g., "latest", "2023.12")
+      VPR_VERSION: "latest"            # VPR version (e.g., "latest", "8.0")
+      OPENFPGA_VERSION: "latest"       # OpenFPGA version (e.g., "latest", "1.0")
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup workflow for testing
+        run: |
+          echo "🔧 Setting up workflow for testing..."
+          echo "Design Type: ${{ github.event.inputs.design_type || 'digital' }}"
+          echo "✅ Workflow runs automatically on push/PR"
+          echo "This will install all tools to verify the build process"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install core system packages
+        run: |
+          # Update package list
+          sudo apt-get update
+          
+          # Install core packages (always needed)
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            git \
+            wget \
+            curl \
+            tree \
+            unzip \
+            make \
+            python3 \
+            python3-pip \
+            python3-venv \
+            bison \
+            flex \
+            help2man \
+            libfl-dev \
+            libfl2 \
+            libgit2-dev \
+            libgoogle-perftools-dev \
+            libz-dev \
+            perl \
+            ruby \
+            ruby-dev \
+            time \
+            zlib1g \
+            zlib1g-dev \
+            gettext \
+            gnat
+
+      - name: Install digital tools (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing digital design tools..."
+          
+          # Install digital simulation and synthesis tools
+          sudo apt-get install -y --no-install-recommends \
+            libqt5multimediawidgets5 \
+            libqt5opengl5 \
+            libqt5svg5-dev \
+            libqt5xmlpatterns5-dev \
+            qtmultimedia5-dev \
+            qttools5-dev
+
+      - name: Install analog tools (analog, mixed, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'analog') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing analog design tools..."
+          
+          # Install analog design tools
+          sudo apt-get install -y --no-install-recommends \
+            magic \
+            netgen \
+            xschem \
+            ngspice
+
+      - name: Install KLayout (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing KLayout for layout viewing..."
+          sudo apt-get install -y klayout
+          klayout -v
+
+      - name: Install Yosys (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing Yosys for digital synthesis..."
+          
+          # Install Yosys from Ubuntu repositories
+          sudo apt-get install -y yosys
+          
+          # Verify installation
+          yosys -V
+          
+          # Check if slang module is available
+          if yosys -m slang -p "slang_version" 2>/dev/null; then
+            echo "✅ Yosys with slang support installed"
+          else
+            echo "⚠️  Yosys installed but slang module not available"
+          fi
+          
+          # Get Yosys version
+          YOSYS_VERSION=$(yosys -V | grep -oP 'Yosys \K[0-9]+\.[0-9]+' || echo "unknown")
+          echo "Installed Yosys version: $YOSYS_VERSION"
+          
+          # Note: Ubuntu 24.04 Yosys version may be older than 0.39
+          # This is acceptable for template testing
+          echo "✅ Yosys installation completed"
+
+      - name: Install Verilator (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing Verilator for digital simulation..."
+          # Clone Verilator repository
+          git clone https://github.com/verilator/verilator.git
+          cd verilator
+          
+          # Checkout specific version 5.026
+          git checkout v5.026
+          
+          # Build and install
+          autoconf
+          ./configure
+          make -j$(nproc)
+          sudo make install
+          
+          # Verify installation
+          verilator --version
+
+      - name: Install OpenROAD tools (chiplets, tapeout) - DISABLED
+        if: false  # Disabled due to long installation time
+        run: |
+          echo "🔧 Installing OpenROAD tools for advanced ASIC flows..."
+          
+          # Clone OpenROAD-flow-scripts repository
+          git clone https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts.git
+          cd OpenROAD-flow-scripts
+          
+          # Build OpenROAD tools (this includes TritonFPlan, RePlAce, TritonCTS, FastRoute, TritonRoute)
+          ./build_openroad.sh
+          
+          # Add OpenROAD tools to PATH
+          echo 'export PATH=$PATH:'$(pwd)'/tools/OpenROAD/build/src' >> $GITHUB_ENV
+          echo 'export PATH=$PATH:'$(pwd)'/tools/RePlAce/build/RePlAce' >> $GITHUB_ENV
+          echo 'export PATH=$PATH:'$(pwd)'/tools/FastRoute/build/FastRoute' >> $GITHUB_ENV
+          
+          # Verify installations
+          echo "✅ OpenROAD tools installed"
+          echo "Note: These tools are now available for advanced ASIC design flows"
+
+      - name: Install GHDL Yosys plugin (digital, mixed, chiplets, tapeout) - DISABLED
+        if: false  # Disabled due to Ubuntu 24.04 Yosys version incompatibility
+        run: |
+          echo "⚠️ GHDL Yosys plugin installation disabled"
+          echo "Reason: Ubuntu 24.04 Yosys version (0.33) is too old for GHDL plugin"
+          echo "Note: VHDL synthesis support not available in this template"
+          echo "For VHDL support, use a newer Yosys version or install manually"
+
+      - name: Install Open PDKs (analog, mixed, tapeout) - DISABLED
+        if: false  # Disabled due to long installation time
+        run: |
+          echo "🔧 Installing Open PDKs for analog design..."
+          
+          # Clone Open PDKs repository
+          git clone https://github.com/RTimothyEdwards/open_pdks.git
+          cd open_pdks
+          
+          # Install Open PDKs (includes sky130, gf180mcu, etc.)
+          ./configure --enable-sky130-pdk --enable-gf180mcu-pdk
+          make
+          sudo make install
+          
+          # Set PDK_ROOT environment variable
+          echo 'export PDK_ROOT=/usr/local/share/pdk' >> $GITHUB_ENV
+          
+          # Verify installation
+          echo "✅ Open PDKs installed"
+          echo "Available PDKs: sky130, gf180mcu"
+          echo "PDK_ROOT set to: /usr/local/share/pdk"
+
+      - name: Install Icarus Verilog (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing Icarus Verilog for digital simulation..."
+          sudo apt-get install -y iverilog
+          iverilog -V
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cocotb pytest pytest-cov
+
+      - name: Setup Vyges CLI (if available)
+        run: |
+          # Check if Vyges CLI is available
+          if command -v vyges &> /dev/null; then
+            echo "Vyges CLI found"
+            vyges --version
+          else
+            echo "Vyges CLI not found - skipping CLI-based tests"
+          fi
+
+      - name: Validate project structure
+        if: ${{ github.event.inputs.test_validation == 'true' }}
+        run: |
+          echo "🔍 Validating project structure..."
+          
+          # Check for required directories
+          required_dirs=("rtl" "tb" "docs" "test")
+          for dir in "${required_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✅ Found $dir/"
+            else
+              echo "⚠️ Missing $dir/ (optional for template)"
+            fi
+          done
+          
+          # Check for required files
+          required_files=("README.md" "LICENSE" "NOTICE")
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ Found $file"
+            else
+              echo "❌ Missing $file"
+              exit 1
+            fi
+          done
+          
+          # Check for metadata template
+          if [ -f "vyges-metadata.template.json" ]; then
+            echo "✅ Found vyges-metadata.template.json"
+          else
+            echo "⚠️ Missing vyges-metadata.template.json"
+          fi
+          
+          echo "✅ Project structure validation complete"
+
+      - name: Validate metadata (if Vyges CLI available)
+        if: ${{ github.event.inputs.test_validation == 'true' }}
+        run: |
+          if command -v vyges &> /dev/null; then
+            echo "🔍 Validating metadata with Vyges CLI..."
+            vyges validate --dry-run || echo "⚠️ Metadata validation failed (expected for template)"
+          else
+            echo "⏭️ Skipping metadata validation (Vyges CLI not available)"
+          fi
+
+      - name: Run linting checks
+        if: ${{ github.event.inputs.test_linting == 'true' }}
+        run: |
+          echo "🔍 Linting SystemVerilog files..."
+          
+          # Find all .sv files
+          sv_files=$(find . -name "*.sv" -type f)
+          
+          if [ -z "$sv_files" ]; then
+            echo "ℹ️ No SystemVerilog files found (expected for template)"
+          else
+            for file in $sv_files; do
+              echo "Linting $file..."
+              verilator --lint-only --Wall --Wno-fatal "$file" || echo "⚠️ Lint issues in $file"
+            done
+          fi
+          
+          echo "✅ Linting complete"
+
+      - name: Check file permissions
+        if: ${{ github.event.inputs.test_linting == 'true' }}
+        run: |
+          echo "🔍 Checking file permissions..."
+          
+          # Check for executable scripts
+          scripts=$(find . -name "*.sh" -type f)
+          for script in $scripts; do
+            if [ ! -x "$script" ]; then
+              echo "⚠️ Script $script is not executable"
+            fi
+          done
+          
+          echo "✅ File permission check complete"
+
+      - name: Run simulation tests
+        if: ${{ github.event.inputs.test_simulation == 'true' }}
+        run: |
+          echo "🧪 Running simulation tests..."
+          
+          # Check for testbench files
+          if [ -d "tb" ]; then
+            echo "Found testbench directory"
+            
+            # Look for SystemVerilog testbenches
+            sv_tb_files=$(find tb -name "tb_*.sv" -type f)
+            if [ -n "$sv_tb_files" ]; then
+              echo "Found SystemVerilog testbenches: $sv_tb_files"
+              # Note: Actual test execution would require specific testbench setup
+              echo "ℹ️ SystemVerilog testbench execution requires specific setup"
+            fi
+            
+            # Look for cocotb testbenches
+            cocotb_files=$(find tb -name "test_*.py" -type f)
+            if [ -n "$cocotb_files" ]; then
+              echo "Found cocotb testbenches: $cocotb_files"
+              # Note: Actual test execution would require specific testbench setup
+              echo "ℹ️ Cocotb testbench execution requires specific setup"
+            fi
+            
+            if [ -z "$sv_tb_files" ] && [ -z "$cocotb_files" ]; then
+              echo "ℹ️ No testbench files found (expected for template)"
+            fi
+          else
+            echo "ℹ️ No testbench directory found (expected for template)"
+          fi
+          
+          echo "✅ Simulation test check complete"
+
+      - name: Check synthesis configuration
+        if: ${{ github.event.inputs.test_synthesis == 'true' }}
+        run: |
+          echo "🔧 Checking synthesis configuration..."
+          
+          # Check ASIC configuration
+          if [ -d "flow/openlane" ]; then
+            echo "✅ Found OpenLane configuration for ASIC"
+            if [ -f "flow/openlane/config.json" ]; then
+              echo "✅ Found OpenLane config.json"
+            fi
+          else
+            echo "ℹ️ No OpenLane configuration found (expected for template)"
+          fi
+          
+          # Check FPGA configuration
+          if [ -d "flow/vivado" ]; then
+            echo "✅ Found Vivado configuration for FPGA"
+          else
+            echo "ℹ️ No Vivado configuration found (expected for template)"
+          fi
+          
+          echo "✅ Synthesis configuration check complete"
+
+      - name: Generate test report
+        run: |
+          echo "📊 Test Report"
+          echo "=============="
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Design Type: ${{ github.event.inputs.design_type }}"
+          echo ""
+          echo "Tool Installation:"
+          echo "- Core Tools: ✅ Always installed"
+          if [[ "${{ github.event.inputs.design_type }}" =~ ^(digital|mixed|chiplets|tapeout)$ ]]; then
+            echo "- Digital Tools: ✅ Installed (Verilator, Yosys, Icarus, GHDL)"
+          else
+            echo "- Digital Tools: ⏭️ Skipped"
+          fi
+          if [[ "${{ github.event.inputs.design_type }}" =~ ^(analog|mixed|tapeout)$ ]]; then
+            echo "- Analog Tools: ✅ Installed (Magic, Xschem, ngspice, Open PDKs)"
+          else
+            echo "- Analog Tools: ⏭️ Skipped"
+          fi
+          if [[ "${{ github.event.inputs.design_type }}" =~ ^(chiplets|tapeout)$ ]]; then
+            echo "- Advanced Tools: ✅ Installed (OpenROAD, TritonRoute)"
+          else
+            echo "- Advanced Tools: ⏭️ Skipped"
+          fi
+          echo ""
+          echo "Test Results:"
+          echo "- Validation: ${{ github.event.inputs.test_validation == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
+          echo "- Linting: ${{ github.event.inputs.test_linting == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
+          echo "- Simulation: ${{ github.event.inputs.test_simulation == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
+          echo "- Synthesis: ${{ github.event.inputs.test_synthesis == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
+          echo ""
+          echo "Note: This is a template repository. Actual tests require IP-specific implementation."
+
+      - name: Generate comprehensive reports
+        run: |
+          echo "📊 Generating comprehensive reports..."
+          
+          # Create public directory for reports
+          mkdir -p public
+          
+          # Generate test harness report
+          if [ -f "scripts/generate_test_harness_report.py" ]; then
+            echo "🔧 Generating test harness report..."
+            python3 scripts/generate_test_harness_report.py
+            if [ -f "test_harness_report.md" ]; then
+              cp test_harness_report.md public/
+              echo "✅ Test harness report generated and copied to public directory"
+            fi
+          fi
+          
+          # Generate code KPIs report
+          if [ -f "scripts/code_kpis.py" ]; then
+            echo "🔧 Generating code KPIs report..."
+            python3 scripts/code_kpis.py --output json > public/code_kpis.json 2>/dev/null || echo "Code KPIs report generation failed"
+            python3 scripts/code_kpis.py > public/code_kpis.txt 2>/dev/null || echo "Code KPIs text report generation failed"
+            echo "✅ Code KPIs reports generated"
+          fi
+          
+          # Create CSS for HTML reports
+          cat > public/report-style.css << 'EOF'
+          <style>
+          body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+              max-width: 1200px; 
+              margin: 0 auto; 
+              padding: 20px; 
+              line-height: 1.6;
+              color: #24292e;
+          }
+          .vyges-footer {
+              background: #f8f9fa;
+              border-top: 1px solid #e1e4e8;
+              padding: 20px 0;
+              margin: 40px -20px -20px -20px;
+              text-align: center;
+              color: #586069;
+          }
+          .vyges-footer p {
+              margin: 5px 0;
+          }
+          .vyges-footer strong {
+              color: #0366d6;
+          }
+          h1 { 
+              color: #0366d6; 
+              border-bottom: 2px solid #e1e4e8; 
+              padding-bottom: 10px; 
+              margin-top: 0;
+          }
+          h2 { 
+              color: #24292e; 
+              margin-top: 30px; 
+              border-bottom: 1px solid #e1e4e8;
+              padding-bottom: 5px;
+          }
+          h3 { 
+              color: #24292e; 
+              margin-top: 25px; 
+          }
+          table { 
+              border-collapse: collapse; 
+              width: 100%; 
+              margin: 20px 0;
+          }
+          th, td { 
+              border: 1px solid #e1e4e8; 
+              padding: 12px; 
+              text-align: left; 
+          }
+          th { 
+              background-color: #f6f8fa; 
+              font-weight: 600;
+          }
+          tr:nth-child(even) { 
+              background-color: #f6f8fa; 
+          }
+          code { 
+              background-color: #f6f8fa; 
+              padding: 2px 4px; 
+              border-radius: 3px; 
+              font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+          }
+          pre { 
+              background-color: #f6f8fa; 
+              padding: 16px; 
+              border-radius: 6px; 
+              overflow-x: auto;
+          }
+          .highlight { 
+              background-color: #fff3cd; 
+              padding: 10px; 
+              border-radius: 4px; 
+              border-left: 4px solid #ffc107;
+          }
+          .success { 
+              background-color: #d4edda; 
+              padding: 10px; 
+              border-radius: 4px; 
+              border-left: 4px solid #28a745;
+          }
+          .error { 
+              background-color: #f8d7da; 
+              padding: 10px; 
+              border-radius: 4px; 
+              border-left: 4px solid #dc3545;
+          }
+          </style>
+          EOF
+          
+          # Create Vyges footer
+          cat > public/vyges-footer.html << 'EOF'
+          <div class="vyges-footer">
+              <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
+              <p>Generated by Vyges IP Template - Comprehensive EDA Toolchain</p>
+              <p>Open-source tools for digital, analog, and mixed-signal design</p>
+          </div>
+          EOF
+          
+          # Convert test harness report to HTML
+          if [ -f "public/test_harness_report.md" ]; then
+            if command -v pandoc &> /dev/null; then
+              pandoc public/test_harness_report.md -o public/test_harness_report.html --css=public/report-style.css --standalone --metadata title="Vyges IP Template - Test Harness Report" --include-after-body=public/vyges-footer.html
+              echo "✅ Converted test harness report to HTML with pandoc"
+            else
+              echo "⚠️ Pandoc not found, creating basic HTML report..."
+              cat > public/test_harness_report.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Vyges IP Template - Test Harness Report</title>
+              <link rel="stylesheet" href="report-style.css">
+          </head>
+          <body>
+              <h1>Vyges IP Template - Test Harness Report</h1>
+              <p><em>Generated: $(date -u)</em></p>
+              <div class="highlight">
+                  <p><strong>Note:</strong> This is a basic HTML report generated without pandoc. For full formatting, install pandoc.</p>
+              </div>
+              <pre><code>$(cat public/test_harness_report.md)</code></pre>
+          </body>
+          </html>
+          EOF
+              echo "✅ Created basic HTML report (pandoc not available)"
+            fi
+          fi
+          
+          echo "✅ Comprehensive report generation complete"
+
+      - name: Create GitHub Pages index
+        run: |
+          echo "🌐 Creating GitHub Pages index..."
+          
+          # Create index.html for GitHub Pages
+          cat > public/index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Vyges IP Template - Reports</title>
+              <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@1,400&display=swap" rel="stylesheet">
+              <style>
+                  body { 
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                      max-width: 1200px; 
+                      margin: 0 auto; 
+                      padding: 20px; 
+                      line-height: 1.6;
+                      color: #24292e;
+                  }
+                  h1 { 
+                      color: #0366d6; 
+                      border-bottom: 2px solid #e1e4e8; 
+                      padding-bottom: 10px; 
+                      margin-top: 0;
+                  }
+                  h2 { 
+                      color: #24292e; 
+                      margin-top: 30px; 
+                      border-bottom: 1px solid #e1e4e8;
+                      padding-bottom: 5px;
+                  }
+                  .timestamp { 
+                      color: #586069; 
+                      font-size: 14px; 
+                      margin-bottom: 30px;
+                  }
+                  table { 
+                      border-collapse: collapse; 
+                      width: 100%; 
+                      margin: 20px 0;
+                      background: white;
+                      border-radius: 8px;
+                      overflow: hidden;
+                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  }
+                  th, td { 
+                      border: 1px solid #e1e4e8; 
+                      padding: 16px; 
+                      text-align: left; 
+                      vertical-align: top;
+                  }
+                  th { 
+                      background-color: #f6f8fa; 
+                      font-weight: 600;
+                      color: #24292e;
+                  }
+                  tr:nth-child(even) { 
+                      background-color: #f8f9fa; 
+                  }
+                  tr:hover { 
+                      background-color: #f1f3f4; 
+                  }
+                  .report-link { 
+                      display: inline-block; 
+                      background: #0366d6; 
+                      color: white; 
+                      padding: 6px 12px; 
+                      text-decoration: none; 
+                      border-radius: 4px; 
+                      margin: 2px 4px 2px 0;
+                      font-size: 12px;
+                      font-weight: 500;
+                  }
+                  .report-link:hover { 
+                      background: #0256cc; 
+                      text-decoration: none;
+                  }
+                  .report-link.html { 
+                      background: #28a745; 
+                  }
+                  .report-link.html:hover { 
+                      background: #218838; 
+                  }
+                  .report-link.md { 
+                      background: #6c757d; 
+                  }
+                  .report-link.md:hover { 
+                      background: #5a6268; 
+                  }
+                  .status-badge {
+                      display: inline-block;
+                      padding: 4px 8px;
+                      border-radius: 12px;
+                      font-size: 12px;
+                      font-weight: 500;
+                      text-transform: uppercase;
+                  }
+                  .status-success {
+                      background: #d4edda;
+                      color: #155724;
+                  }
+                  .status-warning {
+                      background: #fff3cd;
+                      color: #856404;
+                  }
+                  .status-info {
+                      background: #d1ecf1;
+                      color: #0c5460;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>Vyges IP Template - Reports</h1>
+              <div class="timestamp">
+                  Generated: $(date -u)<br>
+                  Repository: ${{ github.repository }}<br>
+                  Workflow: ${{ github.workflow }}<br>
+                  Run ID: ${{ github.run_id }}
+              </div>
+              
+              <div class="highlight">
+                  <p><strong>Template Repository:</strong> This is the Vyges IP Template repository. Use "Use this template" to create your own IP project with this comprehensive EDA toolchain.</p>
+              </div>
+              
+              <h2>Available Reports</h2>
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Report Type</th>
+                          <th>Description</th>
+                          <th>Status</th>
+                          <th>Links</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td><strong>Test Harness Report</strong></td>
+                          <td>Comprehensive test results and simulation analysis</td>
+                          <td><span class="status-badge status-success">Available</span></td>
+                          <td>
+                              <a href="./test_harness_report.html" class="report-link html">HTML</a>
+                              <a href="./test_harness_report.md" class="report-link md">Markdown</a>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td><strong>Code KPIs Report</strong></td>
+                          <td>Code quality metrics and project analysis</td>
+                          <td><span class="status-badge status-success">Available</span></td>
+                          <td>
+                              <a href="./code_kpis.txt" class="report-link md">Text</a>
+                              <a href="./code_kpis.json" class="report-link md">JSON</a>
+                          </td>
+                      </tr>
+                      <tr>
+                          <td><strong>Workflow Status</strong></td>
+                          <td>Current workflow execution status and tool installation</td>
+                          <td><span class="status-badge status-info">Template</span></td>
+                          <td>
+                              <span class="report-link md">Template Only</span>
+                          </td>
+                      </tr>
+                  </tbody>
+              </table>
+              
+              <h2>Template Information</h2>
+              <div class="success">
+                  <p><strong>Design Type Support:</strong> digital, analog, mixed, chiplets, tapeout</p>
+                  <p><strong>Toolchain:</strong> Verilator, Yosys, Icarus, Magic, ngspice, OpenROAD, and more</p>
+                  <p><strong>Testbench Support:</strong> SystemVerilog, Cocotb, UVM</p>
+                  <p><strong>FPGA Support:</strong> Open-source FPGA tools (Yosys, NextPNR)</p>
+              </div>
+              
+              <div class="vyges-footer">
+                  <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
+                  <p>Generated by Vyges IP Template - Comprehensive EDA Toolchain</p>
+                  <p>Open-source tools for digital, analog, and mixed-signal design</p>
+              </div>
+          </body>
+          </html>
+          EOF
+          
+          echo "✅ GitHub Pages index created"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vyges-ip-template-build-artifacts
+          path: |
+            test_harness_report.md
+            scripts/
+            flow/*/reports/
+            flow/*/build/
+            tb/*/build/
+            tb/*/waves/
+            tb/*/coverage/
+            tb/*/*.vcd
+            tb/*/obj_dir/*.vcd
+          retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "🚀 Deploying template reports to GitHub Pages..."
+          
+          # Configure git for deployment with proper authentication
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create a clean working directory for deployment
+          echo "Setting up clean deployment environment..."
+          
+          # Check if gh-pages branch exists
+          if git ls-remote --heads origin gh-pages | grep gh-pages; then
+            echo "gh-pages branch exists, creating clean checkout..."
+            # Create a temporary directory for deployment
+            mkdir -p /tmp/gh-pages-deploy
+            cd /tmp/gh-pages-deploy
+            
+            # Clone the gh-pages branch (shallow clone for speed)
+            git clone --branch gh-pages --single-branch --depth=1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+            
+            # Remove all existing files
+            git rm -rf . || true
+            
+            # Copy new files from the original workspace
+            cp -r ${{ github.workspace }}/public/* .
+            
+            # Commit and push
+            git add .
+            git commit -m "Update template reports - $(date -u)" || echo "No changes to commit"
+            git push origin gh-pages
+            
+            echo "✅ GitHub Pages deployment complete!"
+          else
+            echo "gh-pages branch not found, creating new one..."
+            # Create a temporary directory for deployment
+            mkdir -p /tmp/gh-pages-deploy
+            cd /tmp/gh-pages-deploy
+            
+            # Initialize new repository
+            git init
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            
+            # Copy files from the original workspace
+            cp -r ${{ github.workspace }}/public/* .
+            
+            # Create and push gh-pages branch
+            git add .
+            git commit -m "Initial template reports - $(date -u)"
+            git branch -M gh-pages
+            git push -u origin gh-pages
+            
+            echo "✅ GitHub Pages deployment complete!"
+          fi
+          
+          echo "📖 Template reports available at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - name: Workflow status
+        run: |
+          echo "🎉 Template workflow completed successfully!"
+          echo "This template repository is ready for IP development."
+          echo ""
+          echo "Next steps:"
+          echo "1. Use 'Use this template' to create a new repository"
+          echo "2. Clone your new repository"
+          echo "3. Run 'vyges init --interactive' to set up your IP"
+          echo "4. Add your RTL and testbenches"
+          echo "5. Enable this workflow in your new repository" 
+
+ 

@@ -1,0 +1,40 @@
+Vyges IP Package
+Copyright (c) 2025 Vyges
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+---
+
+This repository was created using the vyges-ip-template:
+https://github.com/vyges/vyges-ip-template
+
+This IP block was created as part of the Vyges open silicon ecosystem:
+https://vyges.com
+
+Includes design concepts or testbench inspiration adapted from:
+- [cocotb](https://github.com/cocotb/cocotb) - BSD License
+- [Verilator](https://github.com/verilator/verilator) - LGPLv3
+- [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) - Apache 2.0
+
+You may redistribute and use this IP in accordance with the license file (LICENSE).
+
+This product includes no commercial EDA vendor IP or confidential third-party content.
+
+All trademarks mentioned belong to their respective owners.
+
+---
+
+# IP Developer/Project Attribution
+# (Add your own copyright, maintainer, and project info below)
+
+Maintainers:
+<Your Name> <your.email@example.com>
+<GitHub handle, website, or affiliation>
+
