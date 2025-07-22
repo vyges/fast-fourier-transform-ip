@@ -182,7 +182,7 @@ def get_github_data():
     return {
         'repository': os.environ.get('GITHUB_REPOSITORY', 'vyges/hardware-ip'),
         'run_id': os.environ.get('GITHUB_RUN_ID', 'unknown'),
-        'generated_date': datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S UTC')
+        'generated_date': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
     }
 
 def format_list_items(items):
