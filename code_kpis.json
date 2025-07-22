@@ -1,28 +1,33 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T15:30:28.475611",
+    "analysis_date": "2025-07-22T15:59:58.195914",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 111,
+    "total_files": 153,
     "total_directories": 42,
     "file_types": {
       ".md": 24,
-      ".json": 6,
+      ".json": 7,
       ".py": 7,
-      "no_extension": 33,
+      "no_extension": 34,
       ".html": 2,
       ".css": 1,
       ".sv": 14,
       ".tcl": 3,
       ".pcf": 1,
       ".v": 1,
-      ".cpp": 13,
+      ".d": 20,
       ".h": 4,
-      ".mk": 2
+      ".o": 17,
+      ".mk": 2,
+      ".cpp": 12,
+      ".a": 1,
+      ".gch": 2,
+      ".dat": 1
     },
     "directory_structure": {
       "root": {
@@ -238,7 +243,9 @@
         "subdirectories": []
       },
       "flow/fpga/openfpga/netlists": {
-        "files": [],
+        "files": [
+          "fft_top_generic.json"
+        ],
         "subdirectories": []
       },
       "flow/fpga/openfpga/constraints": {
@@ -355,30 +362,72 @@
       },
       "tb/sv_tb/obj_dir": {
         "files": [
-          "Vfft_control___024root__DepSet_hd87fcd19__2__Slow.cpp",
-          "Vfft_control__Trace__0__Slow.cpp",
-          "Vfft_control__pch.h",
-          "Vfft_control___024root.h",
-          "Vfft_control___024root__Slow.cpp",
-          "Vfft_control.mk",
-          "Vfft_control___024root__DepSet_hd87fcd19__0__Slow.cpp",
-          "Vfft_control.h",
-          "Vfft_control___024root__DepSet_hd87fcd19__1.cpp",
-          "Vfft_control_classes.mk",
-          "Vfft_control___024root__DepSet_hd87fcd19__0.cpp",
-          "Vfft_control.cpp",
-          "Vfft_control__Syms.cpp",
-          "Vfft_control___024root__DepSet_hc4d89078__0.cpp",
-          "Vfft_control___024root__DepSet_hc4d89078__0__Slow.cpp",
-          "Vfft_control__Syms.h",
-          "Vfft_control___024root__DepSet_hd87fcd19__1__Slow.cpp",
-          "Vfft_control__TraceDecls__0__Slow.cpp",
-          "Vfft_control__Trace__0.cpp"
+          "Vtb_simple__pch.h.slow.d",
+          "Vtb_simple__Syms.h",
+          "Vtb_simple__Syms.d",
+          "Vtb_simple__ver.d",
+          "verilated_threads.d",
+          "verilated_threads.o",
+          "Vtb_simple__pch.h.fast.d",
+          "verilated_vcd_c.o",
+          "Vtb_simple.mk",
+          "Vtb_simple___024root.h",
+          "Vtb_simple__pch.h",
+          "verilated_vcd_c.d",
+          "Vtb_simple.d",
+          "Vtb_simple___024root__DepSet_h74eeff05__0.o",
+          "Vtb_simple___024root__DepSet_h74eeff05__0__Slow.d",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0.o",
+          "Vtb_simple__TraceDecls__0__Slow.d",
+          "Vtb_simple__Trace__0.cpp",
+          "Vtb_simple.h",
+          "Vtb_simple__Syms.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1__Slow.d",
+          "Vtb_simple__Trace__0__Slow.cpp",
+          "verilated_cov.d",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1__Slow.o",
+          "Vtb_simple___024root__Slow.d",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1.o",
+          "Vtb_simple__TraceDecls__0__Slow.cpp",
+          "Vtb_simple_classes.mk",
+          "verilated.d",
+          "Vtb_simple__Trace__0.d",
+          "Vtb_simple___024root__DepSet_h74eeff05__0.d",
+          "verilated_timing.o",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1.d",
+          "Vtb_simple__ALL.a",
+          "Vtb_simple__Trace__0__Slow.o",
+          "Vtb_simple___024root__Slow.o",
+          "verilated_timing.d",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0.cpp",
+          "Vtb_simple__TraceDecls__0__Slow.o",
+          "Vtb_simple___024root__DepSet_h74eeff05__0.cpp",
+          "Vtb_simple__pch.h.fast.gch",
+          "Vtb_simple___024root__Slow.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1__Slow.cpp",
+          "Vtb_simple.o",
+          "Vtb_simple__Trace__0__Slow.d",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0__Slow.o",
+          "Vtb_simple.cpp",
+          "Vtb_simple___024root__DepSet_h74eeff05__0__Slow.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0__Slow.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0__Slow.d",
+          "Vtb_simple__Syms.o",
+          "verilated.o",
+          "Vtb_simple__Trace__0.o",
+          "Vtb_simple__pch.h.slow.gch",
+          "Vtb_simple__verFiles.dat",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0.d",
+          "Vtb_simple___024root__DepSet_h74eeff05__0__Slow.o",
+          "verilated_cov.o"
         ],
         "subdirectories": []
       },
       "tb/sv_tb/work": {
-        "files": [],
+        "files": [
+          "tb_simple"
+        ],
         "subdirectories": []
       },
       "tb/cocotb": {
@@ -395,7 +444,7 @@
   },
   "code_metrics": {
     "rtl_files": 15,
-    "rtl_lines": 8945,
+    "rtl_lines": 9048,
     "rtl_modules": 34,
     "testbench_files": 9,
     "testbench_lines": 1876,
