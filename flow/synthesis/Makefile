@@ -43,12 +43,12 @@ synth_xilinx: $(REPORTS_DIR) $(NETLISTS_DIR)
 	@echo "Xilinx synthesis completed!"
 
 # Generate reports
-reports:
+reports: $(REPORTS_DIR)
 	@echo "Generating synthesis reports..."
-	@if [ -f synthesis_report_generic.txt ]; then \
-		echo "Synthesis report generated: synthesis_report_generic.txt"; \
-		head -20 synthesis_report_generic.txt; \
-		cp synthesis_report_generic.txt synthesis_report.md; \
+	@if [ -f $(REPORTS_DIR)/synthesis_report_generic.txt ]; then \
+		echo "Synthesis report generated: $(REPORTS_DIR)/synthesis_report_generic.txt"; \
+		head -20 $(REPORTS_DIR)/synthesis_report_generic.txt; \
+		cp $(REPORTS_DIR)/synthesis_report_generic.txt $(REPORTS_DIR)/synthesis_report.md; \
 	else \
 		echo "No synthesis report found"; \
 	fi

@@ -251,14 +251,45 @@ module fft_engine #(
         twiddle_addr = (16'(stage_counter) * 16'(butterfly_counter)) % (1 << (fft_length_log2_reg - 1));
     end
     
+    // Memory address multiplexing (fix driver-driver conflict)
+    always_ff @(posedge clk_i) begin
+        if (!reset_n_i) begin
+            mem_addr_i <= 16'h0000;
+        end else if (fft_state == FFT_COMPUTE && mem_ready_o) begin
+            // Stage 1: Read first data
+            mem_addr_i <= addr_a;
+        end else if (pipeline_valid[0]) begin
+            // Stage 2: Read second data
+            mem_addr_i <= pipeline_addr_b[0];
+        end else if (pipeline_valid[1]) begin
+            // Stage 3: Read twiddle factors
+            mem_addr_i <= pipeline_addr_a[0] + 16'h1000;  // Twiddle ROM base
+        end else if (pipeline_valid[4]) begin
+            // Stage 6: Write results
+            mem_addr_i <= pipeline_addr_a[4];
+        end else begin
+            mem_addr_i <= 16'h0000;
+        end
+    end
+
+    // Memory write control
+    always_ff @(posedge clk_i) begin
+        if (!reset_n_i) begin
+            mem_write_i <= 1'b0;
+        end else if (pipeline_valid[4]) begin
+            // Stage 6: Write results
+            mem_write_i <= 1'b1;
+        end else begin
+            mem_write_i <= 1'b0;
+        end
+    end
+
     // Pipeline stage 1: Address generation and memory read
     always_ff @(posedge clk_i) begin
         if (fft_state == FFT_COMPUTE && mem_ready_o) begin
             pipeline_valid[0] <= 1'b1;
             pipeline_addr_a[0] <= addr_a;
             pipeline_addr_b[0] <= addr_b;
-            mem_addr_i <= addr_a;
-            mem_write_i <= 1'b0;
         end else begin
             pipeline_valid[0] <= 1'b0;
         end
@@ -269,8 +300,6 @@ module fft_engine #(
         if (pipeline_valid[0]) begin
             pipeline_valid[1] <= 1'b1;
             pipeline_data_a[1] <= mem_data_o;
-            mem_addr_i <= pipeline_addr_b[0];
-            mem_write_i <= 1'b0;
         end else begin
             pipeline_valid[1] <= 1'b0;
         end
@@ -281,8 +310,6 @@ module fft_engine #(
         if (pipeline_valid[1]) begin
             pipeline_valid[2] <= 1'b1;
             pipeline_data_b[2] <= mem_data_o;
-            mem_addr_i <= pipeline_addr_a[0] + 16'h1000;  // Twiddle ROM base
-            mem_write_i <= 1'b0;
             
             // Complex addition: A + B (fix width issues)
             butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 32'hFFFF);
@@ -369,12 +396,9 @@ module fft_engine #(
             end
             
             // Write results to memory (fix width issues)
-            mem_addr_i <= pipeline_addr_a[4];
             mem_data_i <= (32'(butterfly_result_real_a) << 16) | 32'(butterfly_result_imag_a);
-            mem_write_i <= 1'b1;
         end else begin
             pipeline_valid[5] <= 1'b0;
-            mem_write_i <= 1'b0;
             pipeline_rescaling_active <= 1'b0;
         end
     end
