@@ -76,6 +76,7 @@ module fft_engine #(
     logic [15:0] butterfly_twiddle_real, butterfly_twiddle_imag;
     logic [15:0] butterfly_result_real_a, butterfly_result_imag_a;
     logic [15:0] butterfly_result_real_b, butterfly_result_imag_b;
+    logic [15:0] butterfly_temp_real, butterfly_temp_imag;  // Temporary registers for A-B
     logic        butterfly_overflow;
     
     // Rescaling signals
@@ -300,6 +301,8 @@ module fft_engine #(
         if (pipeline_valid[0]) begin
             pipeline_valid[1] <= 1'b1;
             pipeline_data_a[1] <= mem_data_o;
+            pipeline_addr_a[1] <= pipeline_addr_a[0];
+            pipeline_addr_b[1] <= pipeline_addr_b[0];
         end else begin
             pipeline_valid[1] <= 1'b0;
         end
@@ -310,6 +313,8 @@ module fft_engine #(
         if (pipeline_valid[1]) begin
             pipeline_valid[2] <= 1'b1;
             pipeline_data_b[2] <= mem_data_o;
+            pipeline_addr_a[2] <= pipeline_addr_a[1];
+            pipeline_addr_b[2] <= pipeline_addr_b[1];
             
             // Complex addition: A + B (fix width issues)
             butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 32'hFFFF);
@@ -321,19 +326,21 @@ module fft_engine #(
         end
     end
     
-    // Pipeline stage 4: Complex subtraction
+    // Pipeline stage 4: Complex subtraction and address propagation
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[2]) begin
             pipeline_valid[3] <= 1'b1;
             pipeline_twiddle[3] <= mem_data_o;
+            pipeline_addr_a[3] <= pipeline_addr_a[2];
+            pipeline_addr_b[3] <= pipeline_addr_b[2];
             
             // Complex addition result
             butterfly_result_real_a <= butterfly_real_a + butterfly_real_b;
             butterfly_result_imag_a <= butterfly_imag_a + butterfly_imag_b;
             
-            // Complex subtraction: A - B
-            butterfly_real_a <= butterfly_real_a - butterfly_real_b;
-            butterfly_imag_a <= butterfly_imag_a - butterfly_imag_b;
+            // Complex subtraction: A - B (store in temporary registers)
+            butterfly_temp_real <= butterfly_real_a - butterfly_real_b;
+            butterfly_temp_imag <= butterfly_imag_a - butterfly_imag_b;
         end else begin
             pipeline_valid[3] <= 1'b0;
         end
@@ -343,16 +350,18 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[3]) begin
             pipeline_valid[4] <= 1'b1;
+            pipeline_addr_a[4] <= pipeline_addr_a[3];
+            pipeline_addr_b[4] <= pipeline_addr_b[3];
             
             // Extract twiddle factors (fix width issues)
             butterfly_twiddle_real <= 16'((pipeline_twiddle[3] >> 16) & 32'hFFFF);
             butterfly_twiddle_imag <= 16'(pipeline_twiddle[3] & 32'hFFFF);
             
             // Complex multiplication: (A-B) * W
-            butterfly_result_real_b <= (butterfly_real_a * butterfly_twiddle_real) - 
-                                      (butterfly_imag_a * butterfly_twiddle_imag);
-            butterfly_result_imag_b <= (butterfly_real_a * butterfly_twiddle_imag) + 
-                                      (butterfly_imag_a * butterfly_twiddle_real);
+            butterfly_result_real_b <= (butterfly_temp_real * butterfly_twiddle_real) - 
+                                      (butterfly_temp_imag * butterfly_twiddle_imag);
+            butterfly_result_imag_b <= (butterfly_temp_real * butterfly_twiddle_imag) + 
+                                      (butterfly_temp_imag * butterfly_twiddle_real);
         end else begin
             pipeline_valid[4] <= 1'b0;
         end

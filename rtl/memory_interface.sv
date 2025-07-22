@@ -51,8 +51,8 @@ module memory_interface #(
     input  logic [15:0] mem_addr_i,
     input  logic [31:0] mem_data_i,
     input  logic        mem_write_i,
-    input  logic [31:0] mem_data_o,
-    input  logic        mem_ready_o,
+    output logic [31:0] mem_data_o,
+    output logic        mem_ready_o,
     
     // Control Interface
     output logic        fft_start_o,
@@ -251,5 +251,24 @@ module memory_interface #(
     assign axi_arready_o = 1'b1;
     assign axi_rdata_o = 64'h0000000000000000;
     assign axi_rvalid_o = 1'b0;
+
+    // Memory interface logic
+    // Simple memory model for FFT data storage
+    logic [31:0] fft_memory [0:65535];  // 64K x 32-bit memory
+    
+    // Memory read operation
+    always_comb begin
+        mem_data_o = fft_memory[mem_addr_i];
+    end
+    
+    // Memory write operation
+    always_ff @(posedge clk_i) begin
+        if (mem_write_i) begin
+            fft_memory[mem_addr_i] <= mem_data_i;
+        end
+    end
+    
+    // Memory ready signal (always ready for this simple implementation)
+    assign mem_ready_o = 1'b1;
 
 endmodule 
