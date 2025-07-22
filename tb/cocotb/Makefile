@@ -180,10 +180,25 @@ ifeq ($(COVERAGE),1)
 	fi
 	# Create a simple index.html for the coverage directory
 	@echo "<!DOCTYPE html>" > ../../public/coverage/index.html
-	@echo "<html><head><title>FFT IP Coverage Report</title></head>" >> ../../public/coverage/index.html
+	@echo "<html><head><title>FFT IP Coverage Report</title>" >> ../../public/coverage/index.html
+	@echo "<style>" >> ../../public/coverage/index.html
+	@echo "body { font-family: Arial, sans-serif; margin: 40px; }" >> ../../public/coverage/index.html
+	@echo "h1 { color: #0366d6; }" >> ../../public/coverage/index.html
+	@echo ".report-link { background: #f6f8fa; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #28a745; }" >> ../../public/coverage/index.html
+	@echo "a { color: #0366d6; text-decoration: none; }" >> ../../public/coverage/index.html
+	@echo "a:hover { text-decoration: underline; }" >> ../../public/coverage/index.html
+	@echo "</style></head>" >> ../../public/coverage/index.html
 	@echo "<body><h1>FFT IP Coverage Report</h1>" >> ../../public/coverage/index.html
 	@echo "<p>Coverage files are available in this directory.</p>" >> ../../public/coverage/index.html
-	@echo "<p><a href='../'>Back to main report</a></p></body></html>" >> ../../public/coverage/index.html
+	@echo "<div class='report-link'>" >> ../../public/coverage/index.html
+	@echo "<h3>📊 Coverage Reports:</h3>" >> ../../public/coverage/index.html
+	@echo "<ul>" >> ../../public/coverage/index.html
+	@echo "<li><a href='coverage_report.html'>📄 Detailed Coverage Report (HTML)</a></li>" >> ../../public/coverage/index.html
+	@echo "<li><a href='coverage_report.txt'>📄 Coverage Report (Text)</a></li>" >> ../../public/coverage/index.html
+	@echo "<li><a href='coverage.txt'>📄 Basic Coverage Status</a></li>" >> ../../public/coverage/index.html
+	@echo "</ul>" >> ../../public/coverage/index.html
+	@echo "</div>" >> ../../public/coverage/index.html
+	@echo "<p><a href='../'>← Back to main report</a></p></body></html>" >> ../../public/coverage/index.html
 	# Always generate coverage summary
 	@echo "Coverage Summary:" > ../../public/coverage_summary.txt
 	@echo "=================" >> ../../public/coverage_summary.txt
