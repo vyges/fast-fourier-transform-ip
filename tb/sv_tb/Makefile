@@ -21,8 +21,8 @@ ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
     SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint -Wno-MULTITOP --top-module tb_simple
     SIM_FILES = $(RTL_DIR)/*.sv tb_simple.sv
-    SIM_TARGET = obj_dir/V$(TOP_MODULE)
-    RUN_CMD = $(SIM_TARGET)
+    SIM_TARGET = obj_dir/Vtb_simple
+    RUN_CMD = ./obj_dir/Vtb_simple
 else ifeq ($(SIMULATOR),iverilog)
     SIM_CMD = iverilog
     SIM_FLAGS = -g2012 -Wall -I$(RTL_DIR) -I$(TB_DIR)
@@ -61,6 +61,7 @@ $(WORK_DIR):
 
 # Compile
 compile: $(WORK_DIR)
+	mkdir -p waveforms
 ifeq ($(SIMULATOR),verilator)
 	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES) -o $(SIM_TARGET)
 else ifeq ($(SIMULATOR),iverilog)
@@ -75,6 +76,7 @@ endif
 
 # Run simulation
 run: compile
+	mkdir -p waveforms
 	$(RUN_CMD)
 	@if [ "$(SIMULATOR)" = "verilator" ]; then \
 		if [ -d obj_dir ]; then \

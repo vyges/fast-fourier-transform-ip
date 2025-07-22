@@ -285,10 +285,10 @@ module fft_engine #(
             mem_write_i <= 1'b0;
             
             // Complex addition: A + B (fix width issues)
-            butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 16'hFFFF);
-            butterfly_imag_a <= 16'(pipeline_data_a[1] & 16'hFFFF);
-            butterfly_real_b <= 16'((mem_data_o >> 16) & 16'hFFFF);
-            butterfly_imag_b <= 16'(mem_data_o & 16'hFFFF);
+            butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 32'hFFFF);
+            butterfly_imag_a <= 16'(pipeline_data_a[1] & 32'hFFFF);
+            butterfly_real_b <= 16'((mem_data_o >> 16) & 32'hFFFF);
+            butterfly_imag_b <= 16'(mem_data_o & 32'hFFFF);
         end else begin
             pipeline_valid[2] <= 1'b0;
         end
@@ -318,8 +318,8 @@ module fft_engine #(
             pipeline_valid[4] <= 1'b1;
             
             // Extract twiddle factors (fix width issues)
-            butterfly_twiddle_real <= 16'((pipeline_twiddle[3] >> 16) & 16'hFFFF);
-            butterfly_twiddle_imag <= 16'(pipeline_twiddle[3] & 16'hFFFF);
+            butterfly_twiddle_real <= 16'((pipeline_twiddle[3] >> 16) & 32'hFFFF);
+            butterfly_twiddle_imag <= 16'(pipeline_twiddle[3] & 32'hFFFF);
             
             // Complex multiplication: (A-B) * W
             butterfly_result_real_b <= (butterfly_real_a * butterfly_twiddle_real) - 
