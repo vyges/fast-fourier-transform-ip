@@ -65,30 +65,44 @@ module rescale_unit #(
     
     // Rescaling logic
     always_comb begin
+        // Local variables for overflow detection
+        logic [1:0] real_msb, imag_msb;
+        logic [7:0] real_overflow_bits, imag_overflow_bits;
+        
         // Default outputs
         rescaled_real = data_real_reg;
         rescaled_imag = data_imag_reg;
         scale_factor_increment_reg = 1'b0;
         
-        // Overflow detection
+        // Default overflow detection values
         real_overflow = 1'b0;
         imag_overflow = 1'b0;
         overflow_magnitude_real = 8'h00;
         overflow_magnitude_imag = 8'h00;
         
+        // Default bit extraction values
+        real_msb = 2'b00;
+        real_overflow_bits = 8'h00;
+        imag_msb = 2'b00;
+        imag_overflow_bits = 8'h00;
+        
         if (rescale_en_i && overflow_detect_i) begin
+            // Extract bits for overflow detection (using fixed widths for Icarus compatibility)
+            real_msb = data_real_reg[15:14];  // Fixed for 16-bit data
+            real_overflow_bits = data_real_reg[15:8];  // Fixed for 16-bit data
+            imag_msb = data_imag_reg[15:14];  // Fixed for 16-bit data
+            imag_overflow_bits = data_imag_reg[15:8];  // Fixed for 16-bit data
+            
             // Check for overflow in real component
-            if (data_real_reg[DATA_WIDTH-1:DATA_WIDTH-2] != 2'b00 && 
-                data_real_reg[DATA_WIDTH-1:DATA_WIDTH-2] != 2'b11) begin
+            if (real_msb != 2'b00 && real_msb != 2'b11) begin
                 real_overflow = 1'b1;
-                overflow_magnitude_real = data_real_reg[DATA_WIDTH-1:DATA_WIDTH-8];
+                overflow_magnitude_real = real_overflow_bits;
             end
             
             // Check for overflow in imaginary component
-            if (data_imag_reg[DATA_WIDTH-1:DATA_WIDTH-2] != 2'b00 && 
-                data_imag_reg[DATA_WIDTH-1:DATA_WIDTH-2] != 2'b11) begin
+            if (imag_msb != 2'b00 && imag_msb != 2'b11) begin
                 imag_overflow = 1'b1;
-                overflow_magnitude_imag = data_imag_reg[DATA_WIDTH-1:DATA_WIDTH-8];
+                overflow_magnitude_imag = imag_overflow_bits;
             end
             
             // Apply rescaling if overflow detected

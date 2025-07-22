@@ -102,7 +102,7 @@ module fft_top #(
         .reset_n_i(reset_n_i),
         .fft_start_i(fft_start_i),
         .fft_reset_i(fft_reset_i),
-        .fft_busy_o(fft_busy_o),
+        .fft_busy_o(),  // Remove this connection to avoid MULTIDRIVEN
         .fft_done_i(fft_done_o_internal),
         .fft_error_i(fft_error_o_internal),
         .fft_length_log2_i(fft_length_log2_i),

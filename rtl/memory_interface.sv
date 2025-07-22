@@ -48,9 +48,9 @@ module memory_interface #(
     input  logic        axi_rready_i,
     
     // FFT Engine Interface
-    output logic [15:0] mem_addr_i,
-    output logic [31:0] mem_data_i,
-    output logic        mem_write_i,
+    input  logic [15:0] mem_addr_i,
+    input  logic [31:0] mem_data_i,
+    input  logic        mem_write_i,
     input  logic [31:0] mem_data_o,
     input  logic        mem_ready_o,
     
@@ -186,37 +186,46 @@ module memory_interface #(
     
     // Status register updates
     always_comb begin
+        logic [7:0] overflow_count_val;
+        logic [7:0] stage_count_val;
+        logic [7:0] scale_factor_val;
+        logic [7:0] int_status_val;
+        
+        overflow_count_val = overflow_count_i;
+        stage_count_val = stage_count_i;
+        scale_factor_val = scale_factor_i;
+        int_status_val = int_status_i;
+        
         fft_status_reg = {
-            8'h00,                          // Reserved
-            overflow_count_i,               // Overflow count
-            8'h00,                          // Reserved
-            stage_count_i,                  // Stage count
-            scale_factor_i,                 // Scale factor
-            overflow_detected_i,            // Overflow detected
-            rescaling_active_i,             // Rescaling active
-            buffer_active_i,                // Buffer active
-            fft_error_i,                    // FFT error
-            fft_done_i,                     // FFT done
-            fft_busy_i                      // FFT busy
+            2'h0,                           // Reserved (reduced from 8 to 2 bits)
+            overflow_count_val,             // Overflow count (8 bits)
+            stage_count_val,                // Stage count (8 bits)
+            scale_factor_val,               // Scale factor (8 bits)
+            overflow_detected_i,            // Overflow detected (1 bit)
+            rescaling_active_i,             // Rescaling active (1 bit)
+            buffer_active_i,                // Buffer active (1 bit)
+            fft_error_i,                    // FFT error (1 bit)
+            fft_done_i,                     // FFT done (1 bit)
+            fft_busy_i                      // FFT busy (1 bit)
         };
         
         int_status_reg = {
-            25'h000000,                     // Reserved
-            int_status_i[6:0]               // Interrupt status
+            24'h000000,                     // Reserved (reduced from 25 to 24 bits)
+            int_status_val                  // Interrupt status (8 bits)
         };
         
         scale_factor_reg = {
-            overflow_count_i,               // Overflow count
+            overflow_count_val,             // Overflow count
             8'h00,                          // Reserved
-            stage_count_i,                  // Stage count
-            scale_factor_i                  // Scale factor
+            stage_count_val,                // Stage count
+            scale_factor_val                // Scale factor
         };
         
         overflow_status_reg = {
             8'h00,                          // Reserved
             max_overflow_magnitude_i,       // Max overflow magnitude
             last_overflow_stage_i,          // Last overflow stage
-            overflow_count_i                // Overflow count
+            overflow_count_val              // Overflow count
         };
     end
     
@@ -235,11 +244,6 @@ module memory_interface #(
     
     assign buffer_sel_o = buffer_sel_reg[1:0];
     assign int_enable_o = int_enable_reg[7:0];
-    
-    // Memory interface (simplified for this example)
-    assign mem_addr_i = 16'h0000;  // Placeholder
-    assign mem_data_i = 32'h00000000;  // Placeholder
-    assign mem_write_i = 1'b0;  // Placeholder
     
     // AXI interface (simplified for this example)
     assign axi_awready_o = 1'b1;

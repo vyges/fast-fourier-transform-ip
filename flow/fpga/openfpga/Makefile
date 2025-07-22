@@ -137,7 +137,7 @@ xilinx7_all: xilinx7_bitstream
 # Generic synthesis for any FPGA family
 fpga_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	@echo "🔧 Running generic FPGA synthesis with Yosys..."
-	$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE) -json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"
+	$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE); write_json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"
 	@echo "✅ Generic FPGA synthesis completed"
 
 # =============================================================================

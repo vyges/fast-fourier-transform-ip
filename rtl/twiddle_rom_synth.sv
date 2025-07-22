@@ -37,7 +37,7 @@ module twiddle_rom_synth #(
     logic [31:0] rom_data;
     
     // Address validation
-    assign rom_addr = (addr_i < ROM_SIZE) ? addr_i[ADDR_WIDTH-1:0] : '0;
+    assign rom_addr = (32'(addr_i) < ROM_SIZE) ? addr_i[ADDR_WIDTH-1:0] : '0;
     
     // ROM read
     always_ff @(posedge clk_i) begin

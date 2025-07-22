@@ -19,7 +19,7 @@ COVERAGE = 1
 # Simulator-specific settings
 ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
-    SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint
+    SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint -Wno-MULTITOP --top-module tb_simple
     SIM_FILES = $(RTL_DIR)/*.sv tb_simple.sv
     SIM_TARGET = obj_dir/V$(TOP_MODULE)
     RUN_CMD = $(SIM_TARGET)
@@ -151,7 +151,7 @@ endif
 # Lint check
 lint:
 ifeq ($(SIMULATOR),verilator)
-	verilator --lint-only $(RTL_DIR)/*.sv
+	verilator --lint-only -Wno-MULTITOP $(RTL_DIR)/*.sv
 else ifeq ($(SIMULATOR),vcs)
 	$(SIM_CMD) -full64 -sverilog -lint-only $(RTL_DIR)/*.sv
 endif

@@ -87,6 +87,7 @@ module fft_engine #(
     logic        rescaling_active_reg;
     logic        overflow_detected_reg;
     logic        scale_factor_increment;
+    logic        pipeline_rescaling_active;  // New signal for pipeline stage 6
     
     // Address generation signals
     logic [11:0] stage_counter;
@@ -200,7 +201,7 @@ module fft_engine #(
         overflow_detected_o = overflow_detected_reg;
     end
     
-    // Scale factor tracking
+    // Rescaling and overflow tracking
     always_ff @(posedge clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
             scale_factor_reg <= 8'h00;
@@ -229,6 +230,9 @@ module fft_engine #(
             if (stage_counter >= fft_length_log2_reg && fft_state == FFT_COMPUTE) begin
                 stage_count_reg <= stage_count_reg + 1;
             end
+            
+            // Update rescaling_active_reg based on pipeline signal
+            rescaling_active_reg <= pipeline_rescaling_active;
         end
     end
     
@@ -242,9 +246,9 @@ module fft_engine #(
     // Address generation
     always_comb begin
         butterfly_spacing = 1 << stage_counter;
-        addr_a = (stage_counter * butterfly_spacing) + butterfly_counter;
-        addr_b = addr_a + butterfly_spacing;
-        twiddle_addr = (stage_counter * butterfly_counter) % (1 << (fft_length_log2_reg - 1));
+        addr_a = (16'(stage_counter) * 16'(butterfly_spacing)) + 16'(butterfly_counter);
+        addr_b = addr_a + 16'(butterfly_spacing);
+        twiddle_addr = (16'(stage_counter) * 16'(butterfly_counter)) % (1 << (fft_length_log2_reg - 1));
     end
     
     // Pipeline stage 1: Address generation and memory read
@@ -280,11 +284,11 @@ module fft_engine #(
             mem_addr_i <= pipeline_addr_a[0] + 16'h1000;  // Twiddle ROM base
             mem_write_i <= 1'b0;
             
-            // Complex addition: A + B
-            butterfly_real_a <= (pipeline_data_a[1] >> 16) & 16'hFFFF;
-            butterfly_imag_a <= pipeline_data_a[1] & 16'hFFFF;
-            butterfly_real_b <= (mem_data_o >> 16) & 16'hFFFF;
-            butterfly_imag_b <= mem_data_o & 16'hFFFF;
+            // Complex addition: A + B (fix width issues)
+            butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 16'hFFFF);
+            butterfly_imag_a <= 16'(pipeline_data_a[1] & 16'hFFFF);
+            butterfly_real_b <= 16'((mem_data_o >> 16) & 16'hFFFF);
+            butterfly_imag_b <= 16'(mem_data_o & 16'hFFFF);
         end else begin
             pipeline_valid[2] <= 1'b0;
         end
@@ -313,9 +317,9 @@ module fft_engine #(
         if (pipeline_valid[3]) begin
             pipeline_valid[4] <= 1'b1;
             
-            // Extract twiddle factors
-            butterfly_twiddle_real <= (pipeline_twiddle[3] >> 16) & 16'hFFFF;
-            butterfly_twiddle_imag <= pipeline_twiddle[3] & 16'hFFFF;
+            // Extract twiddle factors (fix width issues)
+            butterfly_twiddle_real <= 16'((pipeline_twiddle[3] >> 16) & 16'hFFFF);
+            butterfly_twiddle_imag <= 16'(pipeline_twiddle[3] & 16'hFFFF);
             
             // Complex multiplication: (A-B) * W
             butterfly_result_real_b <= (butterfly_real_a * butterfly_twiddle_real) - 
@@ -354,23 +358,24 @@ module fft_engine #(
                     butterfly_result_real_b <= butterfly_result_real_b >>> 1;
                     butterfly_result_imag_b <= butterfly_result_imag_b >>> 1;
                     scale_factor_increment <= 1'b1;
-                    rescaling_active_reg <= 1'b1;
+                    pipeline_rescaling_active <= 1'b1;
                 end else begin
                     scale_factor_increment <= 1'b0;
-                    rescaling_active_reg <= 1'b0;
+                    pipeline_rescaling_active <= 1'b0;
                 end
             end else begin
                 scale_factor_increment <= 1'b0;
-                rescaling_active_reg <= 1'b0;
+                pipeline_rescaling_active <= 1'b0;
             end
             
-            // Write results to memory
+            // Write results to memory (fix width issues)
             mem_addr_i <= pipeline_addr_a[4];
-            mem_data_i <= (butterfly_result_real_a << 16) | butterfly_result_imag_a;
+            mem_data_i <= (32'(butterfly_result_real_a) << 16) | 32'(butterfly_result_imag_a);
             mem_write_i <= 1'b1;
         end else begin
             pipeline_valid[5] <= 1'b0;
             mem_write_i <= 1'b0;
+            pipeline_rescaling_active <= 1'b0;
         end
     end
     
