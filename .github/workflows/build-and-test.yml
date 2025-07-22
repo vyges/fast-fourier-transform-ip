@@ -725,41 +725,104 @@ jobs:
             cp test_harness_report.md public/
           fi
           
-          # Generate simple synthesis and FPGA reports
+          # Generate synthesis and FPGA reports
           echo "📊 Generating synthesis and FPGA reports..."
-          cat > public/synthesis_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Synthesis Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <h1>Synthesis Report</h1>
-              <p><em>Generated: $(date -u)</em></p>
-              <p>See synthesis results in the reports directory.</p>
-          </body>
-          </html>
-          EOF
           
-          cat > public/fpga_report.html << 'EOF'
+          # Generate synthesis report
+          if [ -f "flow/synthesis/synthesis_report.md" ]; then
+            if command -v pandoc &> /dev/null; then
+              pandoc flow/synthesis/synthesis_report.md -o public/synthesis_report.html --css public/report-style.css --standalone
+              echo "✅ Generated synthesis report HTML"
+            else
+              echo "⚠️ Pandoc not found, creating basic synthesis report"
+              cat > public/synthesis_report.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>FPGA Implementation Report</title>
+              <title>FFT IP - Synthesis Report</title>
               <link rel="stylesheet" href="report-style.css">
           </head>
           <body>
-              <h1>FPGA Implementation Report</h1>
-              <p><em>Generated: $(date -u)</em></p>
-              <p>See FPGA implementation results in the reports directory.</p>
+              <div class="container">
+                  <h1>FFT IP - Synthesis Report</h1>
+                  <p><em>Generated: $(date -u)</em></p>
+                  <p>Synthesis report not available. Please run synthesis first.</p>
+              </div>
           </body>
           </html>
           EOF
+            fi
+          else
+            echo "⚠️ Synthesis report not found, creating basic report"
+            cat > public/synthesis_report.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>FFT IP - Synthesis Report</title>
+              <link rel="stylesheet" href="report-style.css">
+          </head>
+          <body>
+              <div class="container">
+                  <h1>FFT IP - Synthesis Report</h1>
+                  <p><em>Generated: $(date -u)</em></p>
+                  <p>Synthesis report not available. Please run synthesis first.</p>
+              </div>
+          </body>
+          </html>
+          EOF
+          fi
+          
+          # Generate FPGA report
+          if [ -f "flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md" ]; then
+            if command -v pandoc &> /dev/null; then
+              pandoc flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md -o public/fpga_report.html --css public/report-style.css --standalone
+              echo "✅ Generated FPGA report HTML"
+            else
+              echo "⚠️ Pandoc not found, creating basic FPGA report"
+              cat > public/fpga_report.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>FFT IP - FPGA Report</title>
+              <link rel="stylesheet" href="report-style.css">
+          </head>
+          <body>
+              <div class="container">
+                  <h1>FFT IP - FPGA Report</h1>
+                  <p><em>Generated: $(date -u)</em></p>
+                  <p>FPGA report not available. Please run FPGA flow first.</p>
+              </div>
+          </body>
+          </html>
+          EOF
+            fi
+          else
+            echo "⚠️ FPGA report not found, creating basic report"
+            cat > public/fpga_report.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>FFT IP - FPGA Report</title>
+              <link rel="stylesheet" href="report-style.css">
+          </head>
+          <body>
+              <div class="container">
+                  <h1>FFT IP - FPGA Report</h1>
+                  <p><em>Generated: $(date -u)</em></p>
+                  <p>FPGA report not available. Please run FPGA flow first.</p>
+              </div>
+          </body>
+          </html>
+          EOF
+          fi
           
           # Create the template file for GitHub Pages generation
           echo "📄 Creating index template..."
