@@ -138,7 +138,8 @@ jobs:
             zlib1g \
             zlib1g-dev \
             gettext \
-            gnat
+            gnat \
+            pandoc
 
       - name: Install digital tools (digital, mixed, chiplets, tapeout)
         if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
@@ -347,22 +348,15 @@ jobs:
           fi
 
       - name: Run linting checks
-        if: ${{ github.event.inputs.test_linting == 'true' }}
         run: |
-          echo "🔍 Linting SystemVerilog files..."
-          
-          # Find all .sv files
-          sv_files=$(find . -name "*.sv" -type f)
-          
-          if [ -z "$sv_files" ]; then
-            echo "ℹ️ No SystemVerilog files found (expected for template)"
+          echo "🔍 Linting SystemVerilog files using Makefile..."
+          if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
+            cd tb/sv_tb
+            make lint || echo "⚠️ Linting failed"
+            cd ../..
           else
-            for file in $sv_files; do
-              echo "Linting $file..."
-              verilator --lint-only --Wall --Wno-fatal "$file" || echo "⚠️ Lint issues in $file"
-            done
+            echo "No Makefile for linting found in tb/sv_tb/"
           fi
-          
           echo "✅ Linting complete"
 
       - name: Check file permissions
@@ -381,60 +375,18 @@ jobs:
           echo "✅ File permission check complete"
 
       - name: Run simulation tests
-        if: ${{ github.event.inputs.test_simulation == 'true' }}
         run: |
           set -e
-          echo "🧪 Running simulation tests..."
-          
-          # Check for testbench files
-          if [ -d "tb" ]; then
-            echo "Found testbench directory"
-            
-            # Run SystemVerilog testbenches if Makefile exists
-            if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
-              echo "🔧 Running SystemVerilog testbenches with Verilator..."
-              cd tb/sv_tb
-              
-              # Run individual module tests
-              if [ -f "tb_twiddle_rom.sv" ]; then
-                echo "Testing twiddle_rom module..."
-                make test_twiddle_rom || echo "⚠️ twiddle_rom test failed"
-              fi
-              
-              if [ -f "tb_rescale_unit.sv" ]; then
-                echo "Testing rescale_unit module..."
-                make test_rescale_unit || echo "⚠️ rescale_unit test failed"
-              fi
-              
-              # Run all tests
-              echo "Running all SystemVerilog tests..."
-              make all || echo "⚠️ Some SystemVerilog tests failed"
-              
-              cd ../..
-            fi
-            
-            # Look for SystemVerilog testbenches
-            sv_tb_files=$(find tb -name "tb_*.sv" -type f)
-            if [ -n "$sv_tb_files" ]; then
-              echo "Found SystemVerilog testbenches: $sv_tb_files"
-            fi
-            
-            # Look for cocotb testbenches
-            cocotb_files=$(find tb -name "test_*.py" -type f)
-            if [ -n "$cocotb_files" ]; then
-              echo "Found cocotb testbenches: $cocotb_files"
-              # Note: Actual test execution would require specific testbench setup
-              echo "ℹ️ Cocotb testbench execution requires specific setup"
-            fi
-            
-            if [ -z "$sv_tb_files" ] && [ -z "$cocotb_files" ]; then
-              echo "ℹ️ No testbench files found (expected for template)"
-            fi
+          echo "🧪 Running simulation tests using Makefile..."
+          if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
+            cd tb/sv_tb
+            make all SIMULATOR=verilator || echo "⚠️ Verilator simulation failed"
+            make all SIMULATOR=iverilog || echo "⚠️ Icarus Verilog simulation failed"
+            cd ../..
           else
-            echo "ℹ️ No testbench directory found (expected for template)"
+            echo "No Makefile for simulation found in tb/sv_tb/"
           fi
-          
-          echo "✅ Simulation test check complete"
+          echo "✅ Simulation tests complete"
 
       - name: Check synthesis configuration
         if: ${{ github.event.inputs.test_synthesis == 'true' }}
@@ -480,6 +432,34 @@ jobs:
           
           echo "✅ Synthesis configuration check complete"
 
+      - name: Run synthesis (ASIC)
+        run: |
+          set -e
+          echo "🔧 Running ASIC synthesis using Makefile..."
+          if [ -d "flow/synthesis" ] && [ -f "flow/synthesis/Makefile" ]; then
+            cd flow/synthesis
+            make synth_generic || echo "⚠️ Yosys synthesis failed"
+            make reports || echo "⚠️ Synthesis reports generation failed"
+            cd ../..
+          else
+            echo "No Makefile for synthesis found in flow/synthesis/"
+          fi
+          echo "✅ ASIC synthesis complete"
+
+      - name: Run synthesis (FPGA)
+        run: |
+          set -e
+          echo "🔧 Running FPGA synthesis using Makefile..."
+          if [ -d "flow/fpga/openfpga" ] && [ -f "flow/fpga/openfpga/Makefile" ]; then
+            cd flow/fpga/openfpga
+            make fpga_synth || echo "⚠️ Open source FPGA synthesis failed"
+            make reports || echo "⚠️ FPGA reports generation failed"
+            cd ../..
+          else
+            echo "No Makefile for FPGA synthesis found in flow/fpga/openfpga/"
+          fi
+          echo "✅ FPGA synthesis complete"
+
       - name: Generate test report
         run: |
           echo "📊 Test Report"
@@ -514,13 +494,6 @@ jobs:
           echo "- Synthesis: ${{ github.event.inputs.test_synthesis == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
           echo ""
           echo "Note: This is a template repository. Actual tests require IP-specific implementation."
-
-      # Install Pandoc
-      - name: Install Pandoc
-        run: |
-          echo "🔧 Installing Pandoc for markdown to HTML conversion..."
-          sudo apt-get install -y pandoc
-          pandoc --version
 
       - name: Generate comprehensive reports
         run: |

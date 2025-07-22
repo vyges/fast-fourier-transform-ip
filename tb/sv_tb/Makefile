@@ -76,6 +76,21 @@ endif
 # Run simulation
 run: compile
 	$(RUN_CMD)
+	@if [ "$(SIMULATOR)" = "verilator" ]; then \
+		if [ -d obj_dir ]; then \
+			cp obj_dir/*.vcd . 2>/dev/null || true; \
+		fi; \
+	fi
+
+# Explicit Verilator test target for workflow
+.PHONY: test_verilator
+
+test_verilator:
+	$(MAKE) SIMULATOR=verilator compile
+	$(MAKE) SIMULATOR=verilator run
+	@if [ -d obj_dir ]; then \
+		cp obj_dir/*.vcd . 2>/dev/null || true; \
+	fi
 
 # Clean
 clean:
