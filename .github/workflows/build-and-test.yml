@@ -276,7 +276,7 @@ jobs:
           sudo apt-get install -y fpga-icestorm
           
           # Install PrjTrellis for ECP5 bitstream generation
-          sudo apt-get install -y fpga-prjtrellis
+          sudo apt-get install -y fpga-trellis
           
           # Verify installations
           nextpnr-ice40 --version || echo "⚠️ NextPNR iCE40 not available"

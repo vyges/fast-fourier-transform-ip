@@ -70,7 +70,7 @@ sudo apt-get install yosys nextpnr-ice40 nextpnr-ecp5
 sudo apt-get install fpga-icestorm
 
 # ECP5 tools
-sudo apt-get install fpga-prjtrellis
+sudo apt-get install fpga-trellis
 
 # SymbiFlow (requires additional setup)
 # Follow SymbiFlow installation guide
