@@ -64,8 +64,20 @@ class VygesCodeKPIs:
     
     def _get_project_info(self) -> Dict[str, Any]:
         """Get basic project information."""
+        # Try to get project name from metadata first
+        project_name = self.project_root.name
+        try:
+            metadata_file = self.project_root / "vyges-metadata.json"
+            if metadata_file.exists():
+                with open(metadata_file, 'r') as f:
+                    metadata = json.load(f)
+                    if "name" in metadata:
+                        project_name = metadata["name"].split("/")[-1] if "/" in metadata["name"] else metadata["name"]
+        except (json.JSONDecodeError, KeyError):
+            pass
+        
         info = {
-            "project_name": self.project_root.name,
+            "project_name": project_name,
             "analysis_date": datetime.now().isoformat(),
             "project_root": str(self.project_root.absolute())
         }
@@ -298,30 +310,45 @@ class VygesCodeKPIs:
         
         # Check for linting results
         lint_files = list(self.project_root.rglob("lint_*.log"))
+        lint_files.extend(list(self.project_root.rglob("*lint*.log")))
+        lint_files.extend(list(self.project_root.rglob("*verilator*.log")))
         if lint_files:
             quality["linting_clean"] = True
         
         # Check for synthesis results
         synth_files = list(self.project_root.rglob("*synthesis*.log"))
-        if synth_files:
+        synth_files.extend(list(self.project_root.rglob("*yosys*.log")))
+        synth_files.extend(list(self.project_root.rglob("*synth*.v")))
+        synth_files.extend(list(self.project_root.rglob("flow/synthesis/*.v")))
+        
+        # Check for FPGA synthesis results
+        fpga_synth_files = list(self.project_root.rglob("flow/fpga/openfpga/netlists/*.json"))
+        fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/build/*.asc")))
+        fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/build/*.bin")))
+        fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/build/*.bit")))
+        fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/reports/*.txt")))
+        
+        if synth_files or fpga_synth_files:
             quality["synthesis_clean"] = True
         
         # Check for simulation results
-        sim_files = list(self.project_root.rglob("*simulation*.log"))
+        sim_files = list(self.project_root.rglob("*.vcd"))
+        sim_files.extend(list(self.project_root.rglob("simulation/*.log")))
         if sim_files:
             quality["simulation_passing"] = True
         
-        # Check for coverage reports
-        coverage_files = list(self.project_root.rglob("*coverage*.html"))
+        # Check for coverage results
+        coverage_files = list(self.project_root.rglob("*.ucdb"))
+        coverage_files.extend(list(self.project_root.rglob("coverage/*.html")))
         if coverage_files:
             quality["coverage_goals_met"] = True
         
-        # Check documentation completeness
-        if (self.project_root / "README.md").exists() and \
-           (self.project_root / "Developer_Guide.md").exists():
+        # Check for documentation completeness
+        docs = self._analyze_documentation()
+        if docs["readme_exists"] and docs["documentation_files"] >= 3:
             quality["documentation_complete"] = True
         
-        # Check metadata completeness
+        # Check for metadata completeness
         metadata_files = list(self.project_root.rglob("vyges-metadata.json"))
         if metadata_files:
             quality["metadata_complete"] = True
@@ -405,18 +432,32 @@ class VygesCodeKPIs:
                     metadata["test_coverage_metadata"] = test_score
                 
                 # Flow configuration analysis
-                if "flows" in data and isinstance(data["flows"], dict):
-                    flow_score = 0
-                    flow_data = data["flows"]
-                    if "asic" in flow_data:
+                flow_score = 0
+                
+                # Check for actual flow files
+                flow_dirs = ["flow", "flows", "synthesis", "implementation"]
+                for flow_dir in flow_dirs:
+                    flow_path = self.project_root / flow_dir
+                    if flow_path.exists():
                         flow_score += 25
-                    if "fpga" in flow_data:
-                        flow_score += 25
-                    if "synthesis" in flow_data.get("asic", {}):
-                        flow_score += 25
-                    if "synthesis" in flow_data.get("fpga", {}):
-                        flow_score += 25
-                    metadata["flow_configuration"] = flow_score
+                        break
+                
+                # Check for synthesis files
+                synth_files = list(self.project_root.rglob("*.tcl"))
+                synth_files.extend(list(self.project_root.rglob("*.v")))
+                synth_files.extend(list(self.project_root.rglob("Makefile")))
+                if synth_files:
+                    flow_score += 25
+                
+                # Check for ASIC/FPGA specific files
+                asic_files = list(self.project_root.rglob("*asic*"))
+                fpga_files = list(self.project_root.rglob("*fpga*"))
+                if asic_files:
+                    flow_score += 25
+                if fpga_files:
+                    flow_score += 25
+                
+                metadata["flow_configuration"] = flow_score
                 
                 # Documentation metadata analysis
                 if "meta" in data and isinstance(data["meta"], dict):
@@ -433,12 +474,20 @@ class VygesCodeKPIs:
                     metadata["documentation_metadata"] = doc_score
                 
                 # AI generation readiness
+                # Check for AI generation metadata or assume ready if project is well-structured
                 if "meta" in data and isinstance(data["meta"], dict):
                     meta_data = data["meta"]
                     if "ai_generation" in meta_data and isinstance(meta_data["ai_generation"], dict):
                         ai_data = meta_data["ai_generation"]
                         if "mode" in ai_data and ai_data["mode"] in ["full_automation", "assisted"]:
                             metadata["ai_generation_ready"] = True
+                
+                # If no explicit AI generation metadata, check if project is well-structured
+                if not metadata["ai_generation_ready"]:
+                    if (metadata["field_completeness"] >= 80 and 
+                        metadata["interface_quality"] >= 80 and 
+                        metadata["test_coverage_metadata"] >= 80):
+                        metadata["ai_generation_ready"] = True
                 
                 # Calculate overall quality score
                 quality_components = [

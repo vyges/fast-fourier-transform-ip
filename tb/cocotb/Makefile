@@ -1,182 +1,242 @@
-#==============================================================================
-# Cocotb Testbench Makefile
-#==============================================================================
-# Description: Makefile for Cocotb testbench execution with Icarus and
-#              Verilator simulators. Generates VCD waveform files.
-# Author:      Vyges Team
-# Date:        2025-01-20
-# Version:     1.0.0
-#==============================================================================
+#=============================================================================
+# Cocotb Testbench Makefile for FFT Hardware Accelerator
+#=============================================================================
+# Description: Makefile for Cocotb-based verification of FFT accelerator
+#              Supports multiple simulators and comprehensive test scenarios
+# Author:      Vyges IP Development Team
+# Date:        2025-07-21
+# License:     Apache-2.0
+#=============================================================================
 
-# Default simulator
-SIM ?= icarus
-
-# RTL and testbench files
+# Configuration
+SIMULATOR ?= verilator
+TOP_MODULE = fft_top
 RTL_DIR = ../../rtl
 TB_DIR = .
-RTL_FILES = $(wildcard $(RTL_DIR)/*.sv)
-TB_FILES = $(wildcard $(TB_DIR)/test_*.py)
+WORK_DIR = work
+COVERAGE = 1
+VERBOSE = 1
 
-# Output directories
-BUILD_DIR = build
-VCD_DIR = waveforms
-COVERAGE_DIR = coverage
-RESULTS_DIR = results
+# Python environment
+PYTHONPATH := $(PYTHONPATH):$(TB_DIR)
+COCOTB_REDUCED_LOG_FMT = 1
 
-# Simulator-specific variables
-ifeq ($(SIM),icarus)
-    SIM_CMD = iverilog
-    SIM_FLAGS = -g2012 -Wall -Wno-timescale -Wno-implicit-dimensions
-    RUN_CMD = vvp
-    RUN_FLAGS = -v
-    VCD_FLAGS = -vcd
-    COVERAGE_FLAGS = -f icarus
-    COCOTB_SIM = icarus
-else ifeq ($(SIM),verilator)
+# Simulator-specific settings
+ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
-    SIM_FLAGS = --lint-only --Wall --Wno-fatal
-    RUN_CMD = obj_dir/V$(TOP_MODULE)
-    RUN_FLAGS = 
-    VCD_FLAGS = --trace
-    COVERAGE_FLAGS = --coverage
-    COCOTB_SIM = verilator
-else
-    $(error Unsupported simulator: $(SIM). Supported: icarus, verilator)
+    SIM_FLAGS = --cc --exe --build --trace --coverage
+    SIM_FILES = $(RTL_DIR)/*.sv
+    SIM_TARGET = obj_dir/V$(TOP_MODULE)
+    RUN_CMD = $(SIM_TARGET)
+    COCOTB_HDL_TIMEPRECISION = 1ps
+    COCOTB_HDL_TIMEUNIT = 1ns
+else ifeq ($(SIMULATOR),icarus)
+    SIM_CMD = iverilog
+    SIM_FLAGS = -g2012 -I$(RTL_DIR) -o $(WORK_DIR)/$(TOP_MODULE).vvp
+    SIM_FILES = $(RTL_DIR)/*.sv
+    SIM_TARGET = $(WORK_DIR)/$(TOP_MODULE).vvp
+    RUN_CMD = vvp $(SIM_TARGET)
+    COCOTB_HDL_TIMEPRECISION = 1ps
+    COCOTB_HDL_TIMEUNIT = 1ns
+else ifeq ($(SIMULATOR),vcs)
+    SIM_CMD = vcs
+    SIM_FLAGS = -full64 -sverilog -debug_all -timescale=1ns/1ps
+    SIM_FILES = $(RTL_DIR)/*.sv
+    SIM_TARGET = simv
+    RUN_CMD = ./$(SIM_TARGET)
+    COCOTB_HDL_TIMEPRECISION = 1ps
+    COCOTB_HDL_TIMEUNIT = 1ns
+else ifeq ($(SIMULATOR),modelsim)
+    SIM_CMD = vsim
+    SIM_FLAGS = -do "run -all; quit"
+    SIM_FILES = $(RTL_DIR)/*.sv
+    SIM_TARGET = work.$(TOP_MODULE)
+    RUN_CMD = $(SIM_CMD) $(SIM_TARGET) $(SIM_FLAGS)
+    COCOTB_HDL_TIMEPRECISION = 1ps
+    COCOTB_HDL_TIMEUNIT = 1ns
 endif
 
-# Top module (should be set by user or detected)
-TOP_MODULE ?= example_module
-
-# Cocotb variables
-MODULE = test_example
+# Cocotb settings
+MODULE = test_fft_basic
 TOPLEVEL = $(TOP_MODULE)
 TOPLEVEL_LANG = verilog
 
-# Python and Cocotb
-PYTHON = python3
-COCOTB_REDUCED_LOG_FMT = 1
-COCOTB_ANSI_OUTPUT = 1
+# Test configuration
+TEST_NAME ?= all
+COCOTB_LOG_LEVEL = INFO
 
-# Help target
-help:
-	@echo "Cocotb Testbench Makefile"
-	@echo "========================="
-	@echo ""
-	@echo "Available simulators:"
-	@echo "  icarus    - Icarus Verilog (default)"
-	@echo "  verilator - Verilator"
-	@echo ""
-	@echo "Usage examples:"
-	@echo "  make test_basic                    # Run basic test"
-	@echo "  make test_basic SIM=verilator      # Run with Verilator"
-	@echo "  make test_all                      # Run all tests"
-	@echo "  make waves                         # View waveforms"
-	@echo "  make clean                         # Clean build artifacts"
-	@echo "  make help                          # Show this help"
-	@echo ""
-	@echo "Environment variables:"
-	@echo "  SIM         - Simulator (icarus, verilator)"
-	@echo "  TOP_MODULE  - Top module name"
-	@echo "  RTL_DIR     - RTL source directory"
-	@echo "  TB_DIR      - Testbench directory"
-
-# Create output directories
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-$(VCD_DIR):
-	mkdir -p $(VCD_DIR)
-
-$(COVERAGE_DIR):
-	mkdir -p $(COVERAGE_DIR)
-
-$(RESULTS_DIR):
-	mkdir -p $(RESULTS_DIR)
-
-# Compile target
-compile: $(BUILD_DIR) $(VCD_DIR) $(COVERAGE_DIR) $(RESULTS_DIR)
-	@echo "Compiling with $(SIM) simulator..."
-ifeq ($(SIM),icarus)
-	$(SIM_CMD) $(SIM_FLAGS) -o $(BUILD_DIR)/$(TOP_MODULE).vvp $(RTL_FILES)
-else ifeq ($(SIM),verilator)
-	$(SIM_CMD) $(SIM_FLAGS) $(VCD_FLAGS) --exe $(RTL_FILES) -o $(TOP_MODULE)
-	make -C obj_dir -f V$(TOP_MODULE).mk
+# Coverage settings
+ifeq ($(COVERAGE),1)
+    COCOTB_COVERAGE = 1
+    COVERAGE_DIR = coverage
+    COVERAGE_REPORT = $(COVERAGE_DIR)/coverage.xml
 endif
-	@echo "Compilation completed successfully!"
+
+# Verbose settings
+ifeq ($(VERBOSE),1)
+    COCOTB_VERBOSE = 1
+endif
+
+# Default target
+all: compile run
+
+# Compilation target
+compile:
+	@echo "Compiling FFT design with $(SIMULATOR)..."
+	@mkdir -p $(WORK_DIR)
+ifeq ($(SIMULATOR),verilator)
+	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES) -o $(SIM_TARGET)
+else ifeq ($(SIMULATOR),icarus)
+	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES)
+else ifeq ($(SIMULATOR),vcs)
+	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES) -o $(SIM_TARGET)
+else ifeq ($(SIMULATOR),modelsim)
+	vlib work
+	vlog -sv $(SIM_FILES)
+endif
 
 # Run target
 run: compile
-	@echo "Running Cocotb simulation with $(SIM) simulator..."
+	@echo "Running Cocotb tests with $(SIMULATOR)..."
+	@mkdir -p $(COVERAGE_DIR)
 	MODULE=$(MODULE) TOPLEVEL=$(TOPLEVEL) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
-	$(PYTHON) -m cocotb.run $(TB_FILES) \
-	--simulator $(COCOTB_SIM) \
-	--vcd $(VCD_DIR)/$(TOP_MODULE).vcd \
-	--results-dir $(RESULTS_DIR)
-	@echo "Simulation completed successfully!"
+	COCOTB_REDUCED_LOG_FMT=$(COCOTB_REDUCED_LOG_FMT) \
+	COCOTB_HDL_TIMEPRECISION=$(COCOTB_HDL_TIMEPRECISION) \
+	COCOTB_HDL_TIMEUNIT=$(COCOTB_HDL_TIMEUNIT) \
+	COCOTB_LOG_LEVEL=$(COCOTB_LOG_LEVEL) \
+	$(if $(COCOTB_VERBOSE),COCOTB_VERBOSE=$(COCOTB_VERBOSE),) \
+	$(if $(COCOTB_COVERAGE),COCOTB_COVERAGE=$(COCOTB_COVERAGE),) \
+	$(RUN_CMD)
 
-# Test targets
-test_basic: run
-	@echo "Basic test completed successfully!"
+# Test-specific targets
+test_basic: compile
+	@echo "Running basic FFT functionality tests..."
+	MODULE=test_fft_basic TOPLEVEL=$(TOPLEVEL) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+	COCOTB_REDUCED_LOG_FMT=$(COCOTB_REDUCED_LOG_FMT) \
+	COCOTB_HDL_TIMEPRECISION=$(COCOTB_HDL_TIMEPRECISION) \
+	COCOTB_HDL_TIMEUNIT=$(COCOTB_HDL_TIMEUNIT) \
+	COCOTB_LOG_LEVEL=$(COCOTB_LOG_LEVEL) \
+	$(if $(COCOTB_VERBOSE),COCOTB_VERBOSE=$(COCOTB_VERBOSE),) \
+	$(if $(COCOTB_COVERAGE),COCOTB_COVERAGE=$(COCOTB_COVERAGE),) \
+	$(RUN_CMD)
 
-test_random: run
-	@echo "Random test completed successfully!"
+test_rescaling: compile
+	@echo "Running FFT rescaling tests..."
+	MODULE=test_fft_rescaling TOPLEVEL=$(TOPLEVEL) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+	COCOTB_REDUCED_LOG_FMT=$(COCOTB_REDUCED_LOG_FMT) \
+	COCOTB_HDL_TIMEPRECISION=$(COCOTB_HDL_TIMEPRECISION) \
+	COCOTB_HDL_TIMEUNIT=$(COCOTB_HDL_TIMEUNIT) \
+	COCOTB_LOG_LEVEL=$(COCOTB_LOG_LEVEL) \
+	$(if $(COCOTB_VERBOSE),COCOTB_VERBOSE=$(COCOTB_VERBOSE),) \
+	$(if $(COCOTB_COVERAGE),COCOTB_COVERAGE=$(COCOTB_COVERAGE),) \
+	$(RUN_CMD)
 
-test_all: test_basic test_random
-	@echo "All tests completed successfully!"
+test_all: test_basic test_rescaling
+	@echo "All Cocotb tests completed."
 
-# Coverage target (Verilator only)
-coverage: $(COVERAGE_DIR)
-ifeq ($(SIM),verilator)
-	@echo "Running coverage analysis..."
-	$(SIM_CMD) $(COVERAGE_FLAGS) $(RTL_FILES)
-	@echo "Coverage analysis completed!"
-else
-	@echo "Coverage only supported with Verilator simulator"
-	@exit 1
+# Performance test
+test_performance: compile
+	@echo "Running FFT performance tests..."
+	MODULE=test_fft_basic TOPLEVEL=$(TOPLEVEL) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+	COCOTB_REDUCED_LOG_FMT=$(COCOTB_REDUCED_LOG_FMT) \
+	COCOTB_HDL_TIMEPRECISION=$(COCOTB_HDL_TIMEPRECISION) \
+	COCOTB_HDL_TIMEUNIT=$(COCOTB_HDL_TIMEUNIT) \
+	COCOTB_LOG_LEVEL=WARNING \
+	$(RUN_CMD) +test=performance
+
+# Coverage report
+coverage: run
+ifeq ($(COVERAGE),1)
+	@echo "Generating coverage report..."
+	@mkdir -p $(COVERAGE_DIR)
+	@if [ -f $(COVERAGE_REPORT) ]; then \
+		echo "Coverage report generated: $(COVERAGE_REPORT)"; \
+	else \
+		echo "No coverage data found"; \
+	fi
 endif
 
 # Waveform viewing
 waves:
-	@echo "Available waveform files:"
-	@ls -la $(VCD_DIR)/*.vcd 2>/dev/null || echo "No VCD files found"
-	@echo ""
-	@echo "To view waveforms, use:"
-	@echo "  gtkwave $(VCD_DIR)/$(TOP_MODULE).vcd"
-	@echo "  or"
-	@echo "  open $(VCD_DIR)/$(TOP_MODULE).vcd"
-
-# Results viewing
-results:
-	@echo "Available test results:"
-	@ls -la $(RESULTS_DIR)/*.xml 2>/dev/null || echo "No result files found"
-	@echo ""
-	@echo "To view results, use:"
-	@echo "  cat $(RESULTS_DIR)/*.xml"
+ifeq ($(SIMULATOR),verilator)
+	@echo "Opening waveforms with GTKWave..."
+	@if [ -f dump.vcd ]; then \
+		gtkwave dump.vcd; \
+	else \
+		echo "No waveform file found. Run simulation first."; \
+	fi
+else ifeq ($(SIMULATOR),icarus)
+	@echo "Opening waveforms with GTKWave..."
+	@if [ -f dump.vcd ]; then \
+		gtkwave dump.vcd; \
+	else \
+		echo "No waveform file found. Run simulation first."; \
+	fi
+else ifeq ($(SIMULATOR),vcs)
+	@echo "Opening waveforms with DVE..."
+	@if [ -f vcdplus.vpd ]; then \
+		dve -vpd vcdplus.vpd; \
+	else \
+		echo "No waveform file found. Run simulation first."; \
+	fi
+else ifeq ($(SIMULATOR),modelsim)
+	@echo "Opening waveforms with ModelSim..."
+	@if [ -f wave.do ]; then \
+		vsim -do wave.do; \
+	else \
+		echo "No waveform file found. Run simulation first."; \
+	fi
+endif
 
 # Clean target
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -rf $(BUILD_DIR)
-	rm -rf $(VCD_DIR)
-	rm -rf $(COVERAGE_DIR)
-	rm -rf $(RESULTS_DIR)
-	rm -rf obj_dir
-	rm -f *.vvp
-	rm -f *.vcd
-	rm -f *.xml
-	@echo "Clean completed successfully!"
+	@rm -rf $(WORK_DIR)
+	@rm -rf obj_dir
+	@rm -rf simv
+	@rm -rf simv.daidir
+	@rm -rf csrc
+	@rm -rf ucli.key
+	@rm -rf dump.vcd
+	@rm -rf vcdplus.vpd
+	@rm -rf wave.do
+	@rm -rf transcript
+	@rm -rf work
+	@rm -rf $(COVERAGE_DIR)
+	@rm -rf __pycache__
+	@rm -rf *.pyc
+	@find . -name "*.log" -delete
+	@find . -name "*.vcd" -delete
+	@find . -name "*.vpd" -delete
 
-# Status target
-status:
-	@echo "Cocotb Testbench Status:"
-	@echo "========================"
-	@echo "Simulator: $(SIM)"
-	@echo "Top Module: $(TOP_MODULE)"
-	@echo "RTL Files: $(RTL_FILES)"
-	@echo "Testbench Files: $(TB_FILES)"
-	@echo "Build Directory: $(BUILD_DIR)"
-	@echo "VCD Directory: $(VCD_DIR)"
-	@echo "Coverage Directory: $(COVERAGE_DIR)"
-	@echo "Results Directory: $(RESULTS_DIR)"
+# Help target
+help:
+	@echo "FFT Cocotb Testbench Makefile"
+	@echo "============================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all              - Compile and run all tests (default)"
+	@echo "  compile          - Compile the design"
+	@echo "  run              - Run the default test"
+	@echo "  test_basic       - Run basic FFT functionality tests"
+	@echo "  test_rescaling   - Run FFT rescaling tests"
+	@echo "  test_all         - Run all test modules"
+	@echo "  test_performance - Run performance tests"
+	@echo "  coverage         - Generate coverage report"
+	@echo "  waves            - View waveforms"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  help             - Show this help message"
+	@echo ""
+	@echo "Configuration variables:"
+	@echo "  SIMULATOR        - Simulator to use (verilator, icarus, vcs, modelsim)"
+	@echo "  COVERAGE         - Enable coverage (1 or 0)"
+	@echo "  VERBOSE          - Enable verbose output (1 or 0)"
+	@echo "  TEST_NAME        - Specific test to run"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make SIMULATOR=verilator test_basic"
+	@echo "  make SIMULATOR=icarus test_rescaling COVERAGE=1"
+	@echo "  make SIMULATOR=vcs test_all VERBOSE=1"
 
-.PHONY: help compile run test_basic test_random test_all coverage waves results clean status 
+# Phony targets
+.PHONY: all compile run test_basic test_rescaling test_all test_performance coverage waves clean help 

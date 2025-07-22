@@ -18,6 +18,8 @@ This user guide provides practical information for integrating and using the Fas
 - **Memory Mapped:** APB and AXI interface support
 - **High Performance:** 6 cycles per butterfly operation
 - **Interrupt Support:** Completion and error notification
+- **Automatic Rescaling:** Prevents overflow during computation
+- **Scale Factor Tracking:** Enables proper signal reconstruction
 
 ### 1.2 System Requirements
 
@@ -139,6 +141,9 @@ end
 | 0x0010-0x0013 | BUFFER_SEL | R/W | Buffer Selection Register |
 | 0x0014-0x0017 | INT_ENABLE | R/W | Interrupt Enable Register |
 | 0x0018-0x001B | INT_STATUS | R | Interrupt Status Register |
+| 0x001C-0x001F | SCALE_FACTOR | R | Output Scale Factor Register |
+| 0x0020-0x0023 | RESCALE_CTRL | R/W | Rescaling Control Register |
+| 0x0024-0x0027 | OVERFLOW_STATUS | R | Overflow Status Register |
 | 0x1000-0x1FFF | Input Buffer A | R/W | Input data buffer A |
 | 0x2000-0x2FFF | Input Buffer B | R/W | Input data buffer B |
 | 0x3000-0x3FFF | Output Buffer A | R | Output data buffer A |
@@ -155,6 +160,9 @@ end
 | 0x0020-0x0027 | BUFFER_SEL | R/W | Buffer Selection Register |
 | 0x0028-0x002F | INT_ENABLE | R/W | Interrupt Enable Register |
 | 0x0030-0x0037 | INT_STATUS | R | Interrupt Status Register |
+| 0x0038-0x003F | SCALE_FACTOR | R | Output Scale Factor Register |
+| 0x0040-0x0047 | RESCALE_CTRL | R/W | Rescaling Control Register |
+| 0x0048-0x004F | OVERFLOW_STATUS | R | Overflow Status Register |
 | 0x1000-0x1FFF | Input Buffer A | R/W | Input data buffer A |
 | 0x2000-0x2FFF | Input Buffer B | R/W | Input data buffer B |
 | 0x3000-0x3FFF | Output Buffer A | R | Output data buffer A |
@@ -174,6 +182,9 @@ end
 // Write FFT configuration
 write_reg(FFT_CONFIG, FFT_LENGTH_LOG2);
 write_reg(FFT_LENGTH, FFT_LENGTH);
+
+// Configure rescaling (optional but recommended)
+configure_fft_rescaling();
 ```
 
 #### Step 2: Load Input Data
@@ -208,6 +219,14 @@ for (int i = 0; i < FFT_LENGTH; i++) {
     uint32_t data = read_memory(addr);
     output_real[i] = (int16_t)(data >> 16);
     output_imag[i] = (int16_t)(data & 0xFFFF);
+}
+
+// Read scale factor information
+read_scale_factor_info();
+
+// Optionally reconstruct original signal magnitude
+if (rescaling_enabled) {
+    reconstruct_signal(output_data, FFT_LENGTH);
 }
 ```
 
@@ -247,7 +266,66 @@ while (!interrupt_received) {
 write_reg(FFT_CTRL, 0x04);  // Set BUFFER_SWAP bit
 ```
 
-### 3.3 Interrupt Handling
+### 3.3 Rescaling Configuration
+
+#### Enable Automatic Rescaling
+
+```c
+// Configure rescaling functionality
+void configure_fft_rescaling(void) {
+    // Enable automatic rescaling
+    write_reg(FFT_CTRL, read_reg(FFT_CTRL) | 0x10);  // Set RESCALE_EN
+    
+    // Enable scale factor tracking
+    write_reg(FFT_CTRL, read_reg(FFT_CTRL) | 0x20);  // Set SCALE_TRACK_EN
+    
+    // Set rescaling mode (0=divide by 2 each stage, 1=divide by N at end)
+    write_reg(FFT_CONFIG, read_reg(FFT_CONFIG) & ~0x10000);  // Mode 0
+    
+    // Enable overflow detection
+    write_reg(FFT_CONFIG, read_reg(FFT_CONFIG) | 0x80000);  // Set OVERFLOW_DETECT
+}
+```
+
+#### Read Scale Factor Information
+
+```c
+// Read and display scale factor information
+void read_scale_factor_info(void) {
+    uint32_t scale_factor_reg = read_reg(SCALE_FACTOR);
+    uint8_t total_scale = scale_factor_reg & 0xFF;
+    uint8_t stage_count = (scale_factor_reg >> 8) & 0xFF;
+    uint8_t overflow_count = (scale_factor_reg >> 24) & 0xFF;
+    
+    printf("Scale Factor: %d (2^%d)\n", 1 << total_scale, total_scale);
+    printf("Stages Processed: %d\n", stage_count);
+    printf("Overflow Events: %d\n", overflow_count);
+}
+```
+
+#### Reconstruct Original Signal Magnitude
+
+```c
+// Apply inverse scaling to restore original signal magnitude
+void reconstruct_signal(uint32_t *output_data, uint32_t length) {
+    uint32_t scale_factor_reg = read_reg(SCALE_FACTOR);
+    uint8_t total_scale = scale_factor_reg & 0xFF;
+    
+    // Apply inverse scaling to restore original magnitude
+    for (int i = 0; i < length; i++) {
+        int16_t real_part = (output_data[i] >> 16) & 0xFFFF;
+        int16_t imag_part = output_data[i] & 0xFFFF;
+        
+        // Scale back by the accumulated scale factor
+        real_part = real_part << total_scale;
+        imag_part = imag_part << total_scale;
+        
+        output_data[i] = (real_part << 16) | (imag_part & 0xFFFF);
+    }
+}
+```
+
+### 3.4 Interrupt Handling
 
 #### Interrupt Service Routine
 
@@ -270,6 +348,18 @@ void fft_interrupt_handler(void) {
         // Clear interrupt
         write_reg(INT_STATUS, 0x02);
     }
+    
+    if (int_status & 0x08) {
+        // Overflow interrupt
+        printf("Overflow detected during FFT computation\n");
+        write_reg(INT_STATUS, 0x08);  // Clear interrupt
+    }
+    
+    if (int_status & 0x10) {
+        // Rescaling interrupt
+        printf("Rescaling applied during FFT computation\n");
+        write_reg(INT_STATUS, 0x10);  // Clear interrupt
+    }
 }
 ```
 
@@ -280,6 +370,12 @@ void fft_interrupt_handler(void) {
 void configure_fft_interrupts(void) {
     // Enable FFT completion interrupt
     write_reg(INT_ENABLE, 0x01);
+    
+    // Enable overflow interrupt
+    write_reg(INT_ENABLE, read_reg(INT_ENABLE) | 0x08);
+    
+    // Enable rescaling interrupt
+    write_reg(INT_ENABLE, read_reg(INT_ENABLE) | 0x10);
     
     // Register interrupt handler
     register_interrupt_handler(FFT_IRQ_NUM, fft_interrupt_handler);
@@ -367,7 +463,9 @@ typedef enum {
     FFT_ERROR_INVALID_LENGTH,
     FFT_ERROR_MEMORY_OVERFLOW,
     FFT_ERROR_TIMEOUT,
-    FFT_ERROR_DATA_CORRUPTION
+    FFT_ERROR_DATA_CORRUPTION,
+    FFT_ERROR_RESCALING_OVERFLOW,
+    FFT_ERROR_SCALE_FACTOR_OVERFLOW
 } fft_error_t;
 
 fft_error_t check_fft_error(void) {
@@ -386,6 +484,10 @@ fft_error_t check_fft_error(void) {
                 return FFT_ERROR_TIMEOUT;
             case 0x04:
                 return FFT_ERROR_DATA_CORRUPTION;
+            case 0x08:
+                return FFT_ERROR_RESCALING_OVERFLOW;
+            case 0x09:
+                return FFT_ERROR_SCALE_FACTOR_OVERFLOW;
             default:
                 return FFT_ERROR_NONE;
         }
@@ -421,6 +523,17 @@ void recover_from_fft_error(fft_error_t error) {
             write_reg(FFT_CTRL, 0x01);  // Restart FFT
             break;
             
+        case FFT_ERROR_RESCALING_OVERFLOW:
+            // Disable rescaling and retry
+            write_reg(FFT_CTRL, read_reg(FFT_CTRL) & ~0x10);  // Clear RESCALE_EN
+            write_reg(FFT_CTRL, 0x01);  // Restart FFT
+            break;
+            
+        case FFT_ERROR_SCALE_FACTOR_OVERFLOW:
+            // Reset scale factor and retry
+            write_reg(FFT_CTRL, 0x02);  // Reset FFT engine
+            break;
+            
         default:
             break;
     }
@@ -448,6 +561,13 @@ void print_fft_performance(void) {
     printf("  Cycle Count: %u\n", get_fft_cycle_count());
     printf("  Throughput: %u MSPS\n", get_fft_throughput());
     printf("  Power Consumption: %u mW\n", read_reg(POWER_MONITOR));
+    
+    // Rescaling statistics
+    uint32_t scale_factor_reg = read_reg(SCALE_FACTOR);
+    uint8_t total_scale = scale_factor_reg & 0xFF;
+    uint8_t overflow_count = (scale_factor_reg >> 24) & 0xFF;
+    printf("  Total Scale Factor: 2^%d\n", total_scale);
+    printf("  Overflow Events: %d\n", overflow_count);
 }
 ```
 
@@ -732,7 +852,9 @@ printf("Power consumption: %u mW\n", power_consumption);
 | | | [1] | FFT_RESET - Reset FFT engine |
 | | | [2] | BUFFER_SWAP - Swap input/output buffers |
 | | | [3] | MODE_SEL - Mode selection (0=APB, 1=AXI) |
-| | | [31:4] | RESERVED - Reserved bits |
+| | | [4] | RESCALE_EN - Enable automatic rescaling |
+| | | [5] | SCALE_TRACK_EN - Enable scale factor tracking |
+| | | [31:6] | RESERVED - Reserved bits |
 
 #### Status Registers
 
@@ -742,7 +864,9 @@ printf("Power consumption: %u mW\n", power_consumption);
 | | | [1] | FFT_DONE - FFT computation complete |
 | | | [2] | FFT_ERROR - FFT computation error |
 | | | [3] | BUFFER_ACTIVE - Active buffer indicator |
-| | | [31:4] | RESERVED - Reserved bits |
+| | | [4] | RESCALE_ACTIVE - Rescaling in progress |
+| | | [5] | OVERFLOW_DETECTED - Overflow detected during computation |
+| | | [31:6] | RESERVED - Reserved bits |
 
 ### 8.2 Timing Specifications
 

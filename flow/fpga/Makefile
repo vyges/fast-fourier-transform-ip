@@ -1,150 +1,174 @@
-#==============================================================================
-# FPGA Flow Makefile
-#==============================================================================
-# Description: Makefile for FPGA synthesis and implementation using
-#              open-source tools (Yosys, NextPNR, etc.)
-# Author:      Vyges Team
-# Date:        2025-01-20
-# Version:     1.0.0
-#==============================================================================
+#=============================================================================
+# FPGA Synthesis Makefile for FFT Hardware Accelerator
+#=============================================================================
+# Description: Makefile for FPGA synthesis using Vivado and Quartus
+#              Supports Xilinx and Intel FPGA families
+# Author:      Vyges IP Development Team
+# Date:        2025-07-21
+# License:     Apache-2.0
+#=============================================================================
 
-# Default FPGA family
+# Configuration
 FPGA_FAMILY ?= ice40
-
-# RTL files
+FPGA_PART ?= hx8k-ct256
+TOOL ?= openfpga
+TOP_MODULE = fft_top
 RTL_DIR = ../../rtl
-RTL_FILES = $(wildcard $(RTL_DIR)/*.sv)
-
-# Top module
-TOP_MODULE ?= example_module
-
-# Output directories
+CONSTRAINTS_DIR = constraints
 BUILD_DIR = build
 REPORTS_DIR = reports
-CONSTRAINTS_DIR = constraints
 
-# FPGA-specific variables
-ifeq ($(FPGA_FAMILY),ice40)
-    DEVICE = hx8k
-    PACKAGE = ct256
-    PCF_FILE = $(CONSTRAINTS_DIR)/$(TOP_MODULE).pcf
-    YOSYS_SCRIPT = $(BUILD_DIR)/$(TOP_MODULE)_synth.ys
-    NETLIST_FILE = $(BUILD_DIR)/$(TOP_MODULE).json
-    PLACE_FILE = $(BUILD_DIR)/$(TOP_MODULE).place
-    ROUTE_FILE = $(BUILD_DIR)/$(TOP_MODULE).route
-    BITSTREAM_FILE = $(BUILD_DIR)/$(TOP_MODULE).bin
-else ifeq ($(FPGA_FAMILY),ecp5)
-    DEVICE = 25k
-    PACKAGE = CABGA256
-    LPF_FILE = $(CONSTRAINTS_DIR)/$(TOP_MODULE).lpf
-    YOSYS_SCRIPT = $(BUILD_DIR)/$(TOP_MODULE)_synth.ys
-    NETLIST_FILE = $(BUILD_DIR)/$(TOP_MODULE).json
-    PLACE_FILE = $(BUILD_DIR)/$(TOP_MODULE).place
-    ROUTE_FILE = $(BUILD_DIR)/$(TOP_MODULE).route
-    BITSTREAM_FILE = $(BUILD_DIR)/$(TOP_MODULE).bit
-else
-    $(error Unsupported FPGA family: $(FPGA_FAMILY). Supported: ice40, ecp5)
+# Tool-specific settings
+ifeq ($(TOOL),openfpga)
+    # Open source FPGA flow
+    SYNTH_CMD = make
+    SYNTH_FLAGS = -C openfpga
+    SYNTH_TARGET = $(FPGA_FAMILY)_synth
+    IMPL_CMD = make
+    IMPL_FLAGS = -C openfpga
+    IMPL_TARGET = $(FPGA_FAMILY)_pnr
+    BITSTREAM_CMD = make
+    BITSTREAM_FLAGS = -C openfpga
+    BITSTREAM_TARGET = $(FPGA_FAMILY)_bitstream
+else ifeq ($(TOOL),vivado)
+    SYNTH_CMD = vivado
+    SYNTH_FLAGS = -mode batch -source
+    SYNTH_SCRIPT = vivado_synth.tcl
+    IMPL_CMD = vivado
+    IMPL_FLAGS = -mode batch -source
+    IMPL_SCRIPT = vivado_impl.tcl
+    BITSTREAM_CMD = vivado
+    BITSTREAM_FLAGS = -mode batch -source
+    BITSTREAM_SCRIPT = vivado_bitstream.tcl
+else ifeq ($(TOOL),quartus)
+    SYNTH_CMD = quartus_map
+    SYNTH_FLAGS = --read_settings_files=on
+    IMPL_CMD = quartus_fit
+    IMPL_FLAGS = --read_settings_files=on
+    BITSTREAM_CMD = quartus_asm
+    BITSTREAM_FLAGS = --read_settings_files=on
 endif
 
-# Help target
-help:
-	@echo "FPGA Flow Makefile"
-	@echo "=================="
-	@echo ""
-	@echo "Available FPGA families:"
-	@echo "  ice40    - Lattice iCE40 (default)"
-	@echo "  ecp5     - Lattice ECP5"
-	@echo ""
-	@echo "Usage examples:"
-	@echo "  make all                           # Complete FPGA flow"
-	@echo "  make all FPGA_FAMILY=ecp5          # Use ECP5 family"
-	@echo "  make synthesis                     # Run synthesis only"
-	@echo "  make implementation                # Run implementation only"
-	@echo "  make analysis                      # Run timing analysis"
-	@echo "  make report                        # Generate reports"
-	@echo "  make clean                         # Clean build artifacts"
-	@echo "  make help                          # Show this help"
-	@echo ""
-	@echo "Environment variables:"
-	@echo "  FPGA_FAMILY - FPGA family (ice40, ecp5)"
-	@echo "  TOP_MODULE  - Top module name"
-	@echo "  RTL_DIR     - RTL source directory"
+# Default target
+all: synth impl bitstream
 
-# Create output directories
+# Create directories
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(REPORTS_DIR):
 	mkdir -p $(REPORTS_DIR)
 
-$(CONSTRAINTS_DIR):
-	mkdir -p $(CONSTRAINTS_DIR)
-
-# Generate Yosys synthesis script
-$(YOSYS_SCRIPT): $(BUILD_DIR)
-	@echo "Generating Yosys synthesis script..."
-	@echo "# Yosys synthesis script for $(TOP_MODULE)" > $(YOSYS_SCRIPT)
-	@echo "read_verilog $(RTL_FILES)" >> $(YOSYS_SCRIPT)
-	@echo "hierarchy -top $(TOP_MODULE)" >> $(YOSYS_SCRIPT)
-	@echo "proc; opt; techmap; opt" >> $(YOSYS_SCRIPT)
-	@echo "write_json $(NETLIST_FILE)" >> $(YOSYS_SCRIPT)
-	@echo "Synthesis script generated: $(YOSYS_SCRIPT)"
-
-# Synthesis target
-synthesis: $(YOSYS_SCRIPT)
-	@echo "Running synthesis for $(TOP_MODULE) on $(FPGA_FAMILY)..."
-	yosys $(YOSYS_SCRIPT)
-	@echo "Synthesis completed successfully!"
-
-# Implementation target
-implementation: synthesis
-	@echo "Running implementation for $(TOP_MODULE) on $(FPGA_FAMILY)..."
-ifeq ($(FPGA_FAMILY),ice40)
-	nextpnr-ice40 --$(DEVICE) --package $(PACKAGE) --json $(NETLIST_FILE) --pcf $(PCF_FILE) --asc $(BUILD_DIR)/$(TOP_MODULE).asc
-	icepack $(BUILD_DIR)/$(TOP_MODULE).asc $(BITSTREAM_FILE)
-else ifeq ($(FPGA_FAMILY),ecp5)
-	nextpnr-ecp5 --$(DEVICE) --package $(PACKAGE) --json $(NETLIST_FILE) --lpf $(LPF_FILE) --textcfg $(BUILD_DIR)/$(TOP_MODULE).config
-	ecppack $(BUILD_DIR)/$(TOP_MODULE).config $(BITSTREAM_FILE)
+# Synthesis
+synth: $(BUILD_DIR) $(REPORTS_DIR)
+ifeq ($(TOOL),openfpga)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) $(SYNTH_TARGET) FPGA_PART=$(FPGA_PART)
+else ifeq ($(TOOL),vivado)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) $(SYNTH_SCRIPT) -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) $(TOP_MODULE) --part=$(FPGA_PART)
 endif
-	@echo "Implementation completed successfully!"
 
-# Analysis target
-analysis: implementation
-	@echo "Running timing analysis..."
-	@echo "Timing analysis completed successfully!"
+# Implementation
+impl: synth
+ifeq ($(TOOL),openfpga)
+	$(IMPL_CMD) $(IMPL_FLAGS) $(IMPL_TARGET) FPGA_PART=$(FPGA_PART)
+else ifeq ($(TOOL),vivado)
+	$(IMPL_CMD) $(IMPL_FLAGS) $(IMPL_SCRIPT) -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	$(IMPL_CMD) $(IMPL_FLAGS) $(TOP_MODULE)
+endif
 
-# Report target
-report: analysis
-	@echo "Generating comprehensive FPGA report..."
-	@echo "FPGA Family: $(FPGA_FAMILY)" > $(REPORTS_DIR)/fpga_report.txt
-	@echo "Top Module: $(TOP_MODULE)" >> $(REPORTS_DIR)/fpga_report.txt
-	@echo "Device: $(DEVICE)" >> $(REPORTS_DIR)/fpga_report.txt
-	@echo "Package: $(PACKAGE)" >> $(REPORTS_DIR)/fpga_report.txt
-	@echo "Bitstream: $(BITSTREAM_FILE)" >> $(REPORTS_DIR)/fpga_report.txt
-	@echo "Report generated: $(REPORTS_DIR)/fpga_report.txt"
+# Bitstream generation
+bitstream: impl
+ifeq ($(TOOL),openfpga)
+	$(BITSTREAM_CMD) $(BITSTREAM_FLAGS) $(BITSTREAM_TARGET) FPGA_PART=$(FPGA_PART)
+else ifeq ($(TOOL),vivado)
+	$(BITSTREAM_CMD) $(BITSTREAM_FLAGS) $(BITSTREAM_SCRIPT) -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	$(BITSTREAM_CMD) $(BITSTREAM_FLAGS) $(TOP_MODULE)
+endif
 
-# All-in-one target
-all: report
-	@echo "Complete FPGA flow finished successfully!"
+# Timing analysis
+timing: impl
+ifeq ($(TOOL),openfpga)
+	make -C openfpga $(FPGA_FAMILY)_timing FPGA_PART=$(FPGA_PART)
+else ifeq ($(TOOL),vivado)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) vivado_timing.tcl -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	quartus_sta $(TOP_MODULE) --do_timing_analysis
+endif
 
-# Clean target
+# Resource utilization
+resources: synth
+ifeq ($(TOOL),openfpga)
+	make -C openfpga resources FPGA_FAMILY=$(FPGA_FAMILY)
+else ifeq ($(TOOL),vivado)
+	@echo "Resource utilization report:"
+	@grep -A 20 "Resource Utilization" $(REPORTS_DIR)/synth_1/synth_1.rpt
+else ifeq ($(TOOL),quartus)
+	@echo "Resource utilization report:"
+	@cat $(TOP_MODULE).fit.rpt | grep -A 20 "Resource Usage Summary"
+endif
+
+# Power analysis
+power: impl
+ifeq ($(TOOL),vivado)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) vivado_power.tcl -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	quartus_pow $(TOP_MODULE) --do_power_analysis
+endif
+
+# Simulation
+sim: $(BUILD_DIR)
+ifeq ($(TOOL),vivado)
+	$(SYNTH_CMD) $(SYNTH_FLAGS) vivado_sim.tcl -tclargs $(FPGA_PART) $(TOP_MODULE)
+else ifeq ($(TOOL),quartus)
+	quartus_sim $(TOP_MODULE) --do_functional_sim
+endif
+
+# Clean
 clean:
-	@echo "Cleaning FPGA build artifacts..."
+ifeq ($(TOOL),openfpga)
+	make -C openfpga clean
+else
 	rm -rf $(BUILD_DIR)
 	rm -rf $(REPORTS_DIR)
-	@echo "Clean completed successfully!"
+	rm -rf *.jou
+	rm -rf *.log
+	rm -rf *.str
+	rm -rf *.bit
+	rm -rf *.sof
+	rm -rf *.rpt
+	rm -rf *.qpf
+	rm -rf *.qsf
+endif
 
-# Status target
-status:
-	@echo "FPGA Flow Status:"
-	@echo "================="
-	@echo "FPGA Family: $(FPGA_FAMILY)"
-	@echo "Top Module: $(TOP_MODULE)"
-	@echo "Device: $(DEVICE)"
-	@echo "Package: $(PACKAGE)"
-	@echo "RTL Files: $(RTL_FILES)"
-	@echo "Build Directory: $(BUILD_DIR)"
-	@echo "Reports Directory: $(REPORTS_DIR)"
-	@echo "Constraints Directory: $(CONSTRAINTS_DIR)"
+# Help
+help:
+	@echo "FPGA Synthesis Makefile"
+	@echo "======================"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all        - Complete synthesis, implementation, and bitstream"
+	@echo "  synth      - Run synthesis only"
+	@echo "  impl       - Run implementation (requires synthesis)"
+	@echo "  bitstream  - Generate bitstream (requires implementation)"
+	@echo "  timing     - Run timing analysis"
+	@echo "  resources  - Show resource utilization"
+	@echo "  power      - Run power analysis"
+	@echo "  sim        - Run simulation"
+	@echo "  clean      - Clean build artifacts"
+	@echo "  help       - Show this help"
+	@echo ""
+	@echo "Configuration:"
+	@echo "  FPGA_FAMILY - FPGA family (ice40, ecp5, xilinx7, xilinx-ultrascale, intel-cyclone)"
+	@echo "  FPGA_PART   - Specific FPGA part number"
+	@echo "  TOOL        - Synthesis tool (openfpga, vivado, quartus)"
+	@echo ""
+	@echo "Open Source FPGA Flow:"
+	@echo "  TOOL=openfpga FPGA_FAMILY=ice40 FPGA_PART=hx8k-ct256 make all"
+	@echo "  TOOL=openfpga FPGA_FAMILY=ecp5 make all"
+	@echo "  TOOL=openfpga FPGA_FAMILY=xilinx7 make all"
 
-.PHONY: help synthesis implementation analysis report all clean status 
+.PHONY: all synth impl bitstream timing resources power sim clean help 

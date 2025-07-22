@@ -8,7 +8,7 @@
 
 ## 1. Architecture Overview
 
-The FFT hardware accelerator implements a pipelined radix-2 decimation-in-frequency (DIF) algorithm optimized for high throughput and low latency. The architecture is designed around a 6-stage pipeline that processes one butterfly operation per cycle, meeting the performance requirement of 6 cycles per butterfly.
+The FFT hardware accelerator implements a pipelined radix-2 decimation-in-frequency (DIF) algorithm optimized for high throughput and low latency. The architecture is designed around a 6-stage pipeline that processes one butterfly operation per cycle, meeting the performance requirement of 6 cycles per butterfly. The design includes automatic rescaling after each FFT stage to prevent overflow and maintain signal integrity.
 
 ### 1.1 Core Architecture Components
 
@@ -45,9 +45,18 @@ The FFT hardware accelerator implements a pipelined radix-2 decimation-in-freque
 │  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘       │ │
 │  │  ┌─────────┐  ┌─────────┐                                  │ │
 │  │  │ Stage 5 │  │ Stage 6 │                                  │ │
-│  │  │ Complex │  │ Memory  │                                  │ │
-│  │  │Multiply │  │ Write   │                                  │ │
+│  │  │ Complex │  │ Rescale │                                  │ │
+│  │  │Multiply │  │ & Write │                                  │ │
 │  │  └─────────┘  └─────────┘                                  │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│         │                │                │                     │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │                  Rescaling Subsystem                        │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │ │
+│  │  │   Rescale   │  │   Scale     │  │   Overflow  │         │ │
+│  │  │   Logic     │  │  Factor     │  │  Detection  │         │ │
+│  │  │             │  │  Tracker    │  │             │         │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘         │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │         │                │                │                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
@@ -61,7 +70,7 @@ The FFT hardware accelerator implements a pipelined radix-2 decimation-in-freque
 
 ### 2.1 6-Stage Pipeline Details
 
-The FFT accelerator implements a 6-stage pipeline optimized for the butterfly operation:
+The FFT accelerator implements a 6-stage pipeline optimized for the butterfly operation with integrated rescaling:
 
 #### Stage 1: Address Generation and Memory Read
 - **Function:** Generate addresses for input data and twiddle factors
@@ -108,16 +117,19 @@ The FFT accelerator implements a 6-stage pipeline optimized for the butterfly op
 - **Latency:** 1 clock cycle
 - **Resources:** Complex multiplier (4x 16-bit multipliers + 2x adders)
 
-#### Stage 6: Memory Write
-- **Function:** Write results back to memory
+#### Stage 6: Rescaling and Memory Write
+- **Function:** Rescale results and write back to memory
 - **Operations:**
+  - Check for overflow in addition and multiplication results
+  - Apply rescaling if overflow detected
+  - Update scale factor accumulator
   - Write A' (addition result) to output buffer
   - Write B' (multiplication result) to output buffer
   - Update address counters
 - **Latency:** 1 clock cycle
-- **Resources:** Memory interface, address counters
+- **Resources:** Rescaling logic, scale factor tracker, memory interface
 
-### 2.2 Pipeline Control
+### 2.2 Pipeline Control with Rescaling
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -135,12 +147,128 @@ The FFT accelerator implements a 6-stage pipeline optimized for the butterfly op
 │  │  Pipeline   │  │   Stall     │  │   Flush     │         │
 │  │   Valid     │  │  Control    │  │  Control    │         │
 │  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │  Rescale    │  │   Scale     │  │  Overflow   │         │
+│  │   Enable    │  │  Factor     │  │  Control    │         │
+│  │             │  │  Update     │  │             │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 3. Memory Architecture
+## 3. Rescaling Subsystem
 
-### 3.1 Double-Buffered Memory Organization
+### 3.1 Rescaling Architecture
+
+The rescaling subsystem prevents overflow during FFT computation by automatically scaling intermediate results:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Rescaling Subsystem                         │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Overflow  │  │   Rescale   │  │   Scale     │         │
+│  │  Detection  │  │   Logic     │  │  Factor     │         │
+│  │             │  │             │  │  Tracker    │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│           │                │                │               │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │              Rescaling Control Logic                    │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │ │
+│  │  │   Rescale   │  │   Rounding  │  │  Saturation │     │ │
+│  │  │   Mode      │  │   Control   │  │   Logic     │     │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘     │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 Overflow Detection Logic
+
+```verilog
+// Overflow detection for 16-bit complex data
+always_comb begin
+    // Check for overflow in real component
+    real_overflow = (result_real[15:14] != 2'b00) && (result_real[15:14] != 2'b11);
+    
+    // Check for overflow in imaginary component
+    imag_overflow = (result_imag[15:14] != 2'b00) && (result_imag[15:14] != 2'b11);
+    
+    // Combined overflow detection
+    overflow_detected = real_overflow || imag_overflow;
+end
+```
+
+### 3.3 Rescaling Logic
+
+```verilog
+// Rescaling implementation
+always_comb begin
+    if (rescaling_enabled && overflow_detected) begin
+        // Rescale by dividing by 2 (right shift)
+        rescaled_real = result_real >>> 1;
+        rescaled_imag = result_imag >>> 1;
+        scale_factor_increment = 1'b1;
+    end else begin
+        // No rescaling needed
+        rescaled_real = result_real;
+        rescaled_imag = result_imag;
+        scale_factor_increment = 1'b0;
+    end
+end
+```
+
+### 3.4 Scale Factor Tracking
+
+```verilog
+// Scale factor accumulator
+module scale_factor_tracker (
+    input  logic        clk_i,
+    input  logic        reset_n_i,
+    input  logic        fft_start_i,
+    input  logic        scale_factor_increment_i,
+    output logic [7:0]  total_scale_factor_o,
+    output logic [7:0]  stage_count_o
+);
+
+    logic [7:0] scale_factor_reg;
+    logic [7:0] stage_count_reg;
+    
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            scale_factor_reg <= 8'h00;
+            stage_count_reg <= 8'h00;
+        end else if (fft_start_i) begin
+            scale_factor_reg <= 8'h00;
+            stage_count_reg <= 8'h00;
+        end else if (scale_factor_increment_i) begin
+            scale_factor_reg <= scale_factor_reg + 1;
+        end else if (stage_complete) begin
+            stage_count_reg <= stage_count_reg + 1;
+        end
+    end
+    
+    assign total_scale_factor_o = scale_factor_reg;
+    assign stage_count_o = stage_count_reg;
+    
+endmodule
+```
+
+### 3.5 Rescaling Modes
+
+The FFT accelerator supports two rescaling modes:
+
+#### Mode 0: Divide by 2 (Default)
+- Rescales by dividing by 2 after each butterfly operation
+- Provides gradual scaling throughout the FFT computation
+- Maintains maximum precision
+
+#### Mode 1: Divide by N
+- Rescales by dividing by the FFT length at the end
+- Provides uniform scaling across all stages
+- Reduces computational overhead
+
+## 4. Memory Architecture
+
+### 4.1 Double-Buffered Memory Organization
 
 The FFT accelerator implements a sophisticated double-buffered memory architecture:
 
@@ -173,7 +301,7 @@ The FFT accelerator implements a sophisticated double-buffered memory architectu
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Memory Access Patterns
+### 4.2 Memory Access Patterns
 
 #### Input Data Access Pattern
 For an N-point FFT with log2(N) stages:
@@ -195,7 +323,7 @@ addr_b = addr_a + butterfly_spacing;
 twiddle_addr = (stage_counter * butterfly_index) % (N/2);
 ```
 
-### 3.3 Memory Interface Timing
+### 4.3 Memory Interface Timing with Rescaling
 
 ```
 Clock Cycle:    1    2    3    4    5    6
@@ -212,13 +340,13 @@ Complex Sub:                        ┌────┐
                                    │    │
 Complex Mul:                             ┌────┐
                                         │    │
-Memory Write:                                  ┌────┐
+Rescale & Write:                              ┌────┐
                                               │    │
 ```
 
-## 4. Twiddle Factor Generation
+## 5. Twiddle Factor Generation
 
-### 4.1 ROM Organization
+### 5.1 ROM Organization
 
 The twiddle factor ROM stores pre-computed complex coefficients:
 
@@ -245,7 +373,7 @@ W_N^k = cos(2πk/N) - j*sin(2πk/N)
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 Symmetry Exploitation
+### 5.2 Symmetry Exploitation
 
 The ROM size is optimized by exploiting trigonometric symmetries:
 
@@ -257,16 +385,16 @@ W_N^(N/4+k) = j*W_N^k
 
 This reduces ROM size by approximately 75% for large FFT lengths.
 
-### 4.3 Twiddle Factor Precision
+### 5.3 Twiddle Factor Precision
 
 - **Format:** 16-bit fixed-point (Q1.15 format)
 - **Range:** -1.0 to +1.0
 - **Precision:** 2^-15 ≈ 3.05e-5
 - **Storage:** 32 bits per twiddle factor (16-bit real + 16-bit imaginary)
 
-## 5. Control Unit Architecture
+## 6. Control Unit Architecture
 
-### 5.1 State Machine
+### 6.1 State Machine with Rescaling
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
@@ -277,7 +405,7 @@ This reduces ROM size by approximately 75% for large FFT lengths.
      │              │              │              │
      │              ▼              ▼              ▼
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
-│  ERROR  │◀───│  DONE   │◀───│  SWAP   │◀───│  DONE   │
+│  ERROR  │◀───│  DONE   │◀───│  SWAP   │◀───│ RESCALE │
 │         │    │         │    │         │    │         │
 └─────────┘    └─────────┘    └─────────┘    └─────────┘
 ```
@@ -287,12 +415,13 @@ This reduces ROM size by approximately 75% for large FFT lengths.
 - **IDLE:** Waiting for start command
 - **CONFIG:** Loading FFT configuration parameters
 - **LOAD:** Loading input data into active buffer
-- **COMPUTE:** Executing FFT computation
+- **COMPUTE:** Executing FFT computation with rescaling
+- **RESCALE:** Applying final rescaling if needed
 - **SWAP:** Switching between buffer banks
 - **DONE:** FFT computation complete
 - **ERROR:** Error condition detected
 
-### 5.2 Control Signals
+### 6.2 Control Signals with Rescaling
 
 | Signal | Direction | Description |
 |--------|-----------|-------------|
@@ -303,10 +432,13 @@ This reduces ROM size by approximately 75% for large FFT lengths.
 | `fft_error_o` | output | FFT computation error |
 | `stage_valid_o` | output | Pipeline stage valid |
 | `buffer_swap_o` | output | Buffer swap request |
+| `rescaling_active_o` | output | Rescaling in progress |
+| `scale_factor_o` | output | Current scale factor |
+| `overflow_detected_o` | output | Overflow detected |
 
-## 6. Interface Controllers
+## 7. Interface Controllers
 
-### 6.1 APB Interface Controller
+### 7.1 APB Interface Controller
 
 The APB interface provides register access and data transfer:
 
@@ -346,7 +478,7 @@ PREADY:         ────┐
                     │
 ```
 
-### 6.2 AXI Interface Controller
+### 7.2 AXI Interface Controller
 
 The AXI interface provides high-bandwidth data transfer:
 
@@ -370,32 +502,34 @@ module axi_fft_interface (
 );
 ```
 
-## 7. Performance Optimization
+## 8. Performance Optimization
 
-### 7.1 Pipeline Optimization
+### 8.1 Pipeline Optimization with Rescaling
 
 - **Balanced Stages:** Each pipeline stage has similar latency
 - **Register Balancing:** Minimizes clock-to-clock delay
 - **Clock Gating:** Reduces power consumption during idle periods
 - **Bypass Logic:** Handles data hazards efficiently
+- **Rescaling Integration:** Rescaling logic integrated into pipeline
 
-### 7.2 Memory Optimization
+### 8.2 Memory Optimization
 
 - **Burst Transfers:** Optimizes memory bandwidth utilization
 - **Prefetching:** Reduces memory access latency
 - **Bank Interleaving:** Improves memory access parallelism
 - **Cache-Friendly:** Optimizes for spatial and temporal locality
 
-### 7.3 Arithmetic Optimization
+### 8.3 Arithmetic Optimization
 
 - **Carry-Save Addition:** Reduces critical path delay
 - **Booth Encoding:** Optimizes multiplication performance
 - **Saturation Arithmetic:** Prevents overflow/underflow
 - **Rounding Control:** Configurable rounding modes
+- **Rescaling Optimization:** Efficient rescaling algorithms
 
-## 8. Power Management
+## 9. Power Management
 
-### 8.1 Clock Domain Management
+### 9.1 Clock Domain Management
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -414,11 +548,17 @@ module axi_fft_interface (
 │  │  │   Clock     │  │   Clock     │  │   Clock     │     │ │
 │  │  │   Gate      │  │   Gate      │  │   Gate      │     │ │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘     │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │ │
+│  │  │  Rescaling  │  │   Scale     │  │  Overflow   │     │ │
+│  │  │   Clock     │  │  Factor     │  │  Detection  │     │ │
+│  │  │   Gate      │  │   Clock     │  │   Clock     │     │ │
+│  │  │             │  │   Gate      │  │   Gate      │     │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘     │ │
 │  └─────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 8.2 Power States
+### 9.2 Power States
 
 | State | Description | Clock Gating | Power Consumption |
 |-------|-------------|--------------|-------------------|
@@ -426,64 +566,72 @@ module axi_fft_interface (
 | Idle | Waiting for start | Memory + Interface | 10% |
 | Sleep | Power-down mode | All domains | 1% |
 
-### 8.3 Dynamic Power Reduction
+### 9.3 Dynamic Power Reduction
 
 - **Clock Gating:** Gates unused pipeline stages
 - **Memory Gating:** Gates unused memory banks
 - **Interface Gating:** Gates unused interface logic
 - **Voltage Scaling:** Dynamic voltage/frequency scaling
+- **Rescaling Gating:** Gates rescaling logic when disabled
 
-## 9. Error Handling and Debug
+## 10. Error Handling and Debug
 
-### 9.1 Error Detection
+### 10.1 Error Detection
 
 - **Parity Checking:** Memory data integrity
 - **Timeout Detection:** FFT computation timeout
 - **Range Checking:** Address and data range validation
 - **State Validation:** State machine consistency checking
+- **Overflow Detection:** Automatic overflow detection and handling
 
-### 9.2 Debug Features
+### 10.2 Debug Features
 
 - **Performance Counters:** Cycle count, throughput measurement
 - **Pipeline Monitors:** Stage utilization monitoring
 - **Memory Monitors:** Access pattern analysis
 - **Error Logging:** Detailed error information storage
+- **Rescaling Monitors:** Scale factor tracking and overflow statistics
 
-### 9.3 Test and Debug Interface
+### 10.3 Test and Debug Interface
 
 ```verilog
-// Debug Interface
+// Debug Interface with Rescaling Support
 module fft_debug_interface (
     input  logic        debug_clk_i,
     input  logic        debug_enable_i,
     input  logic [7:0]  debug_addr_i,
     output logic [31:0] debug_data_o,
     input  logic [31:0] debug_data_i,
-    input  logic        debug_write_i
+    input  logic        debug_write_i,
+    input  logic [7:0]  scale_factor_i,
+    input  logic        overflow_detected_i
 );
 ```
 
-## 10. Implementation Considerations
+## 11. Implementation Considerations
 
-### 10.1 Synthesis Guidelines
+### 11.1 Synthesis Guidelines
 
 - **Clock Constraints:** Define clock domains and relationships
 - **Timing Constraints:** Set up timing requirements for all paths
 - **Area Constraints:** Define area budgets for different modules
 - **Power Constraints:** Set up power optimization directives
+- **Rescaling Constraints:** Define rescaling logic timing requirements
 
-### 10.2 Physical Design Considerations
+### 11.2 Physical Design Considerations
 
 - **Floorplanning:** Optimize module placement for timing
 - **Clock Distribution:** Design clock tree for minimal skew
 - **Power Distribution:** Design power grid for voltage drop
 - **Signal Integrity:** Consider crosstalk and noise effects
+- **Rescaling Logic Placement:** Optimize placement of rescaling logic
 
-### 10.3 Verification Strategy
+### 11.3 Verification Strategy
 
 - **Unit Testing:** Test individual modules in isolation
 - **Integration Testing:** Test module interactions
 - **System Testing:** Test complete FFT functionality
 - **Performance Testing:** Verify timing and throughput requirements
+- **Rescaling Testing:** Verify rescaling functionality and scale factor tracking
 
-This architecture document provides the technical foundation for implementing the FFT hardware accelerator according to the design specification. The modular design allows for easy customization and optimization for different target applications and performance requirements.
+This architecture document provides the technical foundation for implementing the FFT hardware accelerator with automatic rescaling and scale factor tracking according to the design specification. The modular design allows for easy customization and optimization for different target applications and performance requirements.

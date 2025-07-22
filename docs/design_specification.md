@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-This document specifies the design of a high-performance Fast Fourier Transform (FFT) hardware accelerator that supports configurable FFT lengths from 256 to 4096 points. The design implements a radix-2 decimation-in-frequency (DIF) FFT algorithm with double-buffered memory architecture for optimal throughput and background data transfer capabilities.
+This document specifies the design of a high-performance Fast Fourier Transform (FFT) hardware accelerator that supports configurable FFT lengths from 256 to 4096 points. The design implements a radix-2 decimation-in-frequency (DIF) FFT algorithm with double-buffered memory architecture for optimal throughput and background data transfer capabilities. The design includes automatic rescaling after each FFT stage to prevent overflow and provides output scale factor tracking for proper signal reconstruction.
 
 ### 1.1 Key Features
 
@@ -20,6 +20,8 @@ This document specifies the design of a high-performance Fast Fourier Transform 
 - **Memory Mapped Interface:** APB/AXI interface for host processor access
 - **Performance:** One butterfly computation in 6 clock cycles
 - **Pipelined Architecture:** Optimized for high throughput
+- **Automatic Rescaling:** Rescaling after each FFT stage to prevent overflow
+- **Scale Factor Tracking:** Output scale factor for proper signal reconstruction
 
 ### 1.2 Performance Targets
 
@@ -27,6 +29,7 @@ This document specifies the design of a high-performance Fast Fourier Transform 
 - **Latency:** Configurable based on FFT length
 - **Power Efficiency:** Optimized for low-power operation
 - **Area:** Target < 50K gates for 1024-point FFT
+- **Dynamic Range:** Maintained through automatic rescaling
 
 ## 2. Architecture Overview
 
@@ -61,6 +64,11 @@ This document specifies the design of a high-performance Fast Fourier Transform 
 │  │  │ Butterfly   │  │   Complex   │  │   Complex   │         │ │
 │  │  │ Processing  │  │ Multiplier  │  │   Adder     │         │ │
 │  │  │ Unit        │  │             │  │             │         │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘         │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │ │
+│  │  │   Rescale   │  │   Scale     │  │   Overflow  │         │ │
+│  │  │   Logic     │  │  Factor     │  │  Detection  │         │ │
+│  │  │             │  │  Tracker    │  │             │         │ │
 │  │  └─────────────┘  └─────────────┘  └─────────────┘         │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
@@ -137,6 +145,9 @@ The FFT accelerator implements a double-buffered memory architecture:
 | 0x0010 | BUFFER_SEL | R/W | Buffer Selection Register |
 | 0x0014 | INT_ENABLE | R/W | Interrupt Enable Register |
 | 0x0018 | INT_STATUS | R | Interrupt Status Register |
+| 0x001C | SCALE_FACTOR | R | Output Scale Factor Register |
+| 0x0020 | RESCALE_CTRL | R/W | Rescaling Control Register |
+| 0x0024 | OVERFLOW_STATUS | R | Overflow Status Register |
 
 ### 4.2 Data Memory Map
 
@@ -156,7 +167,9 @@ The FFT accelerator implements a double-buffered memory architecture:
 | [1] | FFT_RESET | R/W | Reset FFT engine |
 | [2] | BUFFER_SWAP | R/W | Swap input/output buffers |
 | [3] | MODE_SEL | R/W | Mode selection (0=APB, 1=AXI) |
-| [31:4] | RESERVED | R | Reserved bits |
+| [4] | RESCALE_EN | R/W | Enable automatic rescaling |
+| [5] | SCALE_TRACK_EN | R/W | Enable scale factor tracking |
+| [31:6] | RESERVED | R | Reserved bits |
 
 #### FFT_STATUS Register (0x0004)
 | Bits | Name | Access | Description |
@@ -165,51 +178,126 @@ The FFT accelerator implements a double-buffered memory architecture:
 | [1] | FFT_DONE | R | FFT computation complete |
 | [2] | FFT_ERROR | R | FFT computation error |
 | [3] | BUFFER_ACTIVE | R | Active buffer indicator |
-| [31:4] | RESERVED | R | Reserved bits |
+| [4] | RESCALE_ACTIVE | R | Rescaling in progress |
+| [5] | OVERFLOW_DETECTED | R | Overflow detected during computation |
+| [31:6] | RESERVED | R | Reserved bits |
 
 #### FFT_CONFIG Register (0x0008)
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
 | [11:0] | FFT_LENGTH_LOG2 | R/W | Log2 of FFT length (8-12) |
 | [15:12] | RESERVED | R | Reserved bits |
-| [16] | SCALING_EN | R/W | Enable output scaling |
-| [17] | BIT_REVERSE_EN | R/W | Enable bit-reverse addressing |
-| [31:18] | RESERVED | R | Reserved bits |
+| [16] | RESCALE_MODE | R/W | Rescaling mode (0=divide by 2, 1=divide by N) |
+| [17] | ROUNDING_MODE | R/W | Rounding mode (0=truncate, 1=round) |
+| [18] | SATURATION_EN | R/W | Enable saturation arithmetic |
+| [19] | OVERFLOW_DETECT | R/W | Enable overflow detection |
+| [31:20] | RESERVED | R | Reserved bits |
+
+#### SCALE_FACTOR Register (0x001C)
+| Bits | Name | Access | Description |
+|------|------|--------|-------------|
+| [7:0] | SCALE_FACTOR | R | Total scale factor applied (log2) |
+| [15:8] | STAGE_COUNT | R | Number of stages processed |
+| [23:16] | RESERVED | R | Reserved bits |
+| [31:24] | OVERFLOW_COUNT | R | Number of overflow events |
+
+#### RESCALE_CTRL Register (0x0020)
+| Bits | Name | Access | Description |
+|------|------|--------|-------------|
+| [0] | RESCALE_EN | R/W | Enable rescaling after each stage |
+| [1] | SCALE_TRACK_EN | R/W | Enable scale factor tracking |
+| [2] | OVERFLOW_INT_EN | R/W | Enable overflow interrupt |
+| [3] | RESCALE_INT_EN | R/W | Enable rescaling interrupt |
+| [7:4] | RESCALE_THRESHOLD | R/W | Rescaling threshold (bits) |
+| [31:8] | RESERVED | R | Reserved bits |
+
+#### OVERFLOW_STATUS Register (0x0024)
+| Bits | Name | Access | Description |
+|------|------|--------|-------------|
+| [7:0] | OVERFLOW_COUNT | R | Total overflow count |
+| [15:8] | LAST_OVERFLOW_STAGE | R | Stage where last overflow occurred |
+| [23:16] | MAX_OVERFLOW_MAGNITUDE | R | Maximum overflow magnitude |
+| [31:24] | RESERVED | R | Reserved bits |
 
 ## 5. FFT Algorithm Implementation
 
-### 5.1 Radix-2 DIF Algorithm
+### 5.1 Radix-2 DIF Algorithm with Rescaling
 
-The FFT accelerator implements a radix-2 decimation-in-frequency (DIF) algorithm:
+The FFT accelerator implements a radix-2 decimation-in-frequency (DIF) algorithm with automatic rescaling:
 
 ```
 X(k) = X_even(k) + W_N^k * X_odd(k)
 X(k + N/2) = X_even(k) - W_N^k * X_odd(k)
 ```
 
+After each stage, the data is rescaled to prevent overflow:
+```
+X_rescaled(k) = X(k) / 2^scale_factor
+```
+
 Where:
 - `X_even(k)` and `X_odd(k)` are even and odd indexed samples
 - `W_N^k` is the twiddle factor: `W_N^k = e^(-j2πk/N)`
+- `scale_factor` is the accumulated scaling factor
 
-### 5.2 Butterfly Operation
+### 5.2 Butterfly Operation with Rescaling
 
 Each butterfly operation performs:
 
 ```
-A' = A + B
-B' = (A - B) * W_N^k
+A' = (A + B) / 2
+B' = ((A - B) * W_N^k) / 2
 ```
 
 **Timing:** 6 clock cycles per butterfly operation
 
-### 5.3 Pipeline Stages
+### 5.3 Pipeline Stages with Rescaling
 
 1. **Stage 1 (1 cycle):** Address generation and memory read
 2. **Stage 2 (1 cycle):** Data alignment and twiddle factor fetch
 3. **Stage 3 (1 cycle):** Complex addition (A + B)
 4. **Stage 4 (1 cycle):** Complex subtraction (A - B)
 5. **Stage 5 (1 cycle):** Complex multiplication with twiddle factor
-6. **Stage 6 (1 cycle):** Memory write
+6. **Stage 6 (1 cycle):** Rescaling and memory write
+
+### 5.4 Rescaling Implementation
+
+#### Rescaling Logic
+```verilog
+// Rescaling after each butterfly operation
+always_comb begin
+    if (rescaling_enabled) begin
+        // Check for overflow
+        if (|result[15:14] || |result[31:30]) begin
+            // Overflow detected - rescale by 2
+            rescaled_result = result >> 1;
+            scale_factor_increment = 1;
+        end else begin
+            // No overflow - no rescaling needed
+            rescaled_result = result;
+            scale_factor_increment = 0;
+        end
+    end else begin
+        // Rescaling disabled
+        rescaled_result = result;
+        scale_factor_increment = 0;
+    end
+end
+```
+
+#### Scale Factor Tracking
+```verilog
+// Scale factor accumulator
+always_ff @(posedge clk_i or negedge reset_n_i) begin
+    if (!reset_n_i) begin
+        total_scale_factor <= 8'h00;
+    end else if (fft_start) begin
+        total_scale_factor <= 8'h00;
+    end else if (scale_factor_increment) begin
+        total_scale_factor <= total_scale_factor + 1;
+    end
+end
+```
 
 ## 6. Memory Architecture
 
@@ -300,6 +388,7 @@ For a 1024-point FFT:
 | BRAM | 8 | Input/Output buffers + Twiddle ROM |
 | Registers | ~5K | Pipeline registers and control logic |
 | LUTs | ~15K | Address generation and control logic |
+| Scale Factor Logic | ~1K | Rescaling and scale factor tracking |
 
 ## 9. Power Management
 
@@ -308,6 +397,7 @@ For a 1024-point FFT:
 - **Core Domain:** FFT engine and control logic
 - **Memory Domain:** Input/output buffers
 - **Interface Domain:** APB/AXI interface logic
+- **Rescaling Domain:** Rescaling logic and scale factor tracking
 
 ### 9.2 Power States
 
@@ -322,6 +412,7 @@ For a 1024-point FFT:
 - **Memory Banks:** Clock gated when not accessed
 - **Pipeline Stages:** Clock gated during idle periods
 - **Interface Logic:** Clock gated when no transfers active
+- **Rescaling Logic:** Clock gated when rescaling disabled
 
 ## 10. Error Handling
 
@@ -331,12 +422,14 @@ For a 1024-point FFT:
 - **Memory Overflow:** Buffer access beyond allocated space
 - **Timeout Error:** FFT computation exceeds maximum cycles
 - **Data Corruption:** ECC/parity errors in memory
+- **Rescaling Overflow:** Excessive rescaling required
 
 ### 10.2 Error Reporting
 
 - **Status Register:** Error flags in FFT_STATUS register
 - **Interrupt Generation:** FFT_ERROR interrupt signal
 - **Error Logging:** Error codes stored in dedicated registers
+- **Overflow Tracking:** Overflow events logged in OVERFLOW_STATUS
 
 ## 11. Verification Strategy
 
@@ -346,6 +439,7 @@ For a 1024-point FFT:
 - **Integration Tests:** Complete FFT computation verification
 - **Performance Tests:** Throughput and latency measurement
 - **Corner Cases:** Edge cases and error conditions
+- **Rescaling Tests:** Overflow and rescaling verification
 
 ### 11.2 Coverage Goals
 
@@ -353,6 +447,7 @@ For a 1024-point FFT:
 - **Code Coverage:** >95% RTL code coverage
 - **Interface Coverage:** 100% of bus protocol sequences
 - **Error Coverage:** 100% of error handling paths
+- **Rescaling Coverage:** 100% of rescaling scenarios
 
 ## 12. Implementation Guidelines
 
@@ -370,6 +465,8 @@ rtl/
 ├── fft_top.sv              # Top-level module
 ├── fft_engine.sv           # FFT computation engine
 ├── butterfly_unit.sv       # Butterfly processing unit
+├── rescale_unit.sv         # Rescaling logic
+├── scale_factor_tracker.sv # Scale factor tracking
 ├── memory_interface.sv     # Memory interface logic
 ├── address_generator.sv    # Address generation logic
 ├── twiddle_rom.sv          # Twiddle factor ROM
@@ -385,7 +482,8 @@ tb/
 ├── tb_fft_top.sv           # Top-level testbench
 ├── fft_test_vectors.sv     # Test vector generation
 ├── fft_monitor.sv          # Response monitoring
-└── fft_scoreboard.sv       # Result verification
+├── fft_scoreboard.sv       # Result verification
+└── rescale_test.sv         # Rescaling verification
 ```
 
 ## 13. Future Enhancements
@@ -395,21 +493,24 @@ tb/
 - **Variable Radix:** Support for radix-4 and radix-8 algorithms
 - **Mixed Precision:** Support for different input/output precisions
 - **Multi-Channel:** Support for multiple FFT channels
+- **Adaptive Rescaling:** Dynamic rescaling based on signal characteristics
 
 ### 13.2 Performance Optimizations
 
 - **Parallel Processing:** Multiple butterfly units
 - **Memory Optimization:** Advanced memory access patterns
 - **Pipeline Optimization:** Reduced latency implementations
+- **Rescaling Optimization:** Optimized rescaling algorithms
 
 ### 13.3 Interface Enhancements
 
 - **DMA Support:** Direct memory access for high-throughput applications
 - **Streaming Interface:** Real-time streaming data support
 - **Advanced Protocols:** Support for AXI-Stream and other protocols
+- **Scale Factor Interface:** Dedicated interface for scale factor reporting
 
 ## 14. Conclusion
 
-This design specification provides a comprehensive framework for implementing a high-performance FFT hardware accelerator following Vyges conventions. The design meets all specified requirements while providing flexibility for future enhancements and optimizations.
+This design specification provides a comprehensive framework for implementing a high-performance FFT hardware accelerator with automatic rescaling and scale factor tracking following Vyges conventions. The design meets all specified requirements while providing flexibility for future enhancements and optimizations.
 
-The double-buffered architecture ensures optimal throughput with background data transfer capabilities, while the memory-mapped interface provides easy integration with host processors. The 6-cycle butterfly operation meets the performance requirement while maintaining design simplicity and reliability. 
+The double-buffered architecture ensures optimal throughput with background data transfer capabilities, while the memory-mapped interface provides easy integration with host processors. The 6-cycle butterfly operation meets the performance requirement while maintaining design simplicity and reliability. The automatic rescaling feature prevents overflow and maintains signal integrity, while the scale factor tracking enables proper signal reconstruction in the host application. 

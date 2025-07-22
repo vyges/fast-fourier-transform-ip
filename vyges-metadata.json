@@ -3,7 +3,7 @@
   "x-version": "1.0.0",
   "name": "vyges/fast-fourier-transform-ip",
   "version": "1.0.0",
-  "description": "A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture and memory-mapped interfaces.",
+  "description": "A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.",
   "license": "Apache-2.0",
   "template": "vyges-ip-template@1.0.0",
   "target": ["asic", "fpga"],
@@ -22,8 +22,8 @@
   "maintainers": [
     {
       "name": "Vyges IP Development Team",
-      "email": "ip-dev@vyges.com",
-      "github": "vyges-ip-dev"
+      "email": "team@vyges.com",
+      "github": "vyges"
     }
   ],
   "branding": {
@@ -153,6 +153,11 @@
     },
     "vivado": {
       "status": "partial"
+    },
+    "openfpga": {
+      "tools": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow"],
+      "families": ["lattice-ice40", "lattice-ecp5", "xilinx-7"],
+      "status": "implemented"
     }
   },
   "asic": {
@@ -175,12 +180,18 @@
     }
   },
   "fpga": {
-    "families": ["xilinx-7", "xilinx-ultrascale", "intel-cyclone", "intel-arria"],
+    "families": ["xilinx-7", "xilinx-ultrascale", "intel-cyclone", "intel-arria", "lattice-ice40", "lattice-ecp5"],
     "resources": {
       "dsp": 4,
       "bram": 8,
       "lut": 15000,
       "ff": 5000
+    },
+    "open_source": {
+      "supported": true,
+      "tools": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow"],
+      "families": ["lattice-ice40", "lattice-ecp5", "xilinx-7"],
+      "status": "implemented"
     }
   },
   "tags": [
@@ -196,7 +207,16 @@
     "pipelined",
     "radix-2",
     "16-bit",
-    "configurable"
+    "configurable",
+    "rescaling",
+    "overflow-protection",
+    "scale-factor-tracking",
+    "open-source-fpga",
+    "yosys",
+    "nextpnr",
+    "icestorm",
+    "prjtrellis",
+    "symbiflow"
   ],
   "categories": [
     "Digital Signal Processing",
@@ -216,7 +236,10 @@
     "AXI Interface",
     "Configurable Length",
     "16-bit Precision",
-    "Pipelined Architecture"
+    "Pipelined Architecture",
+    "Automatic Rescaling",
+    "Overflow Protection",
+    "Scale Factor Tracking"
   ],
   "documentation": {
     "overview": "docs/design_specification.md",
@@ -246,7 +269,8 @@
     "tools": {
       "synthesis": ["yosys", "design_compiler", "vivado"],
       "simulation": ["verilator", "iverilog", "modelsim"],
-      "formal": ["yosys-smtbmc", "sby"]
+      "formal": ["yosys-smtbmc", "sby"],
+      "fpga": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow", "vivado", "quartus"]
     },
     "standards": ["IEEE 1364-2005", "IEEE 1800-2017"]
   },

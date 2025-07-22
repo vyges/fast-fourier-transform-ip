@@ -1,0 +1,395 @@
+`timescale 1ns/1ps
+
+//=============================================================================
+// FFT Engine Module
+//=============================================================================
+// Description: Main FFT computation engine with 6-stage pipeline and
+//              automatic rescaling functionality. Implements radix-2 DIF
+//              algorithm with configurable FFT lengths.
+// Author:      Vyges IP Development Team
+// Date:        2025-07-21
+// License:     Apache-2.0
+//=============================================================================
+
+module fft_engine #(
+    parameter int FFT_MAX_LENGTH_LOG2 = 12,    // Maximum FFT length (log2)
+    parameter int DATA_WIDTH = 16,             // Input/output data width
+    parameter int TWIDDLE_WIDTH = 16           // Twiddle factor width
+) (
+    // Clock and Reset
+    input  logic        clk_i,
+    input  logic        reset_n_i,
+    
+    // Control Interface
+    input  logic        fft_start_i,
+    input  logic        fft_reset_i,
+    output logic        fft_busy_o,
+    output logic        fft_done_o,
+    output logic        fft_error_o,
+    input  logic [11:0] fft_length_log2_i,
+    input  logic        rescale_en_i,
+    input  logic        scale_track_en_i,
+    input  logic        rescale_mode_i,
+    input  logic        rounding_mode_i,
+    input  logic        saturation_en_i,
+    input  logic        overflow_detect_i,
+    
+    // Memory Interface
+    output logic [15:0] mem_addr_i,
+    output logic [31:0] mem_data_i,
+    output logic        mem_write_i,
+    input  logic [31:0] mem_data_o,
+    input  logic        mem_ready_o,
+    
+    // Rescaling Interface
+    output logic [7:0]  scale_factor_o,
+    output logic [7:0]  stage_count_o,
+    output logic        rescaling_active_o,
+    output logic        overflow_detected_o,
+    output logic [7:0]  overflow_count_o,
+    output logic [7:0]  last_overflow_stage_o,
+    output logic [7:0]  max_overflow_magnitude_o
+);
+
+    // Internal signals
+    logic [11:0] fft_length_log2_reg;
+    logic        rescale_en_reg;
+    logic        scale_track_en_reg;
+    logic        rescale_mode_reg;
+    logic        rounding_mode_reg;
+    logic        saturation_en_reg;
+    logic        overflow_detect_reg;
+    
+    // Pipeline stage signals
+    logic [5:0]  pipeline_valid;
+    logic [15:0] pipeline_addr_a [5:0];
+    logic [15:0] pipeline_addr_b [5:0];
+    logic [31:0] pipeline_data_a [5:0];
+    logic [31:0] pipeline_data_b [5:0];
+    logic [31:0] pipeline_twiddle [5:0];
+    logic [31:0] pipeline_result_a [5:0];
+    logic [31:0] pipeline_result_b [5:0];
+    
+    // Butterfly operation signals
+    logic [15:0] butterfly_real_a, butterfly_imag_a;
+    logic [15:0] butterfly_real_b, butterfly_imag_b;
+    logic [15:0] butterfly_twiddle_real, butterfly_twiddle_imag;
+    logic [15:0] butterfly_result_real_a, butterfly_result_imag_a;
+    logic [15:0] butterfly_result_real_b, butterfly_result_imag_b;
+    logic        butterfly_overflow;
+    
+    // Rescaling signals
+    logic [7:0]  scale_factor_reg;
+    logic [7:0]  stage_count_reg;
+    logic [7:0]  overflow_count_reg;
+    logic [7:0]  last_overflow_stage_reg;
+    logic [7:0]  max_overflow_magnitude_reg;
+    logic        rescaling_active_reg;
+    logic        overflow_detected_reg;
+    logic        scale_factor_increment;
+    
+    // Address generation signals
+    logic [11:0] stage_counter;
+    logic [11:0] butterfly_counter;
+    logic [11:0] butterfly_spacing;
+    logic [15:0] addr_a, addr_b;
+    logic [15:0] twiddle_addr;
+    
+    // State machine
+    typedef enum logic [2:0] {
+        FFT_IDLE,
+        FFT_CONFIG,
+        FFT_LOAD,
+        FFT_COMPUTE,
+        FFT_RESCALE,
+        FFT_DONE,
+        FFT_ERROR
+    } fft_state_t;
+    
+    fft_state_t fft_state, fft_next_state;
+    
+    // Configuration registers
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            fft_length_log2_reg <= 12'h00A;  // Default 1024 points
+            rescale_en_reg <= 1'b0;
+            scale_track_en_reg <= 1'b0;
+            rescale_mode_reg <= 1'b0;
+            rounding_mode_reg <= 1'b0;
+            saturation_en_reg <= 1'b0;
+            overflow_detect_reg <= 1'b0;
+        end else if (fft_start_i) begin
+            fft_length_log2_reg <= fft_length_log2_i;
+            rescale_en_reg <= rescale_en_i;
+            scale_track_en_reg <= scale_track_en_i;
+            rescale_mode_reg <= rescale_mode_i;
+            rounding_mode_reg <= rounding_mode_i;
+            saturation_en_reg <= saturation_en_i;
+            overflow_detect_reg <= overflow_detect_i;
+        end
+    end
+    
+    // State machine
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            fft_state <= FFT_IDLE;
+        end else if (fft_reset_i) begin
+            fft_state <= FFT_IDLE;
+        end else begin
+            fft_state <= fft_next_state;
+        end
+    end
+    
+    // State machine next state logic
+    always_comb begin
+        fft_next_state = fft_state;
+        
+        case (fft_state)
+            FFT_IDLE: begin
+                if (fft_start_i) begin
+                    fft_next_state = FFT_CONFIG;
+                end
+            end
+            
+            FFT_CONFIG: begin
+                fft_next_state = FFT_LOAD;
+            end
+            
+            FFT_LOAD: begin
+                if (mem_ready_o) begin
+                    fft_next_state = FFT_COMPUTE;
+                end
+            end
+            
+            FFT_COMPUTE: begin
+                if (stage_counter >= fft_length_log2_reg) begin
+                    if (rescale_en_reg && rescale_mode_reg) begin
+                        fft_next_state = FFT_RESCALE;
+                    end else begin
+                        fft_next_state = FFT_DONE;
+                    end
+                end else if (fft_error_o) begin
+                    fft_next_state = FFT_ERROR;
+                end
+            end
+            
+            FFT_RESCALE: begin
+                fft_next_state = FFT_DONE;
+            end
+            
+            FFT_DONE: begin
+                fft_next_state = FFT_IDLE;
+            end
+            
+            FFT_ERROR: begin
+                fft_next_state = FFT_IDLE;
+            end
+            
+            default: begin
+                fft_next_state = FFT_IDLE;
+            end
+        endcase
+    end
+    
+    // Output logic
+    always_comb begin
+        fft_busy_o = (fft_state != FFT_IDLE);
+        fft_done_o = (fft_state == FFT_DONE);
+        fft_error_o = (fft_state == FFT_ERROR);
+        rescaling_active_o = rescaling_active_reg;
+        overflow_detected_o = overflow_detected_reg;
+    end
+    
+    // Scale factor tracking
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            scale_factor_reg <= 8'h00;
+            stage_count_reg <= 8'h00;
+            overflow_count_reg <= 8'h00;
+            last_overflow_stage_reg <= 8'h00;
+            max_overflow_magnitude_reg <= 8'h00;
+            rescaling_active_reg <= 1'b0;
+            overflow_detected_reg <= 1'b0;
+        end else if (fft_start_i) begin
+            scale_factor_reg <= 8'h00;
+            stage_count_reg <= 8'h00;
+            overflow_count_reg <= 8'h00;
+            last_overflow_stage_reg <= 8'h00;
+            max_overflow_magnitude_reg <= 8'h00;
+            rescaling_active_reg <= 1'b0;
+            overflow_detected_reg <= 1'b0;
+        end else if (scale_track_en_reg) begin
+            if (scale_factor_increment) begin
+                scale_factor_reg <= scale_factor_reg + 1;
+                overflow_count_reg <= overflow_count_reg + 1;
+                last_overflow_stage_reg <= stage_count_reg;
+                overflow_detected_reg <= 1'b1;
+            end
+            
+            if (stage_counter >= fft_length_log2_reg && fft_state == FFT_COMPUTE) begin
+                stage_count_reg <= stage_count_reg + 1;
+            end
+        end
+    end
+    
+    // Output assignments
+    assign scale_factor_o = scale_factor_reg;
+    assign stage_count_o = stage_count_reg;
+    assign overflow_count_o = overflow_count_reg;
+    assign last_overflow_stage_o = last_overflow_stage_reg;
+    assign max_overflow_magnitude_o = max_overflow_magnitude_reg;
+    
+    // Address generation
+    always_comb begin
+        butterfly_spacing = 1 << stage_counter;
+        addr_a = (stage_counter * butterfly_spacing) + butterfly_counter;
+        addr_b = addr_a + butterfly_spacing;
+        twiddle_addr = (stage_counter * butterfly_counter) % (1 << (fft_length_log2_reg - 1));
+    end
+    
+    // Pipeline stage 1: Address generation and memory read
+    always_ff @(posedge clk_i) begin
+        if (fft_state == FFT_COMPUTE && mem_ready_o) begin
+            pipeline_valid[0] <= 1'b1;
+            pipeline_addr_a[0] <= addr_a;
+            pipeline_addr_b[0] <= addr_b;
+            mem_addr_i <= addr_a;
+            mem_write_i <= 1'b0;
+        end else begin
+            pipeline_valid[0] <= 1'b0;
+        end
+    end
+    
+    // Pipeline stage 2: Data alignment and twiddle factor fetch
+    always_ff @(posedge clk_i) begin
+        if (pipeline_valid[0]) begin
+            pipeline_valid[1] <= 1'b1;
+            pipeline_data_a[1] <= mem_data_o;
+            mem_addr_i <= pipeline_addr_b[0];
+            mem_write_i <= 1'b0;
+        end else begin
+            pipeline_valid[1] <= 1'b0;
+        end
+    end
+    
+    // Pipeline stage 3: Complex addition
+    always_ff @(posedge clk_i) begin
+        if (pipeline_valid[1]) begin
+            pipeline_valid[2] <= 1'b1;
+            pipeline_data_b[2] <= mem_data_o;
+            mem_addr_i <= pipeline_addr_a[0] + 16'h1000;  // Twiddle ROM base
+            mem_write_i <= 1'b0;
+            
+            // Complex addition: A + B
+            butterfly_real_a <= (pipeline_data_a[1] >> 16) & 16'hFFFF;
+            butterfly_imag_a <= pipeline_data_a[1] & 16'hFFFF;
+            butterfly_real_b <= (mem_data_o >> 16) & 16'hFFFF;
+            butterfly_imag_b <= mem_data_o & 16'hFFFF;
+        end else begin
+            pipeline_valid[2] <= 1'b0;
+        end
+    end
+    
+    // Pipeline stage 4: Complex subtraction
+    always_ff @(posedge clk_i) begin
+        if (pipeline_valid[2]) begin
+            pipeline_valid[3] <= 1'b1;
+            pipeline_twiddle[3] <= mem_data_o;
+            
+            // Complex addition result
+            butterfly_result_real_a <= butterfly_real_a + butterfly_real_b;
+            butterfly_result_imag_a <= butterfly_imag_a + butterfly_imag_b;
+            
+            // Complex subtraction: A - B
+            butterfly_real_a <= butterfly_real_a - butterfly_real_b;
+            butterfly_imag_a <= butterfly_imag_a - butterfly_imag_b;
+        end else begin
+            pipeline_valid[3] <= 1'b0;
+        end
+    end
+    
+    // Pipeline stage 5: Complex multiplication
+    always_ff @(posedge clk_i) begin
+        if (pipeline_valid[3]) begin
+            pipeline_valid[4] <= 1'b1;
+            
+            // Extract twiddle factors
+            butterfly_twiddle_real <= (pipeline_twiddle[3] >> 16) & 16'hFFFF;
+            butterfly_twiddle_imag <= pipeline_twiddle[3] & 16'hFFFF;
+            
+            // Complex multiplication: (A-B) * W
+            butterfly_result_real_b <= (butterfly_real_a * butterfly_twiddle_real) - 
+                                      (butterfly_imag_a * butterfly_twiddle_imag);
+            butterfly_result_imag_b <= (butterfly_real_a * butterfly_twiddle_imag) + 
+                                      (butterfly_imag_a * butterfly_twiddle_real);
+        end else begin
+            pipeline_valid[4] <= 1'b0;
+        end
+    end
+    
+    // Pipeline stage 6: Rescaling and memory write
+    always_ff @(posedge clk_i) begin
+        if (pipeline_valid[4]) begin
+            pipeline_valid[5] <= 1'b1;
+            
+            // Check for overflow and apply rescaling
+            if (rescale_en_reg && overflow_detect_reg) begin
+                // Overflow detection logic
+                logic real_overflow_a, imag_overflow_a;
+                logic real_overflow_b, imag_overflow_b;
+                
+                real_overflow_a = (|butterfly_result_real_a[15:14]) && 
+                                 (butterfly_result_real_a[15:14] != 2'b11);
+                imag_overflow_a = (|butterfly_result_imag_a[15:14]) && 
+                                 (butterfly_result_imag_a[15:14] != 2'b11);
+                real_overflow_b = (|butterfly_result_real_b[15:14]) && 
+                                 (butterfly_result_real_b[15:14] != 2'b11);
+                imag_overflow_b = (|butterfly_result_imag_b[15:14]) && 
+                                 (butterfly_result_imag_b[15:14] != 2'b11);
+                
+                if (real_overflow_a || imag_overflow_a || real_overflow_b || imag_overflow_b) begin
+                    // Apply rescaling
+                    butterfly_result_real_a <= butterfly_result_real_a >>> 1;
+                    butterfly_result_imag_a <= butterfly_result_imag_a >>> 1;
+                    butterfly_result_real_b <= butterfly_result_real_b >>> 1;
+                    butterfly_result_imag_b <= butterfly_result_imag_b >>> 1;
+                    scale_factor_increment <= 1'b1;
+                    rescaling_active_reg <= 1'b1;
+                end else begin
+                    scale_factor_increment <= 1'b0;
+                    rescaling_active_reg <= 1'b0;
+                end
+            end else begin
+                scale_factor_increment <= 1'b0;
+                rescaling_active_reg <= 1'b0;
+            end
+            
+            // Write results to memory
+            mem_addr_i <= pipeline_addr_a[4];
+            mem_data_i <= (butterfly_result_real_a << 16) | butterfly_result_imag_a;
+            mem_write_i <= 1'b1;
+        end else begin
+            pipeline_valid[5] <= 1'b0;
+            mem_write_i <= 1'b0;
+        end
+    end
+    
+    // Butterfly counter and stage counter
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            butterfly_counter <= 12'h000;
+            stage_counter <= 12'h000;
+        end else if (fft_start_i) begin
+            butterfly_counter <= 12'h000;
+            stage_counter <= 12'h000;
+        end else if (fft_state == FFT_COMPUTE && pipeline_valid[5]) begin
+            if (butterfly_counter >= (1 << (fft_length_log2_reg - 1)) - 1) begin
+                butterfly_counter <= 12'h000;
+                stage_counter <= stage_counter + 1;
+            end else begin
+                butterfly_counter <= butterfly_counter + 1;
+            end
+        end
+    end
+
+endmodule 

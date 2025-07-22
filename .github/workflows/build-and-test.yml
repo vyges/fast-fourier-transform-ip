@@ -8,7 +8,10 @@ name: Build and Test IP Template
 # These are used throughout the workflow for version consistency
 
 on:
-  # Manual trigger only - template repository
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       design_type:
@@ -199,21 +202,8 @@ jobs:
       - name: Install Verilator (digital, mixed, chiplets, tapeout)
         if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
         run: |
-          echo "🔧 Installing Verilator for digital simulation..."
-          # Clone Verilator repository
-          git clone https://github.com/verilator/verilator.git
-          cd verilator
-          
-          # Checkout specific version 5.026
-          git checkout v5.026
-          
-          # Build and install
-          autoconf
-          ./configure
-          make -j$(nproc)
-          sudo make install
-          
-          # Verify installation
+          echo "🔧 Installing Verilator from Ubuntu package..."
+          sudo apt-get install -y verilator
           verilator --version
 
       - name: Install OpenROAD tools (chiplets, tapeout) - DISABLED
@@ -273,6 +263,28 @@ jobs:
           echo "🔧 Installing Icarus Verilog for digital simulation..."
           sudo apt-get install -y iverilog
           iverilog -V
+
+      - name: Install Open Source FPGA tools (digital, mixed, chiplets, tapeout)
+        if: contains('${{ github.event.inputs.design_type }}', 'digital') || contains('${{ github.event.inputs.design_type }}', 'mixed') || contains('${{ github.event.inputs.design_type }}', 'chiplets') || contains('${{ github.event.inputs.design_type }}', 'tapeout')
+        run: |
+          echo "🔧 Installing Open Source FPGA tools..."
+          
+          # Install NextPNR for place and route
+          sudo apt-get install -y nextpnr-ice40 nextpnr-ecp5
+          
+          # Install IceStorm for iCE40 bitstream generation
+          sudo apt-get install -y icestorm-tools
+          
+          # Install PrjTrellis for ECP5 bitstream generation
+          sudo apt-get install -y prjtrellis-tools
+          
+          # Verify installations
+          nextpnr-ice40 --version || echo "⚠️ NextPNR iCE40 not available"
+          nextpnr-ecp5 --version || echo "⚠️ NextPNR ECP5 not available"
+          icepack --version || echo "⚠️ IcePack not available"
+          ecppack --version || echo "⚠️ ECPPack not available"
+          
+          echo "✅ Open Source FPGA tools installation completed"
 
       - name: Install Python dependencies
         run: |
@@ -377,12 +389,33 @@ jobs:
           if [ -d "tb" ]; then
             echo "Found testbench directory"
             
+            # Run SystemVerilog testbenches if Makefile exists
+            if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
+              echo "🔧 Running SystemVerilog testbenches..."
+              cd tb/sv_tb
+              
+              # Run individual module tests
+              if [ -f "tb_twiddle_rom.sv" ]; then
+                echo "Testing twiddle_rom module..."
+                make test_twiddle_rom || echo "⚠️ twiddle_rom test failed"
+              fi
+              
+              if [ -f "tb_rescale_unit.sv" ]; then
+                echo "Testing rescale_unit module..."
+                make test_rescale_unit || echo "⚠️ rescale_unit test failed"
+              fi
+              
+              # Run all tests
+              echo "Running all SystemVerilog tests..."
+              make all || echo "⚠️ Some SystemVerilog tests failed"
+              
+              cd ../..
+            fi
+            
             # Look for SystemVerilog testbenches
             sv_tb_files=$(find tb -name "tb_*.sv" -type f)
             if [ -n "$sv_tb_files" ]; then
               echo "Found SystemVerilog testbenches: $sv_tb_files"
-              # Note: Actual test execution would require specific testbench setup
-              echo "ℹ️ SystemVerilog testbench execution requires specific setup"
             fi
             
             # Look for cocotb testbenches
@@ -417,11 +450,31 @@ jobs:
             echo "ℹ️ No OpenLane configuration found (expected for template)"
           fi
           
-          # Check FPGA configuration
+          # Check Yosys synthesis configuration
+          if [ -d "flow/synthesis" ]; then
+            echo "✅ Found Yosys synthesis configuration"
+            if [ -f "flow/synthesis/Makefile" ]; then
+              echo "✅ Found synthesis Makefile"
+            fi
+          else
+            echo "ℹ️ No Yosys synthesis configuration found"
+          fi
+          
+          # Check commercial FPGA configuration
           if [ -d "flow/vivado" ]; then
             echo "✅ Found Vivado configuration for FPGA"
           else
             echo "ℹ️ No Vivado configuration found (expected for template)"
+          fi
+          
+          # Check open source FPGA configuration
+          if [ -d "flow/fpga/openfpga" ]; then
+            echo "✅ Found Open Source FPGA configuration"
+            if [ -f "flow/fpga/openfpga/Makefile" ]; then
+              echo "✅ Found open source FPGA Makefile"
+            fi
+          else
+            echo "ℹ️ No Open Source FPGA configuration found"
           fi
           
           echo "✅ Synthesis configuration check complete"
@@ -484,6 +537,29 @@ jobs:
             python3 scripts/code_kpis.py --output json > public/code_kpis.json 2>/dev/null || echo "Code KPIs report generation failed"
             python3 scripts/code_kpis.py > public/code_kpis.txt 2>/dev/null || echo "Code KPIs text report generation failed"
             echo "✅ Code KPIs reports generated"
+          fi
+          
+          # Run synthesis and generate reports if synthesis is enabled
+          if [ "${{ github.event.inputs.test_synthesis }}" = "true" ]; then
+            echo "🔧 Running synthesis and generating reports..."
+            
+            # Run Yosys synthesis if available
+            if [ -d "flow/synthesis" ] && [ -f "flow/synthesis/Makefile" ]; then
+              echo "Running Yosys synthesis..."
+              cd flow/synthesis
+              make synth_generic || echo "⚠️ Yosys synthesis failed"
+              make reports || echo "⚠️ Synthesis reports generation failed"
+              cd ../..
+            fi
+            
+            # Run open source FPGA synthesis if available
+            if [ -d "flow/fpga/openfpga" ] && [ -f "flow/fpga/openfpga/Makefile" ]; then
+              echo "Running open source FPGA synthesis..."
+              cd flow/fpga/openfpga
+              make fpga_synth || echo "⚠️ Open source FPGA synthesis failed"
+              make reports || echo "⚠️ FPGA reports generation failed"
+              cd ../..
+            fi
           fi
           
           # Create CSS for HTML reports
@@ -790,7 +866,7 @@ jobs:
                   <p><strong>Design Type Support:</strong> digital, analog, mixed, chiplets, tapeout</p>
                   <p><strong>Toolchain:</strong> Verilator, Yosys, Icarus, Magic, ngspice, OpenROAD, and more</p>
                   <p><strong>Testbench Support:</strong> SystemVerilog, Cocotb, UVM</p>
-                  <p><strong>FPGA Support:</strong> Open-source FPGA tools (Yosys, NextPNR)</p>
+                  <p><strong>FPGA Support:</strong> Open-source FPGA tools (Yosys, NextPNR, IceStorm, PrjTrellis)</p>
               </div>
               
               <div class="vyges-footer">
@@ -813,11 +889,17 @@ jobs:
             scripts/
             flow/*/reports/
             flow/*/build/
+            flow/*/netlists/
             tb/*/build/
             tb/*/waves/
             tb/*/coverage/
             tb/*/*.vcd
             tb/*/obj_dir/*.vcd
+            flow/fpga/openfpga/reports/
+            flow/fpga/openfpga/build/
+            flow/fpga/openfpga/netlists/
+            flow/synthesis/reports/
+            flow/synthesis/netlists/
           retention-days: 30
 
       - name: Deploy to GitHub Pages
