@@ -907,22 +907,19 @@ jobs:
         run: |
           echo "🚀 Deploying template reports to GitHub Pages..."
           
-          # Configure git for deployment with proper authentication
+          # Configure git for deployment
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Create a clean working directory for deployment
-          echo "Setting up clean deployment environment..."
-          
           # Check if gh-pages branch exists
           if git ls-remote --heads origin gh-pages | grep gh-pages; then
-            echo "gh-pages branch exists, creating clean checkout..."
+            echo "gh-pages branch exists, updating..."
             # Create a temporary directory for deployment
             mkdir -p /tmp/gh-pages-deploy
             cd /tmp/gh-pages-deploy
             
-            # Clone the gh-pages branch (shallow clone for speed)
-            git clone --branch gh-pages --single-branch --depth=1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
+            # Clone the gh-pages branch
+            git clone --branch gh-pages --single-branch --depth=1 https://github.com/${{ github.repository }}.git .
             
             # Remove all existing files
             git rm -rf . || true
@@ -944,7 +941,7 @@ jobs:
             
             # Initialize new repository
             git init
-            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            git remote add origin https://github.com/${{ github.repository }}.git
             
             # Copy files from the original workspace
             cp -r ${{ github.workspace }}/public/* .
