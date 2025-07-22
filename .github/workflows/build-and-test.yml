@@ -483,15 +483,15 @@ jobs:
             cat > process_waveform_template.py << 'PYEOF'
           import os
           import sys
-          from datetime import datetime
-          
+          from datetime import datetime, timezone # Use timezone.utc for compatibility
+
           # Read template
           with open('public/waveforms_template.html', 'r') as f:
               template = f.read()
           
           # Replace basic variables
           template = template.replace('{{IP_NAME}}', 'FFT IP')
-          template = template.replace('{{GENERATED_DATE}}', datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S UTC'))
+          template = template.replace('{{GENERATED_DATE}}', datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')) # Fixed compatibility
           template = template.replace('{{RUN_ID}}', os.environ.get('GITHUB_RUN_ID', 'unknown'))
           
           # Generate VCD files table rows

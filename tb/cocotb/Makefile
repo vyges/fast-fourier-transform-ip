@@ -26,8 +26,8 @@ ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
     SIM_FLAGS = --cc --exe --build --trace --coverage
     SIM_FILES = $(RTL_DIR)/*.sv
-    SIM_TARGET = obj_dir/V$(TOP_MODULE)
-    RUN_CMD = $(SIM_TARGET)
+    SIM_TARGET = V$(TOP_MODULE)
+    RUN_CMD = $(WORK_DIR)/obj_dir/$(SIM_TARGET)
     COCOTB_HDL_TIMEPRECISION = 1ps
     COCOTB_HDL_TIMEUNIT = 1ns
 else ifeq ($(SIMULATOR),icarus)
@@ -85,7 +85,8 @@ compile:
 	@echo "Compiling FFT design with $(SIMULATOR)..."
 	@mkdir -p $(WORK_DIR)
 ifeq ($(SIMULATOR),verilator)
-	$(SIM_CMD) $(SIM_FLAGS) --top-module $(TOP_MODULE) $(SIM_FILES) -o $(SIM_TARGET)
+	@mkdir -p $(WORK_DIR)
+	cd $(WORK_DIR) && $(SIM_CMD) $(SIM_FLAGS) --top-module $(TOP_MODULE) ../$(RTL_DIR)/*.sv -o $(SIM_TARGET)
 else ifeq ($(SIMULATOR),icarus)
 	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES)
 else ifeq ($(SIMULATOR),vcs)
