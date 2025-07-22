@@ -240,6 +240,10 @@ public/*.txt
 public/*.md
 gh-pages/
 
+# Keep template files
+!public/index_template.html
+!public/report-style.css
+
 # =============================================================================
 # Tool-specific Artifacts
 # =============================================================================
