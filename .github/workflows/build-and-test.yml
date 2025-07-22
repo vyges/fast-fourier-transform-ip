@@ -906,6 +906,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           echo "🚀 Deploying template reports to GitHub Pages..."
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Workspace: ${{ github.workspace }}"
           
           # Configure git for deployment
           git config --global user.name "github-actions[bot]"
@@ -918,18 +921,23 @@ jobs:
             mkdir -p /tmp/gh-pages-deploy
             cd /tmp/gh-pages-deploy
             
-            # Clone the gh-pages branch
-            git clone --branch gh-pages --single-branch --depth=1 https://github.com/${{ github.repository }}.git .
+            # Clone the gh-pages branch with authentication
+            git clone --branch gh-pages --single-branch --depth=1 https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git .
             
             # Remove all existing files
             git rm -rf . || true
             
             # Copy new files from the original workspace
+            echo "Copying files from ${{ github.workspace }}/public/ to deployment directory..."
+            ls -la ${{ github.workspace }}/public/ || echo "public directory not found"
             cp -r ${{ github.workspace }}/public/* .
             
             # Commit and push
+            echo "Adding files to git..."
             git add .
+            echo "Committing changes..."
             git commit -m "Update template reports - $(date -u)" || echo "No changes to commit"
+            echo "Pushing to gh-pages branch..."
             git push origin gh-pages
             
             echo "✅ GitHub Pages deployment complete!"
@@ -941,15 +949,21 @@ jobs:
             
             # Initialize new repository
             git init
-            git remote add origin https://github.com/${{ github.repository }}.git
+            git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
             
             # Copy files from the original workspace
+            echo "Copying files from ${{ github.workspace }}/public/ to deployment directory..."
+            ls -la ${{ github.workspace }}/public/ || echo "public directory not found"
             cp -r ${{ github.workspace }}/public/* .
             
             # Create and push gh-pages branch
+            echo "Adding files to git..."
             git add .
+            echo "Committing initial files..."
             git commit -m "Initial template reports - $(date -u)"
+            echo "Creating gh-pages branch..."
             git branch -M gh-pages
+            echo "Pushing to gh-pages branch..."
             git push -u origin gh-pages
             
             echo "✅ GitHub Pages deployment complete!"
