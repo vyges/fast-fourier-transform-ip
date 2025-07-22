@@ -54,7 +54,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     env:
