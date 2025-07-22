@@ -1,0 +1,424 @@
+{
+  "project_info": {
+    "project_name": "fast-fourier-transform-ip",
+    "analysis_date": "2025-07-22T04:17:20.059578",
+    "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
+    "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
+    "git_status": "dirty"
+  },
+  "file_structure": {
+    "total_files": 86,
+    "total_directories": 37,
+    "file_types": {
+      ".md": 24,
+      ".json": 5,
+      ".py": 6,
+      "no_extension": 33,
+      ".sv": 14,
+      ".tcl": 3,
+      ".pcf": 1
+    },
+    "directory_structure": {
+      "root": {
+        "files": [
+          "test_harness_report.md",
+          ".copilot-chat-context.md",
+          "vyges-metadata.template.json",
+          "generate_test_harness_report.py",
+          "install_tools.md",
+          ".vyges-ai-context.json",
+          "Developer_Guide.md",
+          "README.md",
+          "Makefile",
+          "NOTICE",
+          "LICENSE",
+          ".cursorrules",
+          ".gitignore",
+          "vyges-metadata.json"
+        ],
+        "subdirectories": [
+          "analog",
+          "docs",
+          "test",
+          "layout",
+          ".github",
+          "public",
+          "rtl",
+          "flow",
+          "simulation",
+          ".git",
+          "integration",
+          "scripts",
+          "packaging",
+          "tb"
+        ]
+      },
+      "analog": {
+        "files": [
+          "README.md"
+        ],
+        "subdirectories": [
+          "gds",
+          "macros",
+          "xschem",
+          "lef",
+          "netlist",
+          "magic"
+        ]
+      },
+      "analog/gds": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "analog/macros": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "analog/xschem": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "analog/lef": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "analog/netlist": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "analog/magic": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "docs": {
+        "files": [
+          "waveforms.md",
+          "design_specification.md",
+          "api_reference.md",
+          "architecture.md",
+          "user_guide.md"
+        ],
+        "subdirectories": [
+          "images"
+        ]
+      },
+      "docs/images": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "test": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "layout": {
+        "files": [
+          "README.md"
+        ],
+        "subdirectories": [
+          "constraints",
+          "lvs",
+          "drc"
+        ]
+      },
+      "layout/constraints": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "layout/lvs": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "layout/drc": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "public": {
+        "files": [
+          "test_harness_report.md",
+          "code_kpis.json"
+        ],
+        "subdirectories": []
+      },
+      "rtl": {
+        "files": [
+          "fft_top.sv",
+          "twiddle_rom.sv",
+          "rescale_unit.sv",
+          "twiddle_rom_synth.sv",
+          "fft_engine.sv",
+          ".gitkeep",
+          "scale_factor_tracker.sv",
+          "fft_control.sv",
+          "memory_interface.sv"
+        ],
+        "subdirectories": []
+      },
+      "flow": {
+        "files": [
+          "synth_report.md"
+        ],
+        "subdirectories": [
+          "verilator",
+          "openlane",
+          "fpga",
+          "vivado",
+          "synthesis",
+          "openlane2"
+        ]
+      },
+      "flow/verilator": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "flow/openlane": {
+        "files": [
+          "README.md",
+          "Makefile",
+          "config.template.json",
+          "configuration.md",
+          "config.tcl"
+        ],
+        "subdirectories": []
+      },
+      "flow/fpga": {
+        "files": [
+          "Makefile"
+        ],
+        "subdirectories": [
+          "openfpga"
+        ]
+      },
+      "flow/fpga/openfpga": {
+        "files": [
+          "README.md",
+          "Makefile",
+          "FPGA_FLOW_SUMMARY.md"
+        ],
+        "subdirectories": [
+          "constraints"
+        ]
+      },
+      "flow/fpga/openfpga/constraints": {
+        "files": [
+          "hx8k-ct256.pcf"
+        ],
+        "subdirectories": []
+      },
+      "flow/vivado": {
+        "files": [
+          "README.md",
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "flow/synthesis": {
+        "files": [
+          "synthesis_report.md",
+          "yosys_synth_generic.tcl",
+          "Makefile",
+          "yosys_synth.tcl"
+        ],
+        "subdirectories": []
+      },
+      "flow/openlane2": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "simulation": {
+        "files": [
+          "README.md"
+        ],
+        "subdirectories": [
+          "waveforms",
+          "configs"
+        ]
+      },
+      "simulation/waveforms": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "simulation/configs": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "integration": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "scripts": {
+        "files": [
+          "generate_test_harness_report.py",
+          "README.md",
+          "code_kpis.py"
+        ],
+        "subdirectories": []
+      },
+      "packaging": {
+        "files": [
+          "README.md"
+        ],
+        "subdirectories": []
+      },
+      "tb": {
+        "files": [
+          "README.md",
+          "Makefile"
+        ],
+        "subdirectories": [
+          "uvm_tb",
+          "sv_tb",
+          "cocotb"
+        ]
+      },
+      "tb/uvm_tb": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "tb/sv_tb": {
+        "files": [
+          "tb_twiddle_rom.sv",
+          "tb_minimal.sv",
+          "Makefile",
+          ".gitkeep",
+          "tb_example.sv",
+          "tb_simple.sv",
+          "tb_fft_top.sv",
+          "tb_rescale_unit.sv"
+        ],
+        "subdirectories": []
+      },
+      "tb/cocotb": {
+        "files": [
+          "Makefile",
+          ".gitkeep",
+          "test_fft_basic.py",
+          "test_example.py",
+          "test_fft_rescaling.py"
+        ],
+        "subdirectories": []
+      }
+    }
+  },
+  "code_metrics": {
+    "rtl_files": 14,
+    "rtl_lines": 2531,
+    "rtl_modules": 30,
+    "testbench_files": 9,
+    "testbench_lines": 1876,
+    "constraint_files": 4,
+    "constraint_lines": 524,
+    "script_files": 2,
+    "script_lines": 1282
+  },
+  "documentation_metrics": {
+    "documentation_files": 8,
+    "documentation_lines": 5715,
+    "readme_exists": true,
+    "developer_guide_exists": true,
+    "architecture_docs": 1,
+    "api_docs": 0,
+    "tutorial_docs": 0
+  },
+  "test_metrics": {
+    "test_files": 9,
+    "test_lines": 1876,
+    "test_types": {
+      "systemverilog": 6,
+      "cocotb": 3,
+      "uvm": 0,
+      "formal": 0
+    },
+    "coverage_files": 0,
+    "test_vectors": 0
+  },
+  "quality_metrics": {
+    "linting_clean": false,
+    "synthesis_clean": false,
+    "simulation_passing": false,
+    "coverage_goals_met": false,
+    "documentation_complete": true,
+    "metadata_complete": true
+  },
+  "metadata_analysis": {
+    "metadata_exists": true,
+    "required_fields": {
+      "name": true,
+      "version": true,
+      "description": true,
+      "license": true,
+      "target": true,
+      "design_type": true,
+      "maturity": true
+    },
+    "optional_fields": {
+      "parameters": true,
+      "interfaces": true,
+      "files": false,
+      "test": true,
+      "flows": true,
+      "meta": false,
+      "created": true,
+      "updated": true
+    },
+    "validation_status": "valid",
+    "quality_score": 87.66666666666666,
+    "catalog_readiness": "ready",
+    "field_completeness": 86.66666666666667,
+    "interface_quality": 133.33333333333331,
+    "test_coverage_metadata": 100,
+    "flow_configuration": 100,
+    "documentation_metadata": 0,
+    "ai_generation_ready": true,
+    "issues": [],
+    "recommendations": []
+  },
+  "summary": {
+    "overall_score": 88.76666666666667,
+    "strengths": [
+      "RTL implementation present",
+      "README documentation exists",
+      "Test coverage implemented",
+      "High-quality Vyges metadata",
+      "Catalog-ready metadata",
+      "AI generation ready"
+    ],
+    "areas_for_improvement": [],
+    "recommendations": [
+      "Consider advanced features like formal verification"
+    ]
+  }
+}
