@@ -1,24 +1,28 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T14:59:50.742018",
+    "analysis_date": "2025-07-22T15:30:28.475611",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 90,
-    "total_directories": 37,
+    "total_files": 111,
+    "total_directories": 42,
     "file_types": {
       ".md": 24,
-      ".json": 5,
+      ".json": 6,
       ".py": 7,
       "no_extension": 33,
       ".html": 2,
       ".css": 1,
       ".sv": 14,
       ".tcl": 3,
-      ".pcf": 1
+      ".pcf": 1,
+      ".v": 1,
+      ".cpp": 13,
+      ".h": 4,
+      ".mk": 2
     },
     "directory_structure": {
       "root": {
@@ -224,8 +228,18 @@
           "FPGA_FLOW_SUMMARY.md"
         ],
         "subdirectories": [
+          "build",
+          "netlists",
           "constraints"
         ]
+      },
+      "flow/fpga/openfpga/build": {
+        "files": [],
+        "subdirectories": []
+      },
+      "flow/fpga/openfpga/netlists": {
+        "files": [],
+        "subdirectories": []
       },
       "flow/fpga/openfpga/constraints": {
         "files": [
@@ -246,6 +260,15 @@
           "yosys_synth_generic.tcl",
           "Makefile",
           "yosys_synth.tcl"
+        ],
+        "subdirectories": [
+          "netlists"
+        ]
+      },
+      "flow/synthesis/netlists": {
+        "files": [
+          "fft_top_synth_generic.json",
+          "fft_top_synth_generic.v"
         ],
         "subdirectories": []
       },
@@ -325,6 +348,37 @@
           "tb_fft_top.sv",
           "tb_rescale_unit.sv"
         ],
+        "subdirectories": [
+          "obj_dir",
+          "work"
+        ]
+      },
+      "tb/sv_tb/obj_dir": {
+        "files": [
+          "Vfft_control___024root__DepSet_hd87fcd19__2__Slow.cpp",
+          "Vfft_control__Trace__0__Slow.cpp",
+          "Vfft_control__pch.h",
+          "Vfft_control___024root.h",
+          "Vfft_control___024root__Slow.cpp",
+          "Vfft_control.mk",
+          "Vfft_control___024root__DepSet_hd87fcd19__0__Slow.cpp",
+          "Vfft_control.h",
+          "Vfft_control___024root__DepSet_hd87fcd19__1.cpp",
+          "Vfft_control_classes.mk",
+          "Vfft_control___024root__DepSet_hd87fcd19__0.cpp",
+          "Vfft_control.cpp",
+          "Vfft_control__Syms.cpp",
+          "Vfft_control___024root__DepSet_hc4d89078__0.cpp",
+          "Vfft_control___024root__DepSet_hc4d89078__0__Slow.cpp",
+          "Vfft_control__Syms.h",
+          "Vfft_control___024root__DepSet_hd87fcd19__1__Slow.cpp",
+          "Vfft_control__TraceDecls__0__Slow.cpp",
+          "Vfft_control__Trace__0.cpp"
+        ],
+        "subdirectories": []
+      },
+      "tb/sv_tb/work": {
+        "files": [],
         "subdirectories": []
       },
       "tb/cocotb": {
@@ -340,15 +394,15 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 14,
-    "rtl_lines": 2531,
-    "rtl_modules": 30,
+    "rtl_files": 15,
+    "rtl_lines": 8945,
+    "rtl_modules": 34,
     "testbench_files": 9,
     "testbench_lines": 1876,
     "constraint_files": 4,
     "constraint_lines": 524,
     "script_files": 3,
-    "script_lines": 1559
+    "script_lines": 1563
   },
   "documentation_metrics": {
     "documentation_files": 8,
@@ -373,7 +427,7 @@
   },
   "quality_metrics": {
     "linting_clean": false,
-    "synthesis_clean": false,
+    "synthesis_clean": true,
     "simulation_passing": false,
     "coverage_goals_met": false,
     "documentation_complete": true,
