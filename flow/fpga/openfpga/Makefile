@@ -152,6 +152,13 @@ reports: $(REPORTS_DIR)
 	@echo "FPGA Family: $(FPGA_FAMILY)" >> $(REPORTS_DIR)/synthesis_report.txt
 	@echo "Top Module: $(TOP_MODULE)" >> $(REPORTS_DIR)/synthesis_report.txt
 	@echo "✅ Synthesis reports generated"
+	# Also generate FPGA_FLOW_SUMMARY.md for GitHub Pages
+	@echo "# FPGA Flow Summary for $(TOP_MODULE)" > $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md
+	@echo "Generated: $(shell date)" >> $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md
+	@echo "FPGA Family: $(FPGA_FAMILY)" >> $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md
+	@echo "Top Module: $(TOP_MODULE)" >> $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md
+	@echo "See detailed synthesis and implementation reports in this directory." >> $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md
+	@cp $(REPORTS_DIR)/FPGA_FLOW_SUMMARY.md FPGA_FLOW_SUMMARY.md
 
 # Resource utilization analysis
 resources: $(REPORTS_DIR)

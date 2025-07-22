@@ -383,6 +383,7 @@ jobs:
       - name: Run simulation tests
         if: ${{ github.event.inputs.test_simulation == 'true' }}
         run: |
+          set -e
           echo "🧪 Running simulation tests..."
           
           # Check for testbench files
@@ -391,7 +392,7 @@ jobs:
             
             # Run SystemVerilog testbenches if Makefile exists
             if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
-              echo "🔧 Running SystemVerilog testbenches..."
+              echo "🔧 Running SystemVerilog testbenches with Verilator..."
               cd tb/sv_tb
               
               # Run individual module tests
@@ -516,6 +517,7 @@ jobs:
 
       - name: Generate comprehensive reports
         run: |
+          set -e
           echo "📊 Generating comprehensive reports..."
           
           # Create public directory for reports
@@ -528,6 +530,10 @@ jobs:
             if [ -f "test_harness_report.md" ]; then
               cp test_harness_report.md public/
               echo "✅ Test harness report generated and copied to public directory"
+              echo "Pandoc version: $(pandoc --version 2>/dev/null || echo 'not found')"
+              echo "Checking for test_harness_report.md: $(ls -l public/test_harness_report.md)"
+              pandoc public/test_harness_report.md -o public/test_harness_report.html --css=public/report-style.css --standalone || { echo '❌ Pandoc failed for test_harness_report.md'; exit 1; }
+              echo "✅ Converted test harness report to HTML with pandoc"
             fi
           fi
           
@@ -542,7 +548,6 @@ jobs:
           # Run synthesis and generate reports if synthesis is enabled
           if [ "${{ github.event.inputs.test_synthesis }}" = "true" ]; then
             echo "🔧 Running synthesis and generating reports..."
-            
             # Run Yosys synthesis if available
             if [ -d "flow/synthesis" ] && [ -f "flow/synthesis/Makefile" ]; then
               echo "Running Yosys synthesis..."
@@ -551,7 +556,6 @@ jobs:
               make reports || echo "⚠️ Synthesis reports generation failed"
               cd ../..
             fi
-            
             # Run open source FPGA synthesis if available
             if [ -d "flow/fpga/openfpga" ] && [ -f "flow/fpga/openfpga/Makefile" ]; then
               echo "Running open source FPGA synthesis..."
@@ -561,7 +565,13 @@ jobs:
               cd ../..
             fi
           fi
-          
+          # Copy synthesis and FPGA markdown reports to public/
+          if [ -f "flow/synthesis/synthesis_report.md" ]; then
+            cp flow/synthesis/synthesis_report.md public/
+          fi
+          if [ -f "flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md" ]; then
+            cp flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md public/
+          fi
           # Create CSS for HTML reports
           cat > public/report-style.css << 'EOF'
           <style>
@@ -662,175 +672,12 @@ jobs:
           </div>
           EOF
           
-          # Convert test harness report to HTML
-          if [ -f "public/test_harness_report.md" ]; then
-            if command -v pandoc &> /dev/null; then
-              pandoc public/test_harness_report.md -o public/test_harness_report.html --css=public/report-style.css --standalone --metadata title="Vyges IP Template - Test Harness Report" --include-after-body=public/vyges-footer.html
-              echo "✅ Converted test harness report to HTML with pandoc"
-            else
-              echo "⚠️ Pandoc not found, creating basic HTML report..."
-              cat > public/test_harness_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Vyges IP Template - Test Harness Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <h1>Vyges IP Template - Test Harness Report</h1>
-              <p><em>Generated: $(date -u)</em></p>
-              <div class="highlight">
-                  <p><strong>Note:</strong> This is a basic HTML report generated without pandoc. For full formatting, install pandoc.</p>
-              </div>
-              <pre><code>$(cat public/test_harness_report.md)</code></pre>
-          </body>
-          </html>
-          EOF
-              echo "✅ Created basic HTML report (pandoc not available)"
-            fi
-          fi
-          
           echo "✅ Comprehensive report generation complete"
 
       - name: Create GitHub Pages index
         run: |
+          set -e
           echo "🌐 Creating GitHub Pages index..."
-          
-          # Generate comprehensive reports
-          echo "📊 Generating comprehensive reports..."
-          
-          # Generate test harness report
-          if [ -f "scripts/generate_test_harness_report.py" ]; then
-            echo "📋 Generating test harness report..."
-            python3 scripts/generate_test_harness_report.py
-          fi
-          
-          # Generate code KPIs report
-          if [ -f "scripts/code_kpis.py" ]; then
-            echo "📈 Generating code KPIs report..."
-            python3 scripts/code_kpis.py --output json > public/code_kpis.json 2>/dev/null || echo "Code KPIs JSON report generation failed"
-            python3 scripts/code_kpis.py > public/code_kpis.txt 2>/dev/null || echo "Code KPIs text report generation failed"
-          fi
-          
-          # Convert test harness report to HTML
-          if command -v pandoc &> /dev/null && [ -f "test_harness_report.md" ]; then
-            echo "🔄 Converting test harness report to HTML..."
-            pandoc test_harness_report.md -o public/test_harness_report.html --standalone --css=report-style.css
-          fi
-          
-          # Copy test harness report markdown
-          if [ -f "test_harness_report.md" ]; then
-            cp test_harness_report.md public/
-          fi
-          
-          # Generate synthesis and FPGA reports
-          echo "📊 Generating synthesis and FPGA reports..."
-          
-          # Generate synthesis report
-          if [ -f "flow/synthesis/synthesis_report.md" ]; then
-            if command -v pandoc &> /dev/null; then
-              pandoc flow/synthesis/synthesis_report.md -o public/synthesis_report.html --css public/report-style.css --standalone
-              echo "✅ Generated synthesis report HTML"
-            else
-              echo "⚠️ Pandoc not found, creating basic synthesis report"
-              cat > public/synthesis_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>FFT IP - Synthesis Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <div class="container">
-                  <h1>FFT IP - Synthesis Report</h1>
-                  <p><em>Generated: $(date -u)</em></p>
-                  <p>Synthesis report not available. Please run synthesis first.</p>
-              </div>
-          </body>
-          </html>
-          EOF
-            fi
-          else
-            echo "⚠️ Synthesis report not found, creating basic report"
-            cat > public/synthesis_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>FFT IP - Synthesis Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <div class="container">
-                  <h1>FFT IP - Synthesis Report</h1>
-                  <p><em>Generated: $(date -u)</em></p>
-                  <p>Synthesis report not available. Please run synthesis first.</p>
-              </div>
-          </body>
-          </html>
-          EOF
-          fi
-          
-          # Generate FPGA report
-          if [ -f "flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md" ]; then
-            if command -v pandoc &> /dev/null; then
-              pandoc flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md -o public/fpga_report.html --css public/report-style.css --standalone
-              echo "✅ Generated FPGA report HTML"
-            else
-              echo "⚠️ Pandoc not found, creating basic FPGA report"
-              cat > public/fpga_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>FFT IP - FPGA Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <div class="container">
-                  <h1>FFT IP - FPGA Report</h1>
-                  <p><em>Generated: $(date -u)</em></p>
-                  <p>FPGA report not available. Please run FPGA flow first.</p>
-              </div>
-          </body>
-          </html>
-          EOF
-            fi
-          else
-            echo "⚠️ FPGA report not found, creating basic report"
-            cat > public/fpga_report.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>FFT IP - FPGA Report</title>
-              <link rel="stylesheet" href="report-style.css">
-          </head>
-          <body>
-              <div class="container">
-                  <h1>FFT IP - FPGA Report</h1>
-                  <p><em>Generated: $(date -u)</em></p>
-                  <p>FPGA report not available. Please run FPGA flow first.</p>
-              </div>
-          </body>
-          </html>
-          EOF
-          fi
-          
-          # Use the committed template file for GitHub Pages generation
-          echo "📄 Using committed index template..."
-          # Ensure the template file exists
-          if [ ! -f "public/index_template.html" ]; then
-            echo "❌ Template file not found: public/index_template.html"
-            exit 1
-          fi
           
           # Generate dynamic index.html using Python script
           echo "📄 Generating index.html from template..."
@@ -840,7 +687,6 @@ jobs:
             echo "⚠️ GitHub Pages generator script not found, using basic template"
             cp public/index_template.html public/index.html
           fi
-          
           echo "✅ GitHub Pages index created"
 
       - name: Upload build artifacts
