@@ -515,6 +515,13 @@ jobs:
           echo ""
           echo "Note: This is a template repository. Actual tests require IP-specific implementation."
 
+      # Install Pandoc
+      - name: Install Pandoc
+        run: |
+          echo "🔧 Installing Pandoc for markdown to HTML conversion..."
+          sudo apt-get install -y pandoc
+          pandoc --version
+
       - name: Generate comprehensive reports
         run: |
           set -e
