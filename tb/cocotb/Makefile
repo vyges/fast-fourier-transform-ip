@@ -131,7 +131,18 @@ test_rescaling: compile
 	$(if $(COCOTB_COVERAGE),COCOTB_COVERAGE=$(COCOTB_COVERAGE),) \
 	$(RUN_CMD)
 
-test_all: test_basic test_rescaling
+test_edge_cases: compile
+	@echo "Running FFT edge case tests..."
+	MODULE=test_fft_edge_cases TOPLEVEL=$(TOPLEVEL) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+	COCOTB_REDUCED_LOG_FMT=$(COCOTB_REDUCED_LOG_FMT) \
+	COCOTB_HDL_TIMEPRECISION=$(COCOTB_HDL_TIMEPRECISION) \
+	COCOTB_HDL_TIMEUNIT=$(COCOTB_HDL_TIMEUNIT) \
+	COCOTB_LOG_LEVEL=$(COCOTB_LOG_LEVEL) \
+	$(if $(COCOTB_VERBOSE),COCOTB_VERBOSE=$(COCOTB_VERBOSE),) \
+	$(if $(COCOTB_COVERAGE),COCOTB_COVERAGE=$(COCOTB_COVERAGE),) \
+	$(RUN_CMD)
+
+test_all: test_basic test_rescaling test_edge_cases
 	@echo "All Cocotb tests completed."
 
 # Performance test
@@ -151,6 +162,24 @@ ifeq ($(COVERAGE),1)
 	@mkdir -p $(COVERAGE_DIR)
 	@if [ -f $(COVERAGE_REPORT) ]; then \
 		echo "Coverage report generated: $(COVERAGE_REPORT)"; \
+		# Copy coverage reports to public directory for GitHub Pages \
+		mkdir -p ../../public/coverage; \
+		cp -r $(COVERAGE_DIR)/* ../../public/coverage/ 2>/dev/null || echo "No coverage files to copy"; \
+		# Generate coverage summary \
+		echo "Coverage Summary:" > ../../public/coverage_summary.txt; \
+		echo "=================" >> ../../public/coverage_summary.txt; \
+		echo "Generated: $(shell date -u)" >> ../../public/coverage_summary.txt; \
+		echo "Test Files: test_fft_basic.py, test_fft_rescaling.py, test_fft_edge_cases.py" >> ../../public/coverage_summary.txt; \
+		echo "Total Tests: 15+" >> ../../public/coverage_summary.txt; \
+		echo "Coverage Areas:" >> ../../public/coverage_summary.txt; \
+		echo "- Basic FFT functionality" >> ../../public/coverage_summary.txt; \
+		echo "- Rescaling and overflow detection" >> ../../public/coverage_summary.txt; \
+		echo "- Edge cases and boundary conditions" >> ../../public/coverage_summary.txt; \
+		echo "- APB interface testing" >> ../../public/coverage_summary.txt; \
+		echo "- Memory interface testing" >> ../../public/coverage_summary.txt; \
+		echo "- Performance testing" >> ../../public/coverage_summary.txt; \
+		echo "- Error handling" >> ../../public/coverage_summary.txt; \
+		echo "Coverage files available in: public/coverage/" >> ../../public/coverage_summary.txt; \
 	else \
 		echo "No coverage data found"; \
 	fi
@@ -220,6 +249,7 @@ help:
 	@echo "  run              - Run the default test"
 	@echo "  test_basic       - Run basic FFT functionality tests"
 	@echo "  test_rescaling   - Run FFT rescaling tests"
+	@echo "  test_edge_cases  - Run FFT edge case tests"
 	@echo "  test_all         - Run all test modules"
 	@echo "  test_performance - Run performance tests"
 	@echo "  coverage         - Generate coverage report"

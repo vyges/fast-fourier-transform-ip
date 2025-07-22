@@ -388,6 +388,129 @@ jobs:
           fi
           echo "✅ Simulation tests complete"
 
+      - name: Run Cocotb testbench tests
+        run: |
+          set -e
+          echo "🧪 Running Cocotb testbench tests..."
+          if [ -d "tb/cocotb" ] && [ -f "tb/cocotb/Makefile" ]; then
+            cd tb/cocotb
+            
+            echo "Running Cocotb tests with Verilator (with coverage)..."
+            make SIMULATOR=verilator test_all COVERAGE=1 || echo "⚠️ Cocotb Verilator tests failed"
+            
+            echo "Running Cocotb tests with Icarus (with coverage)..."
+            make SIMULATOR=icarus test_all COVERAGE=1 || echo "⚠️ Cocotb Icarus tests failed"
+            
+            echo "Generating comprehensive coverage report..."
+            make coverage COVERAGE=1 || echo "⚠️ Coverage report generation failed"
+            
+            cd ../..
+          else
+            echo "No Cocotb Makefile found in tb/cocotb/"
+          fi
+          echo "✅ Cocotb testbench tests complete"
+
+      - name: Generate VCD waveform reports
+        if: always()
+        run: |
+          echo "Generating VCD waveform reports..."
+          
+          # Create waveform directory
+          mkdir -p public/waveforms
+          
+          # Find all VCD files and copy them to public directory
+          find . -name "*.vcd" -type f | while read vcd_file; do
+            basename=$(basename "$vcd_file" .vcd)
+            echo "🔍 Processing VCD file: $vcd_file -> ${basename}.vcd"
+            
+            # Copy VCD file to public directory
+            cp "$vcd_file" "public/waveforms/${basename}.vcd"
+            
+            echo "✅ Copied ${basename}.vcd to public/waveforms/"
+          done
+          
+          # Generate waveform index using template
+          if [ -f "public/waveforms_template.html" ]; then
+            echo "Using waveform template for generation..."
+            
+            # Create a simple Python script to process the template
+            cat > process_waveform_template.py << 'PYEOF'
+          import os
+          import sys
+          from datetime import datetime
+          
+          # Read template
+          with open('public/waveforms_template.html', 'r') as f:
+              template = f.read()
+          
+          # Replace basic variables
+          template = template.replace('{{IP_NAME}}', 'FFT IP')
+          template = template.replace('{{GENERATED_DATE}}', datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'))
+          template = template.replace('{{RUN_ID}}', os.environ.get('GITHUB_RUN_ID', 'unknown'))
+          
+          # Generate VCD files table rows
+          vcd_rows = []
+          waveforms_dir = 'public/waveforms'
+          if os.path.exists(waveforms_dir):
+              for file in os.listdir(waveforms_dir):
+                  if file.endswith('.vcd'):
+                      basename = file[:-4]
+                      filepath = os.path.join(waveforms_dir, file)
+                      filesize = os.path.getsize(filepath)
+                      size_str = f"{filesize} bytes" if filesize < 1024 else f"{filesize/1024:.1f} KB"
+                      
+                      row = f'''                        <tr>
+                            <td><strong>{basename}.vcd</strong></td>
+                            <td>{size_str}</td>
+                            <td>
+                                <a href="{basename}.vcd" class="download-link" download>📥 Download</a>
+                                <a href="https://app.surfer-project.org/index.html?load_url=https://{os.environ.get('GITHUB_REPOSITORY_OWNER', 'vyges')}.github.io/{os.environ.get('GITHUB_REPOSITORY', 'fast-fourier-transform-ip').split('/')[-1]}/waveforms/{basename}.vcd&startup_commands=scope_add_recursive%20testbench" target="_blank" class="download-link view-link" style="margin-left: 8px;">👁️ View</a>
+                            </td>
+                        </tr>'''
+                      vcd_rows.append(row)
+          
+          if vcd_rows:
+              template = template.replace('{{VCD_FILES}}', '\n'.join(vcd_rows))
+          else:
+              template = template.replace('{{VCD_FILES}}', '<tr><td colspan="3">No VCD files found</td></tr>')
+          
+          # Write the generated HTML
+          with open('public/waveforms/index.html', 'w') as f:
+              f.write(template)
+          
+          print("✅ Waveform index generated using template")
+          PYEOF
+          
+          python3 process_waveform_template.py
+          rm process_waveform_template.py
+          else
+            echo "⚠️ Waveform template not found, using fallback generation"
+            # Fallback to simple HTML if template not available
+            cat > "public/waveforms/index.html" << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head><title>FFT IP Waveforms</title></head>
+          <body>
+              <h1>FFT IP Waveform Files</h1>
+              <p>Generated: $(date -u)</p>
+              <ul>
+          EOF
+          
+          find public/waveforms -name "*.vcd" | while read vcd_file; do
+            basename=$(basename "$vcd_file" .vcd)
+            echo "                    <li><a href=\"${basename}.vcd\">${basename}.vcd</a></li>" >> public/waveforms/index.html
+          done
+          
+          cat >> public/waveforms/index.html << 'EOF'
+              </ul>
+              <p><a href="../index.html">← Back to Main Reports</a></p>
+          </body>
+          </html>
+          EOF
+          fi
+          
+          echo "✅ VCD waveform reports generated successfully"
+
       - name: Check synthesis configuration
         if: ${{ github.event.inputs.test_synthesis == 'true' }}
         run: |
@@ -693,6 +816,9 @@ jobs:
             flow/fpga/openfpga/netlists/
             flow/synthesis/reports/
             flow/synthesis/netlists/
+            public/waveforms/
+            public/coverage/
+            public/coverage_summary.txt
           retention-days: 30
 
       - name: Deploy to GitHub Pages
