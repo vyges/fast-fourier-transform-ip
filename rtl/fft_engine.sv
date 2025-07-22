@@ -62,13 +62,21 @@ module fft_engine #(
     
     // Pipeline stage signals
     logic [5:0]  pipeline_valid;
-    logic [15:0] pipeline_addr_a [5:0];
-    logic [15:0] pipeline_addr_b [5:0];
-    logic [31:0] pipeline_data_a [5:0];
-    logic [31:0] pipeline_data_b [5:0];
-    logic [31:0] pipeline_twiddle [5:0];
-    logic [31:0] pipeline_result_a [5:0];
-    logic [31:0] pipeline_result_b [5:0];
+    
+    // Pipeline address registers (individual instead of arrays)
+    logic [15:0] pipeline_addr_a_0, pipeline_addr_a_1, pipeline_addr_a_2, pipeline_addr_a_3, pipeline_addr_a_4, pipeline_addr_a_5;
+    logic [15:0] pipeline_addr_b_0, pipeline_addr_b_1, pipeline_addr_b_2, pipeline_addr_b_3, pipeline_addr_b_4, pipeline_addr_b_5;
+    
+    // Pipeline data registers (individual instead of arrays)
+    logic [31:0] pipeline_data_a_0, pipeline_data_a_1, pipeline_data_a_2, pipeline_data_a_3, pipeline_data_a_4, pipeline_data_a_5;
+    logic [31:0] pipeline_data_b_0, pipeline_data_b_1, pipeline_data_b_2, pipeline_data_b_3, pipeline_data_b_4, pipeline_data_b_5;
+    
+    // Pipeline twiddle registers (individual instead of arrays)
+    logic [31:0] pipeline_twiddle_0, pipeline_twiddle_1, pipeline_twiddle_2, pipeline_twiddle_3, pipeline_twiddle_4, pipeline_twiddle_5;
+    
+    // Pipeline result registers (individual instead of arrays)
+    logic [31:0] pipeline_result_a_0, pipeline_result_a_1, pipeline_result_a_2, pipeline_result_a_3, pipeline_result_a_4, pipeline_result_a_5;
+    logic [31:0] pipeline_result_b_0, pipeline_result_b_1, pipeline_result_b_2, pipeline_result_b_3, pipeline_result_b_4, pipeline_result_b_5;
     
     // Butterfly operation signals
     logic [15:0] butterfly_real_a, butterfly_imag_a;
@@ -251,7 +259,8 @@ module fft_engine #(
         butterfly_spacing = 1 << stage_counter;
         addr_a = (16'(stage_counter) * 16'(butterfly_spacing)) + 16'(butterfly_counter);
         addr_b = addr_a + 16'(butterfly_spacing);
-        twiddle_addr = (16'(stage_counter) * 16'(butterfly_counter)) % (1 << (fft_length_log2_reg - 1));
+        // Simplified twiddle address calculation to avoid complex modulo
+        twiddle_addr = (16'(stage_counter) * 16'(butterfly_counter)) & ((1 << (fft_length_log2_reg - 1)) - 1);
     end
     
     // Memory address multiplexing (fix driver-driver conflict)
@@ -263,13 +272,13 @@ module fft_engine #(
             mem_addr_i <= addr_a;
         end else if (pipeline_valid[0]) begin
             // Stage 2: Read second data
-            mem_addr_i <= pipeline_addr_b[0];
+            mem_addr_i <= pipeline_addr_b_0;
         end else if (pipeline_valid[1]) begin
             // Stage 3: Read twiddle factors
-            mem_addr_i <= pipeline_addr_a[0] + 16'h1000;  // Twiddle ROM base
+            mem_addr_i <= pipeline_addr_a_0 + 16'h1000;  // Twiddle ROM base
         end else if (pipeline_valid[4]) begin
             // Stage 6: Write results
-            mem_addr_i <= pipeline_addr_a[4];
+            mem_addr_i <= pipeline_addr_a_4;
         end else begin
             mem_addr_i <= 16'h0000;
         end
@@ -291,8 +300,8 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (fft_state == FFT_COMPUTE && mem_ready_o) begin
             pipeline_valid[0] <= 1'b1;
-            pipeline_addr_a[0] <= addr_a;
-            pipeline_addr_b[0] <= addr_b;
+            pipeline_addr_a_0 <= addr_a;
+            pipeline_addr_b_0 <= addr_b;
         end else begin
             pipeline_valid[0] <= 1'b0;
         end
@@ -302,9 +311,9 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[0]) begin
             pipeline_valid[1] <= 1'b1;
-            pipeline_data_a[1] <= mem_data_o;
-            pipeline_addr_a[1] <= pipeline_addr_a[0];
-            pipeline_addr_b[1] <= pipeline_addr_b[0];
+            pipeline_data_a_1 <= mem_data_o;
+            pipeline_addr_a_1 <= pipeline_addr_a_0;
+            pipeline_addr_b_1 <= pipeline_addr_b_0;
         end else begin
             pipeline_valid[1] <= 1'b0;
         end
@@ -314,13 +323,13 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[1]) begin
             pipeline_valid[2] <= 1'b1;
-            pipeline_data_b[2] <= mem_data_o;
-            pipeline_addr_a[2] <= pipeline_addr_a[1];
-            pipeline_addr_b[2] <= pipeline_addr_b[1];
+            pipeline_data_b_2 <= mem_data_o;
+            pipeline_addr_a_2 <= pipeline_addr_a_1;
+            pipeline_addr_b_2 <= pipeline_addr_b_1;
             
             // Complex addition: A + B (fix width issues)
-            butterfly_real_a <= 16'((pipeline_data_a[1] >> 16) & 32'hFFFF);
-            butterfly_imag_a <= 16'(pipeline_data_a[1] & 32'hFFFF);
+            butterfly_real_a <= 16'((pipeline_data_a_1 >> 16) & 32'hFFFF);
+            butterfly_imag_a <= 16'(pipeline_data_a_1 & 32'hFFFF);
             butterfly_real_b <= 16'((mem_data_o >> 16) & 32'hFFFF);
             butterfly_imag_b <= 16'(mem_data_o & 32'hFFFF);
         end else begin
@@ -332,9 +341,9 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[2]) begin
             pipeline_valid[3] <= 1'b1;
-            pipeline_twiddle[3] <= mem_data_o;
-            pipeline_addr_a[3] <= pipeline_addr_a[2];
-            pipeline_addr_b[3] <= pipeline_addr_b[2];
+            pipeline_twiddle_3 <= mem_data_o;
+            pipeline_addr_a_3 <= pipeline_addr_a_2;
+            pipeline_addr_b_3 <= pipeline_addr_b_2;
             
             // Complex addition result
             butterfly_result_real_a <= butterfly_real_a + butterfly_real_b;
@@ -352,12 +361,12 @@ module fft_engine #(
     always_ff @(posedge clk_i) begin
         if (pipeline_valid[3]) begin
             pipeline_valid[4] <= 1'b1;
-            pipeline_addr_a[4] <= pipeline_addr_a[3];
-            pipeline_addr_b[4] <= pipeline_addr_b[3];
+            pipeline_addr_a_4 <= pipeline_addr_a_3;
+            pipeline_addr_b_4 <= pipeline_addr_b_3;
             
             // Extract twiddle factors (fix width issues)
-            butterfly_twiddle_real <= 16'((pipeline_twiddle[3] >> 16) & 32'hFFFF);
-            butterfly_twiddle_imag <= 16'(pipeline_twiddle[3] & 32'hFFFF);
+            butterfly_twiddle_real <= 16'((pipeline_twiddle_3 >> 16) & 32'hFFFF);
+            butterfly_twiddle_imag <= 16'(pipeline_twiddle_3 & 32'hFFFF);
             
             // Complex multiplication: (A-B) * W
             butterfly_result_real_b <= (butterfly_temp_real * butterfly_twiddle_real) - 
