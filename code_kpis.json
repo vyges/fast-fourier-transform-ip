@@ -1,19 +1,22 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T04:17:20.059578",
+    "analysis_date": "2025-07-22T05:05:16.672123",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 86,
+    "total_files": 91,
     "total_directories": 37,
     "file_types": {
       ".md": 24,
       ".json": 5,
-      ".py": 6,
+      ".py": 7,
       "no_extension": 33,
+      ".txt": 1,
+      ".html": 2,
+      ".css": 1,
       ".sv": 14,
       ".tcl": 3,
       ".pcf": 1
@@ -157,7 +160,11 @@
       "public": {
         "files": [
           "test_harness_report.md",
-          "code_kpis.json"
+          "code_kpis.json",
+          "code_kpis.txt",
+          "vyges-footer.html",
+          "report-style.css",
+          "test_harness_report.html"
         ],
         "subdirectories": []
       },
@@ -279,6 +286,7 @@
       },
       "scripts": {
         "files": [
+          "generate_github_pages.py",
           "generate_test_harness_report.py",
           "README.md",
           "code_kpis.py"
@@ -341,8 +349,8 @@
     "testbench_lines": 1876,
     "constraint_files": 4,
     "constraint_lines": 524,
-    "script_files": 2,
-    "script_lines": 1282
+    "script_files": 3,
+    "script_lines": 1559
   },
   "documentation_metrics": {
     "documentation_files": 8,

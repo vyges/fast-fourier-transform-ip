@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>vyges/fast-fourier-transform-ip - Vyges</title>
+    <title>{{IP_NAME}} - Vyges</title>
     <style>
         :root {
             --primary-color: #0366d6;
@@ -242,40 +242,36 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>vyges/fast-fourier-transform-ip</h1>
-            <p>A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p>
+            <h1>{{IP_NAME}}</h1>
+            <p>{{IP_DESCRIPTION}}</p>
         </div>
         
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-number">88.8</div>
+                <div class="stat-number">{{OVERALL_SCORE}}</div>
                 <div class="stat-label">Overall Score</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">16</div>
+                <div class="stat-number">{{RTL_FILES}}</div>
                 <div class="stat-label">RTL Files</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">12,567</div>
+                <div class="stat-number">{{RTL_LINES}}</div>
                 <div class="stat-label">RTL Lines</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">9</div>
+                <div class="stat-number">{{TEST_FILES}}</div>
                 <div class="stat-label">Test Files</div>
             </div>
         </div>
         
         <div class="section">
             <h2>📊 Project Overview</h2>
-            <p>A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p>
+            <p>{{PROJECT_OVERVIEW}}</p>
             
             <h3>Key Features:</h3>
             <ul class="feature-list">
-                <li>High-performance architecture</li>
-<li>Comprehensive test coverage</li>
-<li>Memory-mapped interfaces</li>
-<li>Configurable parameters</li>
-<li>Open-source toolchain support</li>
+                {{KEY_FEATURES}}
             </ul>
         </div>
         
@@ -320,20 +316,14 @@
                 <div class="report-card">
                     <h3>RTL Modules</h3>
                     <ul class="feature-list">
-                        <li>Top-level module</li>
-<li>Core computation engine</li>
-<li>Control and sequencing</li>
-<li>Memory management</li>
+                        {{RTL_MODULES}}
                     </ul>
                 </div>
                 
                 <div class="report-card">
                     <h3>Testbench Coverage</h3>
                     <ul class="feature-list">
-                        <li>SystemVerilog testbenches</li>
-<li>Functional verification</li>
-<li>Performance benchmarking</li>
-<li>Interface testing</li>
+                        {{TESTBENCH_COVERAGE}}
                     </ul>
                 </div>
             </div>
@@ -344,28 +334,28 @@
             <div class="report-grid">
                 <div class="report-card">
                     <h3>Simulation</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Passing</span></p>
-                    <p><strong>Test Cases:</strong> 23/23 passed (100.0% success rate)</p>
-                    <p><strong>Simulators:</strong> verilator, iverilog, modelsim</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-success">{{SIMULATION_STATUS}}</span></p>
+                    <p><strong>Test Cases:</strong> {{PASSED_TESTS}}/{{TOTAL_TESTS}} passed ({{SUCCESS_RATE}}% success rate)</p>
+                    <p><strong>Simulators:</strong> {{SIMULATORS}}</p>
                 </div>
                 
                 <div class="report-card">
                     <h3>Synthesis</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Clean</span></p>
-                    <p><strong>Tools:</strong> yosys, design_compiler, vivado</p>
-                    <p><strong>Technology:</strong> Generic, sky130B</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-success">{{SYNTHESIS_STATUS}}</span></p>
+                    <p><strong>Tools:</strong> {{SYNTHESIS_TOOLS}}</p>
+                    <p><strong>Technology:</strong> {{TECHNOLOGY}}</p>
                 </div>
                 
                 <div class="report-card">
                     <h3>FPGA Flow</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Implemented</span></p>
-                    <p><strong>Families:</strong> xilinx-7, xilinx-ultrascale, intel-cyclone, intel-arria, lattice-ice40, lattice-ecp5</p>
-                    <p><strong>Tools:</strong> Yosys, NextPNR, IceStorm</p>
+                    <p><strong>Status:</strong> <span class="status-badge status-success">{{FPGA_STATUS}}</span></p>
+                    <p><strong>Families:</strong> {{FPGA_FAMILIES}}</p>
+                    <p><strong>Tools:</strong> {{FPGA_TOOLS}}</p>
                 </div>
                 
                 <div class="report-card">
                     <h3>Quality Metrics</h3>
-                    <p><strong>Overall Score:</strong> 88.8/100</p>
+                    <p><strong>Overall Score:</strong> {{OVERALL_SCORE}}/100</p>
                     <p><strong>Catalog Ready:</strong> <span class="status-badge status-success">Yes</span></p>
                     <p><strong>AI Generation Ready:</strong> <span class="status-badge status-success">Yes</span></p>
                 </div>
@@ -374,8 +364,8 @@
         
         <div class="footer">
             <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
-            <p>vyges/fast-fourier-transform-ip - A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p>
-            <p>Generated on: 2025-07-22 05:05:16 UTC | Repository: vyges/fast-fourier-transform-ip | Run ID: 16435153305</p>
+            <p>{{IP_NAME}} - {{IP_DESCRIPTION}}</p>
+            <p>Generated on: {{GENERATED_DATE}} | Repository: {{REPOSITORY}} | Run ID: {{RUN_ID}}</p>
         </div>
     </div>
 </body>
