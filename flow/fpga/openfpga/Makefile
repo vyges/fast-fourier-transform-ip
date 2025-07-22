@@ -179,7 +179,12 @@ fpga_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
 	@echo ""
 	@echo "Step 2: Running full synthesis with simplified memory interface..."
-	./timeout_wrapper.sh 120 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE); write_json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"'
+	# Create a temporary script for the full synthesis
+	@echo '#!/bin/bash' > temp_synth.sh
+	@echo '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE); write_json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"' >> temp_synth.sh
+	@chmod +x temp_synth.sh
+	./timeout_wrapper.sh 120 './temp_synth.sh'
+	@rm -f temp_synth.sh
 	@echo "✅ Generic FPGA synthesis completed"
 
 # =============================================================================
@@ -189,6 +194,7 @@ fpga_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 # Generate synthesis reports
 reports: $(REPORTS_DIR)
 	@echo "📊 Generating synthesis reports..."
+	@mkdir -p $(REPORTS_DIR)
 	@echo "Synthesis Report for $(TOP_MODULE)" > $(REPORTS_DIR)/synthesis_report.txt
 	@echo "Generated: $(shell date)" >> $(REPORTS_DIR)/synthesis_report.txt
 	@echo "FPGA Family: $(FPGA_FAMILY)" >> $(REPORTS_DIR)/synthesis_report.txt

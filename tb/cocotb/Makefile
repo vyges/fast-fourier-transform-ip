@@ -85,7 +85,7 @@ compile:
 	@echo "Compiling FFT design with $(SIMULATOR)..."
 	@mkdir -p $(WORK_DIR)
 ifeq ($(SIMULATOR),verilator)
-	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES) -o $(SIM_TARGET)
+	$(SIM_CMD) $(SIM_FLAGS) --top-module $(TOP_MODULE) $(SIM_FILES) -o $(SIM_TARGET)
 else ifeq ($(SIMULATOR),icarus)
 	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES)
 else ifeq ($(SIMULATOR),vcs)
