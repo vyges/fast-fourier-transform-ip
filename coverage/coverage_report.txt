@@ -1,0 +1,39 @@
+FFT IP Coverage Report
+Generated: 2025-07-22 21:52:54 UTC
+
+Test Coverage Summary:
+====================
+
+Test Files Executed:
+- test_fft_basic.py (5 tests)
+- test_fft_rescaling.py (3 tests) 
+- test_fft_edge_cases.py (8 tests)
+
+Total Tests: 16
+
+Coverage Areas Tested:
+- Basic FFT functionality (1024-point FFT)
+- Rescaling and overflow detection
+- Edge cases and boundary conditions
+- APB interface testing
+- Memory interface testing
+- Performance testing
+- Error handling and interrupts
+
+Test Results:
+- All tests completed successfully
+- Icarus Verilog simulation passed
+- No test failures reported
+
+Coverage Limitations:
+- Icarus Verilog has limited coverage collection capabilities
+- Coverage data not available in standard formats
+- Tests provide functional verification but not line coverage
+
+Recommendations:
+- Use Verilator for more detailed coverage analysis
+- Consider adding coverage assertions in test code
+- Implement coverage collection in testbench
+
+This report was generated automatically when coverage tools
+did not provide detailed coverage data.

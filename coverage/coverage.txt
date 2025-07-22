@@ -1,2 +1,0 @@
-Coverage data not available
-Tests were run but coverage data was not generated

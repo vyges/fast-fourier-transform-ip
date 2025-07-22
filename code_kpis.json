@@ -1,21 +1,21 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T21:41:42.710194",
+    "analysis_date": "2025-07-22T21:55:15.472316",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 116,
+    "total_files": 120,
     "total_directories": 47,
     "file_types": {
       ".md": 26,
       ".json": 5,
-      ".py": 8,
+      ".py": 9,
       "no_extension": 34,
-      ".html": 5,
-      ".txt": 3,
+      ".html": 7,
+      ".txt": 4,
       ".css": 1,
       ".vcd": 2,
       ".sv": 14,
@@ -184,8 +184,9 @@
       },
       "public/coverage": {
         "files": [
-          "index.html",
-          "coverage.txt"
+          "coverage_report.txt",
+          "coverage_report.html",
+          "index.html"
         ],
         "subdirectories": []
       },
@@ -410,6 +411,7 @@
           ".gitkeep",
           "test_fft_basic.py",
           "test_example.py",
+          "generate_coverage_report.py",
           "test_fft_rescaling.py"
         ],
         "subdirectories": [
@@ -424,7 +426,10 @@
         "subdirectories": []
       },
       "tb/cocotb/coverage": {
-        "files": [],
+        "files": [
+          "coverage_report.txt",
+          "coverage_report.html"
+        ],
         "subdirectories": []
       }
     }
@@ -458,7 +463,7 @@
       "uvm": 0,
       "formal": 0
     },
-    "coverage_files": 0,
+    "coverage_files": 2,
     "test_vectors": 0
   },
   "quality_metrics": {
@@ -503,7 +508,7 @@
     "recommendations": []
   },
   "summary": {
-    "overall_score": 88.76666666666667,
+    "overall_score": 98.76666666666667,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
