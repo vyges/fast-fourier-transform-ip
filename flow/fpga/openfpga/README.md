@@ -67,10 +67,10 @@ The following tools must be installed and available in your PATH:
 sudo apt-get install yosys nextpnr-ice40 nextpnr-ecp5
 
 # iCE40 tools
-sudo apt-get install icestorm-tools
+sudo apt-get install fpga-icestorm
 
 # ECP5 tools
-sudo apt-get install prjtrellis-tools
+sudo apt-get install fpga-prjtrellis
 
 # SymbiFlow (requires additional setup)
 # Follow SymbiFlow installation guide
@@ -268,7 +268,7 @@ The open source FPGA flow is integrated with the Vyges GitHub Actions workflow:
 # .github/workflows/build-and-test.yml
 - name: Install FPGA tools
   run: |
-    sudo apt-get install yosys nextpnr-ice40 icestorm-tools
+    sudo apt-get install yosys nextpnr-ice40 fpga-icestorm
 
 - name: Run FPGA synthesis
   run: |

@@ -272,11 +272,11 @@ jobs:
           # Install NextPNR for place and route
           sudo apt-get install -y nextpnr-ice40 nextpnr-ecp5
           
-          # Install IceStorm for iCE40 bitstream generation
-          sudo apt-get install -y icestorm-tools
+          # Install IceStorm for iCE40 bitstream generation (updated package name)
+          sudo apt-get install -y fpga-icestorm
           
           # Install PrjTrellis for ECP5 bitstream generation
-          sudo apt-get install -y prjtrellis-tools
+          sudo apt-get install -y fpga-prjtrellis
           
           # Verify installations
           nextpnr-ice40 --version || echo "⚠️ NextPNR iCE40 not available"
