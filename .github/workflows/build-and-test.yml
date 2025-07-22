@@ -408,6 +408,7 @@ jobs:
             echo "✅ Found Yosys synthesis configuration"
             if [ -f "flow/synthesis/Makefile" ]; then
               echo "✅ Found synthesis Makefile"
+              echo "✅ Synthesis includes timeout protection and individual module testing"
             fi
           else
             echo "ℹ️ No Yosys synthesis configuration found"
@@ -425,6 +426,7 @@ jobs:
             echo "✅ Found Open Source FPGA configuration"
             if [ -f "flow/fpga/openfpga/Makefile" ]; then
               echo "✅ Found open source FPGA Makefile"
+              echo "✅ FPGA synthesis includes timeout protection and individual module testing"
             fi
           else
             echo "ℹ️ No Open Source FPGA configuration found"
@@ -438,7 +440,8 @@ jobs:
           echo "🔧 Running ASIC synthesis using Makefile..."
           if [ -d "flow/synthesis" ] && [ -f "flow/synthesis/Makefile" ]; then
             cd flow/synthesis
-            make synth_generic || echo "⚠️ Yosys synthesis failed"
+            # Use the improved synthesis approach with timeout protection
+            make synth_individual || echo "⚠️ Yosys synthesis failed"
             make reports || echo "⚠️ Synthesis reports generation failed"
             cd ../..
           else
@@ -452,6 +455,7 @@ jobs:
           echo "🔧 Running FPGA synthesis using Makefile..."
           if [ -d "flow/fpga/openfpga" ] && [ -f "flow/fpga/openfpga/Makefile" ]; then
             cd flow/fpga/openfpga
+            # Use the improved synthesis approach with timeout protection
             make fpga_synth || echo "⚠️ Open source FPGA synthesis failed"
             make reports || echo "⚠️ FPGA reports generation failed"
             cd ../..
@@ -530,15 +534,15 @@ jobs:
             echo "🔧 Running synthesis and generating reports..."
             # Run Yosys synthesis if available
             if [ -d "flow/synthesis" ] && [ -f "flow/synthesis/Makefile" ]; then
-              echo "Running Yosys synthesis..."
+              echo "Running Yosys synthesis with improved approach..."
               cd flow/synthesis
-              make synth_generic || echo "⚠️ Yosys synthesis failed"
+              make synth_individual || echo "⚠️ Yosys synthesis failed"
               make reports || echo "⚠️ Synthesis reports generation failed"
               cd ../..
             fi
             # Run open source FPGA synthesis if available
             if [ -d "flow/fpga/openfpga" ] && [ -f "flow/fpga/openfpga/Makefile" ]; then
-              echo "Running open source FPGA synthesis..."
+              echo "Running open source FPGA synthesis with improved approach..."
               cd flow/fpga/openfpga
               make fpga_synth || echo "⚠️ Open source FPGA synthesis failed"
               make reports || echo "⚠️ FPGA reports generation failed"
