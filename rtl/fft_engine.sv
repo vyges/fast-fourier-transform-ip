@@ -77,6 +77,8 @@ module fft_engine #(
     logic [15:0] butterfly_result_real_a, butterfly_result_imag_a;
     logic [15:0] butterfly_result_real_b, butterfly_result_imag_b;
     logic [15:0] butterfly_temp_real, butterfly_temp_imag;  // Temporary registers for A-B
+    logic [15:0] butterfly_final_real_a, butterfly_final_imag_a;  // Final results after rescaling
+    logic [15:0] butterfly_final_real_b, butterfly_final_imag_b;  // Final results after rescaling
     logic        butterfly_overflow;
     
     // Rescaling signals
@@ -389,23 +391,33 @@ module fft_engine #(
                 
                 if (real_overflow_a || imag_overflow_a || real_overflow_b || imag_overflow_b) begin
                     // Apply rescaling
-                    butterfly_result_real_a <= butterfly_result_real_a >>> 1;
-                    butterfly_result_imag_a <= butterfly_result_imag_a >>> 1;
-                    butterfly_result_real_b <= butterfly_result_real_b >>> 1;
-                    butterfly_result_imag_b <= butterfly_result_imag_b >>> 1;
+                    butterfly_final_real_a <= butterfly_result_real_a >>> 1;
+                    butterfly_final_imag_a <= butterfly_result_imag_a >>> 1;
+                    butterfly_final_real_b <= butterfly_result_real_b >>> 1;
+                    butterfly_final_imag_b <= butterfly_result_imag_b >>> 1;
                     scale_factor_increment <= 1'b1;
                     pipeline_rescaling_active <= 1'b1;
                 end else begin
+                    // Rescaling disabled - pass through results
+                    butterfly_final_real_a <= butterfly_result_real_a;
+                    butterfly_final_imag_a <= butterfly_result_imag_a;
+                    butterfly_final_real_b <= butterfly_result_real_b;
+                    butterfly_final_imag_b <= butterfly_result_imag_b;
                     scale_factor_increment <= 1'b0;
                     pipeline_rescaling_active <= 1'b0;
                 end
             end else begin
+                // Rescaling disabled - pass through results
+                butterfly_final_real_a <= butterfly_result_real_a;
+                butterfly_final_imag_a <= butterfly_result_imag_a;
+                butterfly_final_real_b <= butterfly_result_real_b;
+                butterfly_final_imag_b <= butterfly_result_imag_b;
                 scale_factor_increment <= 1'b0;
                 pipeline_rescaling_active <= 1'b0;
             end
             
             // Write results to memory (fix width issues)
-            mem_data_i <= (32'(butterfly_result_real_a) << 16) | 32'(butterfly_result_imag_a);
+            mem_data_i <= (32'(butterfly_final_real_a) << 16) | 32'(butterfly_final_imag_a);
         end else begin
             pipeline_valid[5] <= 1'b0;
             pipeline_rescaling_active <= 1'b0;
