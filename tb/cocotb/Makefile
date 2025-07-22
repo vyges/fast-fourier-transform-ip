@@ -70,6 +70,8 @@ ifeq ($(COVERAGE),1)
     COCOTB_COVERAGE = 1
     COVERAGE_DIR = coverage
     COVERAGE_REPORT = $(COVERAGE_DIR)/coverage.xml
+    # Also check for other coverage file types
+    COVERAGE_FILES = $(COVERAGE_DIR)/*.xml $(COVERAGE_DIR)/*.html $(COVERAGE_DIR)/*.txt $(COVERAGE_DIR)/*.json
 endif
 
 # Verbose settings
@@ -162,15 +164,19 @@ ifeq ($(COVERAGE),1)
 	@echo "Generating coverage report..."
 	@mkdir -p $(COVERAGE_DIR)
 	@mkdir -p ../../public/coverage
-	@if [ -f $(COVERAGE_REPORT) ]; then \
-		echo "Coverage report generated: $(COVERAGE_REPORT)"; \
+	@echo "Checking for coverage files..."
+	@ls -la $(COVERAGE_DIR)/ 2>/dev/null || echo "No coverage directory found"
+	@if [ -f $(COVERAGE_REPORT) ] || [ -n "$(shell ls $(COVERAGE_FILES) 2>/dev/null)" ]; then \
+		echo "Coverage files found:"; \
+		ls -la $(COVERAGE_DIR)/* 2>/dev/null || echo "No specific coverage files found"; \
 		# Copy coverage reports to public directory for GitHub Pages \
 		cp -r $(COVERAGE_DIR)/* ../../public/coverage/ 2>/dev/null || echo "No coverage files to copy"; \
 	else \
-		echo "No coverage data found, creating fallback coverage files"; \
-		# Create fallback coverage files for GitHub Pages \
-		echo "Coverage data not available" > ../../public/coverage/coverage.txt; \
-		echo "Tests were run but coverage data was not generated" >> ../../public/coverage/coverage.txt; \
+		echo "No coverage data found, generating basic coverage report"; \
+		# Generate basic coverage report using Python script \
+		python3 generate_coverage_report.py || echo "Coverage report generation failed"; \
+		# Copy generated coverage reports to public directory \
+		cp -r $(COVERAGE_DIR)/* ../../public/coverage/ 2>/dev/null || echo "No coverage files to copy"; \
 	fi
 	# Create a simple index.html for the coverage directory
 	@echo "<!DOCTYPE html>" > ../../public/coverage/index.html
