@@ -234,7 +234,10 @@ tb/uvm_tb/*.html
 test_harness_report.md
 code_kpis.json
 code_kpis.txt
-public/
+public/*.html
+public/*.json
+public/*.txt
+public/*.md
 gh-pages/
 
 # =============================================================================
