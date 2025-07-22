@@ -1,13 +1,13 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T21:25:17.822174",
+    "analysis_date": "2025-07-22T21:36:41.243479",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 113,
+    "total_files": 114,
     "total_directories": 46,
     "file_types": {
       ".md": 26,
@@ -20,7 +20,7 @@
       ".vcd": 2,
       ".sv": 14,
       ".tcl": 4,
-      ".sh": 11,
+      ".sh": 12,
       ".pcf": 1,
       ".vvp": 1
     },
@@ -234,6 +234,7 @@
       },
       "flow/fpga/openfpga": {
         "files": [
+          "temp_synth.sh",
           "README.md",
           "Makefile",
           "FPGA_FLOW_SUMMARY.md",
