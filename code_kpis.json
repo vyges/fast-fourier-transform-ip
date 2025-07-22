@@ -1,14 +1,14 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T15:59:58.195914",
+    "analysis_date": "2025-07-22T16:20:23.177564",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 153,
-    "total_directories": 42,
+    "total_files": 154,
+    "total_directories": 43,
     "file_types": {
       ".md": 24,
       ".json": 7,
@@ -27,7 +27,8 @@
       ".cpp": 12,
       ".a": 1,
       ".gch": 2,
-      ".dat": 1
+      ".dat": 1,
+      ".vcd": 1
     },
     "directory_structure": {
       "root": {
@@ -357,6 +358,7 @@
         ],
         "subdirectories": [
           "obj_dir",
+          "waveforms",
           "work"
         ]
       },
@@ -424,6 +426,12 @@
         ],
         "subdirectories": []
       },
+      "tb/sv_tb/waveforms": {
+        "files": [
+          "tb_example.vcd"
+        ],
+        "subdirectories": []
+      },
       "tb/sv_tb/work": {
         "files": [
           "tb_simple"
@@ -477,7 +485,7 @@
   "quality_metrics": {
     "linting_clean": false,
     "synthesis_clean": true,
-    "simulation_passing": false,
+    "simulation_passing": true,
     "coverage_goals_met": false,
     "documentation_complete": true,
     "metadata_complete": true
