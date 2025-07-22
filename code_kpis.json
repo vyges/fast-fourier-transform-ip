@@ -1,30 +1,36 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T20:18:13.541258",
+    "analysis_date": "2025-07-22T21:19:10.471235",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 128,
-    "total_directories": 45,
+    "total_files": 170,
+    "total_directories": 46,
     "file_types": {
-      ".md": 25,
+      ".md": 26,
       ".json": 5,
       ".py": 8,
       "no_extension": 34,
       ".html": 4,
+      ".txt": 2,
       ".css": 1,
       ".vcd": 2,
       ".sv": 14,
       ".tcl": 4,
       ".sh": 11,
       ".pcf": 1,
-      ".cpp": 12,
-      ".h": 4,
+      ".vvp": 1,
       ".mk": 2,
-      ".vvp": 1
+      ".cpp": 12,
+      ".d": 19,
+      ".o": 16,
+      ".h": 4,
+      ".gch": 2,
+      ".dat": 1,
+      ".a": 1
     },
     "directory_structure": {
       "root": {
@@ -167,6 +173,7 @@
           "test_harness_report.md",
           "index_template.html",
           "code_kpis.json",
+          "coverage_summary.txt",
           "report-style.css",
           "test_harness_report.html",
           "waveforms_template.html"
@@ -241,10 +248,18 @@
           "timeout_wrapper.sh"
         ],
         "subdirectories": [
+          "reports",
           "build",
           "netlists",
           "constraints"
         ]
+      },
+      "flow/fpga/openfpga/reports": {
+        "files": [
+          "FPGA_FLOW_SUMMARY.md",
+          "synthesis_report.txt"
+        ],
+        "subdirectories": []
       },
       "flow/fpga/openfpga/build": {
         "files": [],
@@ -397,36 +412,76 @@
           "test_fft_rescaling.py"
         ],
         "subdirectories": [
-          "obj_dir",
           "work"
         ]
-      },
-      "tb/cocotb/obj_dir": {
-        "files": [
-          "Vfft_control__Trace__0__Slow.cpp",
-          "Vfft_control__pch.h",
-          "Vfft_control___024root.h",
-          "Vfft_control___024root__Slow.cpp",
-          "Vfft_control.mk",
-          "Vfft_control___024root__DepSet_hd87fcd19__0__Slow.cpp",
-          "Vfft_control.h",
-          "Vfft_control___024root__DepSet_hd87fcd19__1.cpp",
-          "Vfft_control_classes.mk",
-          "Vfft_control___024root__DepSet_hd87fcd19__0.cpp",
-          "Vfft_control.cpp",
-          "Vfft_control__Syms.cpp",
-          "Vfft_control___024root__DepSet_hc4d89078__0.cpp",
-          "Vfft_control___024root__DepSet_hc4d89078__0__Slow.cpp",
-          "Vfft_control__Syms.h",
-          "Vfft_control___024root__DepSet_hd87fcd19__1__Slow.cpp",
-          "Vfft_control__TraceDecls__0__Slow.cpp",
-          "Vfft_control__Trace__0.cpp"
-        ],
-        "subdirectories": []
       },
       "tb/cocotb/work": {
         "files": [
           "fft_top.vvp"
+        ],
+        "subdirectories": [
+          "obj_dir"
+        ]
+      },
+      "tb/cocotb/work/obj_dir": {
+        "files": [
+          "Vfft_top.mk",
+          "Vfft_top___024root__Slow.cpp",
+          "Vfft_top__pch.h.slow.d",
+          "Vfft_top___024root__Slow.d",
+          "Vfft_top__pch.h.fast.d",
+          "Vfft_top___024root__DepSet_he670bc46__0__Slow.o",
+          "verilated_threads.d",
+          "Vfft_top__Trace__0__Slow.o",
+          "verilated_threads.o",
+          "Vfft_top___024root__DepSet_he670bc46__1.d",
+          "verilated_vcd_c.o",
+          "Vfft_top.cpp",
+          "Vfft_top___024root__DepSet_he670bc46__1.o",
+          "verilated_vcd_c.d",
+          "Vfft_top__Syms.d",
+          "Vfft_top__Syms.h",
+          "Vfft_top__Trace__0.d",
+          "Vfft_top___024root__DepSet_he670bc46__0.cpp",
+          "Vfft_top.o",
+          "Vfft_top__ver.d",
+          "Vfft_top__pch.h.fast.gch",
+          "Vfft_top___024root__DepSet_hec073b8b__0__Slow.o",
+          "Vfft_top___024root__DepSet_hec073b8b__0.o",
+          "Vfft_top__pch.h",
+          "Vfft_top__Trace__0.cpp",
+          "Vfft_top___024root__Slow.o",
+          "Vfft_top___024root__DepSet_he670bc46__1.cpp",
+          "Vfft_top___024root.h",
+          "Vfft_top__verFiles.dat",
+          "Vfft_top___024root__DepSet_hec073b8b__0__Slow.d",
+          "verilated_cov.d",
+          "Vfft_top___024root__DepSet_hec073b8b__0.d",
+          "Vfft_top___024root__DepSet_he670bc46__0.d",
+          "Vfft_top.h",
+          "Vfft_top__Trace__0__Slow.d",
+          "Vfft_top___024root__DepSet_he670bc46__0__Slow.cpp",
+          "Vfft_top___024root__DepSet_he670bc46__0.o",
+          "verilated.d",
+          "Vfft_top__TraceDecls__0__Slow.d",
+          "Vfft_top___024root__DepSet_hec073b8b__0.cpp",
+          "Vfft_top___024root__DepSet_he670bc46__0__Slow.d",
+          "Vfft_top.d",
+          "Vfft_top___024root__DepSet_he670bc46__1__Slow.d",
+          "Vfft_top__Syms.o",
+          "Vfft_top_classes.mk",
+          "Vfft_top___024root__DepSet_hec073b8b__0__Slow.cpp",
+          "Vfft_top__TraceDecls__0__Slow.cpp",
+          "Vfft_top__ALL.a",
+          "Vfft_top__Trace__0.o",
+          "Vfft_top___024root__DepSet_he670bc46__1__Slow.o",
+          "Vfft_top__TraceDecls__0__Slow.o",
+          "Vfft_top__pch.h.slow.gch",
+          "verilated.o",
+          "Vfft_top___024root__DepSet_he670bc46__1__Slow.cpp",
+          "Vfft_top__Trace__0__Slow.cpp",
+          "Vfft_top__Syms.cpp",
+          "verilated_cov.o"
         ],
         "subdirectories": []
       }
@@ -466,7 +521,7 @@
   },
   "quality_metrics": {
     "linting_clean": false,
-    "synthesis_clean": false,
+    "synthesis_clean": true,
     "simulation_passing": true,
     "coverage_goals_met": false,
     "documentation_complete": true,
