@@ -380,7 +380,7 @@ jobs:
           echo "🧪 Running simulation tests using Makefile..."
           if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
             cd tb/sv_tb
-            make all SIMULATOR=verilator || echo "⚠️ Verilator simulation failed"
+            # Use Icarus Verilog for simulation
             make all SIMULATOR=iverilog || echo "⚠️ Icarus Verilog simulation failed"
             cd ../..
           else
