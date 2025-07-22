@@ -208,6 +208,53 @@
             color: var(--success-color);
         }
         
+        .report-table,
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .report-table th,
+        .report-table td,
+        .status-table th,
+        .status-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .report-table th,
+        .status-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+        
+        .report-table tr:hover,
+        .status-table tr:hover {
+            background: var(--light-bg);
+        }
+        
+        .report-table td:last-child,
+        .status-table td:last-child {
+            text-align: center;
+        }
+        
+        .report-table .btn,
+        .status-table .btn {
+            margin: 2px;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+        
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -277,37 +324,47 @@
         
         <div class="section">
             <h2>📋 Available Reports</h2>
-            <div class="report-grid">
-                <div class="report-card">
-                    <h3>Test Harness Report</h3>
-                    <p>Comprehensive test results, simulation analysis, and verification coverage for the IP implementation.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./test_harness_report.html" class="btn btn-success">View HTML Report</a>
-                    <a href="./test_harness_report.md" class="btn btn-info">View Markdown</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Code KPIs Report</h3>
-                    <p>Code quality metrics, project analysis, and Vyges metadata compliance assessment.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./code_kpis.txt" class="btn btn-info">View Text Report</a>
-                    <a href="./code_kpis.json" class="btn btn-info">View JSON Data</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Synthesis Results</h3>
-                    <p>ASIC and FPGA synthesis reports, resource utilization, and timing analysis.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./synthesis_report.html" class="btn btn-success">View Synthesis Report</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>FPGA Implementation</h3>
-                    <p>Open-source FPGA flow results for various FPGA families.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./fpga_report.html" class="btn btn-success">View FPGA Report</a>
-                </div>
-            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Report Name</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Test Harness Report</strong></td>
+                        <td>Comprehensive test results, simulation analysis, and verification coverage for the IP implementation.</td>
+                        <td>
+                            <a href="./test_harness_report.html" class="btn btn-success">HTML</a>
+                            <a href="./test_harness_report.md" class="btn btn-info">Markdown</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Code KPIs Report</strong></td>
+                        <td>Code quality metrics, project analysis, and Vyges metadata compliance assessment.</td>
+                        <td>
+                            <a href="./code_kpis.txt" class="btn btn-info">Text</a>
+                            <a href="./code_kpis.json" class="btn btn-info">JSON</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Synthesis Results</strong></td>
+                        <td>ASIC and FPGA synthesis reports, resource utilization, and timing analysis.</td>
+                        <td>
+                            <a href="./synthesis_report.html" class="btn btn-success">HTML</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>FPGA Implementation</strong></td>
+                        <td>Open-source FPGA flow results for various FPGA families.</td>
+                        <td>
+                            <a href="./fpga_report.html" class="btn btn-success">HTML</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         
         <div class="section">
@@ -331,35 +388,37 @@
         
         <div class="section">
             <h2>🚀 Build Status</h2>
-            <div class="report-grid">
-                <div class="report-card">
-                    <h3>Simulation</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">{{SIMULATION_STATUS}}</span></p>
-                    <p><strong>Test Cases:</strong> {{PASSED_TESTS}}/{{TOTAL_TESTS}} passed ({{SUCCESS_RATE}}% success rate)</p>
-                    <p><strong>Simulators:</strong> {{SIMULATORS}}</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Synthesis</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">{{SYNTHESIS_STATUS}}</span></p>
-                    <p><strong>Tools:</strong> {{SYNTHESIS_TOOLS}}</p>
-                    <p><strong>Technology:</strong> {{TECHNOLOGY}}</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>FPGA Flow</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">{{FPGA_STATUS}}</span></p>
-                    <p><strong>Families:</strong> {{FPGA_FAMILIES}}</p>
-                    <p><strong>Tools:</strong> {{FPGA_TOOLS}}</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Quality Metrics</h3>
-                    <p><strong>Overall Score:</strong> {{OVERALL_SCORE}}/100</p>
-                    <p><strong>Catalog Ready:</strong> <span class="status-badge status-success">Yes</span></p>
-                    <p><strong>AI Generation Ready:</strong> <span class="status-badge status-success">Yes</span></p>
-                </div>
-            </div>
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simulation</strong></td>
+                        <td><span class="status-badge status-success">{{SIMULATION_STATUS}}</span></td>
+                        <td>{{PASSED_TESTS}}/{{TOTAL_TESTS}} passed ({{SUCCESS_RATE}}% success rate)<br><small>Simulators: {{SIMULATORS}}</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Synthesis</strong></td>
+                        <td><span class="status-badge status-success">{{SYNTHESIS_STATUS}}</span></td>
+                        <td>Tools: {{SYNTHESIS_TOOLS}}<br><small>Technology: {{TECHNOLOGY}}</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>FPGA Flow</strong></td>
+                        <td><span class="status-badge status-success">{{FPGA_STATUS}}</span></td>
+                        <td>Families: {{FPGA_FAMILIES}}<br><small>Tools: {{FPGA_TOOLS}}</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Quality Metrics</strong></td>
+                        <td><span class="status-badge status-success">Ready</span></td>
+                        <td>Overall Score: {{OVERALL_SCORE}}/100<br><small>Catalog Ready: Yes | AI Generation Ready: Yes</small></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         
         <div class="footer">
@@ -369,4 +428,4 @@
         </div>
     </div>
 </body>
-</html>
+</html> 

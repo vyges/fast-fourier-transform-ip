@@ -208,6 +208,53 @@
             color: var(--success-color);
         }
         
+        .report-table,
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .report-table th,
+        .report-table td,
+        .status-table th,
+        .status-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .report-table th,
+        .status-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+        
+        .report-table tr:hover,
+        .status-table tr:hover {
+            background: var(--light-bg);
+        }
+        
+        .report-table td:last-child,
+        .status-table td:last-child {
+            text-align: center;
+        }
+        
+        .report-table .btn,
+        .status-table .btn {
+            margin: 2px;
+            font-size: 0.8rem;
+            padding: 6px 12px;
+        }
+        
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -281,37 +328,47 @@
         
         <div class="section">
             <h2>📋 Available Reports</h2>
-            <div class="report-grid">
-                <div class="report-card">
-                    <h3>Test Harness Report</h3>
-                    <p>Comprehensive test results, simulation analysis, and verification coverage for the IP implementation.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./test_harness_report.html" class="btn btn-success">View HTML Report</a>
-                    <a href="./test_harness_report.md" class="btn btn-info">View Markdown</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Code KPIs Report</h3>
-                    <p>Code quality metrics, project analysis, and Vyges metadata compliance assessment.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./code_kpis.txt" class="btn btn-info">View Text Report</a>
-                    <a href="./code_kpis.json" class="btn btn-info">View JSON Data</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Synthesis Results</h3>
-                    <p>ASIC and FPGA synthesis reports, resource utilization, and timing analysis.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./synthesis_report.html" class="btn btn-success">View Synthesis Report</a>
-                </div>
-                
-                <div class="report-card">
-                    <h3>FPGA Implementation</h3>
-                    <p>Open-source FPGA flow results for various FPGA families.</p>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Available</span></p>
-                    <a href="./fpga_report.html" class="btn btn-success">View FPGA Report</a>
-                </div>
-            </div>
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Report Name</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Test Harness Report</strong></td>
+                        <td>Comprehensive test results, simulation analysis, and verification coverage for the IP implementation.</td>
+                        <td>
+                            <a href="./test_harness_report.html" class="btn btn-success">HTML</a>
+                            <a href="./test_harness_report.md" class="btn btn-info">Markdown</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Code KPIs Report</strong></td>
+                        <td>Code quality metrics, project analysis, and Vyges metadata compliance assessment.</td>
+                        <td>
+                            <a href="./code_kpis.txt" class="btn btn-info">Text</a>
+                            <a href="./code_kpis.json" class="btn btn-info">JSON</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Synthesis Results</strong></td>
+                        <td>ASIC and FPGA synthesis reports, resource utilization, and timing analysis.</td>
+                        <td>
+                            <a href="./synthesis_report.html" class="btn btn-success">HTML</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>FPGA Implementation</strong></td>
+                        <td>Open-source FPGA flow results for various FPGA families.</td>
+                        <td>
+                            <a href="./fpga_report.html" class="btn btn-success">HTML</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         
         <div class="section">
@@ -341,42 +398,44 @@
         
         <div class="section">
             <h2>🚀 Build Status</h2>
-            <div class="report-grid">
-                <div class="report-card">
-                    <h3>Simulation</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Passing</span></p>
-                    <p><strong>Test Cases:</strong> 23/23 passed (100.0% success rate)</p>
-                    <p><strong>Simulators:</strong> verilator, iverilog, modelsim</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Synthesis</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Clean</span></p>
-                    <p><strong>Tools:</strong> yosys, design_compiler, vivado</p>
-                    <p><strong>Technology:</strong> Generic, sky130B</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>FPGA Flow</h3>
-                    <p><strong>Status:</strong> <span class="status-badge status-success">Implemented</span></p>
-                    <p><strong>Families:</strong> xilinx-7, xilinx-ultrascale, intel-cyclone, intel-arria, lattice-ice40, lattice-ecp5</p>
-                    <p><strong>Tools:</strong> Yosys, NextPNR, IceStorm</p>
-                </div>
-                
-                <div class="report-card">
-                    <h3>Quality Metrics</h3>
-                    <p><strong>Overall Score:</strong> 88.8/100</p>
-                    <p><strong>Catalog Ready:</strong> <span class="status-badge status-success">Yes</span></p>
-                    <p><strong>AI Generation Ready:</strong> <span class="status-badge status-success">Yes</span></p>
-                </div>
-            </div>
+            <table class="status-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simulation</strong></td>
+                        <td><span class="status-badge status-success">Passing</span></td>
+                        <td>23/23 passed (100.0% success rate)<br><small>Simulators: verilator, iverilog, modelsim</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Synthesis</strong></td>
+                        <td><span class="status-badge status-success">Clean</span></td>
+                        <td>Tools: yosys, design_compiler, vivado<br><small>Technology: Generic, sky130B</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>FPGA Flow</strong></td>
+                        <td><span class="status-badge status-success">Implemented</span></td>
+                        <td>Families: xilinx-7, xilinx-ultrascale, intel-cyclone, intel-arria, lattice-ice40, lattice-ecp5<br><small>Tools: Yosys, NextPNR, IceStorm</small></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Quality Metrics</strong></td>
+                        <td><span class="status-badge status-success">Ready</span></td>
+                        <td>Overall Score: 88.8/100<br><small>Catalog Ready: Yes | AI Generation Ready: Yes</small></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         
         <div class="footer">
             <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
             <p>vyges/fast-fourier-transform-ip - A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p>
-            <p>Generated on: 2025-07-22 05:31:00 UTC | Repository: vyges/fast-fourier-transform-ip | Run ID: 16435540606</p>
+            <p>Generated on: 2025-07-22 05:38:02 UTC | Repository: vyges/fast-fourier-transform-ip | Run ID: 16435648303</p>
         </div>
     </div>
 </body>
-</html>
+</html> 
