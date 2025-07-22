@@ -24,7 +24,7 @@ COCOTB_REDUCED_LOG_FMT = 1
 # Simulator-specific settings
 ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
-    SIM_FLAGS = --cc --exe --build --trace --coverage
+    SIM_FLAGS = --sc --build --trace --coverage
     SIM_FILES = $(RTL_DIR)/*.sv
     SIM_TARGET = V$(TOP_MODULE)
     RUN_CMD = $(WORK_DIR)/obj_dir/$(SIM_TARGET)

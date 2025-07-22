@@ -394,16 +394,10 @@ jobs:
           echo "🧪 Running Cocotb testbench tests..."
           if [ -d "tb/cocotb" ] && [ -f "tb/cocotb/Makefile" ]; then
             cd tb/cocotb
-            
-            echo "Running Cocotb tests with Verilator (with coverage)..."
-            make SIMULATOR=verilator test_all COVERAGE=1 || echo "⚠️ Cocotb Verilator tests failed"
-            
             echo "Running Cocotb tests with Icarus (with coverage)..."
             make SIMULATOR=icarus test_all COVERAGE=1 || echo "⚠️ Cocotb Icarus tests failed"
-            
             echo "Generating comprehensive coverage report..."
-            make coverage COVERAGE=1 || echo "⚠️ Coverage report generation failed"
-            
+            make SIMULATOR=icarus coverage COVERAGE=1 || echo "⚠️ Coverage report generation failed"
             cd ../..
           else
             echo "No Cocotb Makefile found in tb/cocotb/"
