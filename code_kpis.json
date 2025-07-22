@@ -1,26 +1,30 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-22T17:47:08.615176",
+    "analysis_date": "2025-07-22T20:18:13.541258",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 105,
-    "total_directories": 42,
+    "total_files": 128,
+    "total_directories": 45,
     "file_types": {
       ".md": 25,
       ".json": 5,
-      ".py": 7,
+      ".py": 8,
       "no_extension": 34,
-      ".html": 2,
+      ".html": 4,
       ".css": 1,
+      ".vcd": 2,
       ".sv": 14,
       ".tcl": 4,
       ".sh": 11,
       ".pcf": 1,
-      ".vcd": 1
+      ".cpp": 12,
+      ".h": 4,
+      ".mk": 2,
+      ".vvp": 1
     },
     "directory_structure": {
       "root": {
@@ -164,7 +168,17 @@
           "index_template.html",
           "code_kpis.json",
           "report-style.css",
-          "test_harness_report.html"
+          "test_harness_report.html",
+          "waveforms_template.html"
+        ],
+        "subdirectories": [
+          "waveforms"
+        ]
+      },
+      "public/waveforms": {
+        "files": [
+          "index.html",
+          "tb_example.vcd"
         ],
         "subdirectories": []
       },
@@ -375,11 +389,44 @@
       },
       "tb/cocotb": {
         "files": [
+          "test_fft_edge_cases.py",
           "Makefile",
           ".gitkeep",
           "test_fft_basic.py",
           "test_example.py",
           "test_fft_rescaling.py"
+        ],
+        "subdirectories": [
+          "obj_dir",
+          "work"
+        ]
+      },
+      "tb/cocotb/obj_dir": {
+        "files": [
+          "Vfft_control__Trace__0__Slow.cpp",
+          "Vfft_control__pch.h",
+          "Vfft_control___024root.h",
+          "Vfft_control___024root__Slow.cpp",
+          "Vfft_control.mk",
+          "Vfft_control___024root__DepSet_hd87fcd19__0__Slow.cpp",
+          "Vfft_control.h",
+          "Vfft_control___024root__DepSet_hd87fcd19__1.cpp",
+          "Vfft_control_classes.mk",
+          "Vfft_control___024root__DepSet_hd87fcd19__0.cpp",
+          "Vfft_control.cpp",
+          "Vfft_control__Syms.cpp",
+          "Vfft_control___024root__DepSet_hc4d89078__0.cpp",
+          "Vfft_control___024root__DepSet_hc4d89078__0__Slow.cpp",
+          "Vfft_control__Syms.h",
+          "Vfft_control___024root__DepSet_hd87fcd19__1__Slow.cpp",
+          "Vfft_control__TraceDecls__0__Slow.cpp",
+          "Vfft_control__Trace__0.cpp"
+        ],
+        "subdirectories": []
+      },
+      "tb/cocotb/work": {
+        "files": [
+          "fft_top.vvp"
         ],
         "subdirectories": []
       }
@@ -389,8 +436,8 @@
     "rtl_files": 14,
     "rtl_lines": 2627,
     "rtl_modules": 30,
-    "testbench_files": 9,
-    "testbench_lines": 1876,
+    "testbench_files": 10,
+    "testbench_lines": 2304,
     "constraint_files": 5,
     "constraint_lines": 528,
     "script_files": 3,
@@ -406,11 +453,11 @@
     "tutorial_docs": 0
   },
   "test_metrics": {
-    "test_files": 9,
-    "test_lines": 1876,
+    "test_files": 10,
+    "test_lines": 2304,
     "test_types": {
       "systemverilog": 6,
-      "cocotb": 3,
+      "cocotb": 4,
       "uvm": 0,
       "formal": 0
     },

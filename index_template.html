@@ -289,6 +289,10 @@
 <body>
     <div class="container">
         <div class="header">
+            <div style="margin-bottom: 20px;">
+                <img src="https://github.com/vyges.png" alt="Vyges Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-right: 20px; vertical-align: middle; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 3px solid rgba(255,255,255,0.2);">
+                <span style="vertical-align: middle; font-size: 24px; font-weight: bold;">vyges</span>
+            </div>
             <h1>{{IP_NAME}}</h1>
             <p>{{IP_DESCRIPTION}}</p>
         </div>
@@ -350,6 +354,21 @@
                         </td>
                     </tr>
                     <tr>
+                        <td><strong>Waveform Analysis</strong></td>
+                        <td>VCD waveform analysis for debugging and signal analysis.</td>
+                        <td>
+                            <a href="./waveforms/index.html" class="btn btn-success">🌊 Waveforms</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Test Coverage Report</strong></td>
+                        <td>Comprehensive test coverage analysis and verification results.</td>
+                        <td>
+                            <a href="./coverage_summary.txt" class="btn btn-info">Text</a>
+                            <a href="./coverage/" class="btn btn-success">📊 Coverage</a>
+                        </td>
+                    </tr>
+                    <tr>
                         <td><strong>Synthesis Results</strong></td>
                         <td>ASIC and FPGA synthesis reports, resource utilization, and timing analysis.</td>
                         <td>
@@ -403,6 +422,11 @@
                         <td>{{PASSED_TESTS}}/{{TOTAL_TESTS}} passed ({{SUCCESS_RATE}}% success rate)<br><small>Simulators: {{SIMULATORS}}</small></td>
                     </tr>
                     <tr>
+                        <td><strong>Waveforms</strong></td>
+                        <td><span class="status-badge status-success">Available</span></td>
+                        <td>VCD files generated for analysis<br><small>Viewers: GTKWave, Surfer, WaveDrom</small></td>
+                    </tr>
+                    <tr>
                         <td><strong>Synthesis</strong></td>
                         <td><span class="status-badge status-success">{{SYNTHESIS_STATUS}}</span></td>
                         <td>Tools: {{SYNTHESIS_TOOLS}}<br><small>Technology: {{TECHNOLOGY}}</small></td>
@@ -420,7 +444,22 @@
                 </tbody>
             </table>
         </div>
-        
+        <div style="margin-top: 30px; padding: 15px; background: #f1f3f4; border-radius: 8px; text-align: center; color: #5f6368; font-size: 14px;">
+            <p style="margin: 0;"><strong>Thanks to open-source tools:</strong> 
+                <a href="https://www.veripool.org/verilator/" target="_blank">Verilator</a>, 
+                <a href="https://github.com/steveicarus/iverilog" target="_blank">Icarus Verilog</a>, 
+                <a href="https://yosyshq.net/yosys/" target="_blank">Yosys</a>, 
+                <a href="https://github.com/ghdl/ghdl" target="_blank">GHDL</a>, 
+                <a href="https://github.com/RTimothyEdwards/netgen" target="_blank">Netgen</a>, 
+                <a href="http://opencircuitdesign.com/magic/" target="_blank">Magic</a>, 
+                <a href="https://www.cocotb.org/" target="_blank">Python Cocotb</a>, 
+                <a href="https://gtkwave.sourceforge.net/" target="_blank">GTKWave</a>, 
+                <a href="https://surfer-project.org/" target="_blank">Surfer</a>, 
+                <a href="https://www.klayout.de/" target="_blank">KLayout</a>, 
+                <a href="https://skywater-pdk.readthedocs.io" target="_blank">SkyWater Open PDK</a>, 
+                <a href="https://github.com/The-OpenROAD-Project/OpenROAD" target="_blank">OpenROAD</a>
+            </p>
+        </div>
         <div class="footer">
             <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
             <p>Generated on: {{GENERATED_DATE}} | Run ID: {{RUN_ID}}</p>
