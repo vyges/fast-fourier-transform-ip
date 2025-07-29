@@ -122,13 +122,70 @@ def extract_test_data():
             
     return test_data
 
+def extract_gate_analysis():
+    """Extract gate analysis data from gate analysis reports"""
+    gate_data = {
+        'total_gates': '0',
+        'die_size': 'N/A'
+    }
+    
+    # Check for gate analysis report in flow/yosys
+    gate_report_path = 'flow/yosys/gate_analysis_report.md'
+    if os.path.exists(gate_report_path):
+        with open(gate_report_path, 'r') as f:
+            content = f.read()
+            
+        # Extract total gates
+        gates_match = re.search(r'\*\*Primitive Gates\*\*:\s*([\d,]+)', content)
+        if gates_match:
+            gate_data['total_gates'] = gates_match.group(1)
+            
+        # Extract transistor count for die size estimation
+        transistors_match = re.search(r'\*\*Estimated Transistors\*\*:\s*([\d,]+)', content)
+        if transistors_match:
+            transistors = int(transistors_match.group(1).replace(',', ''))
+            # Rough die size estimation: 1K transistors ≈ 0.1mm² in 130nm
+            # This is a very rough estimate - actual die size depends on technology node
+            die_size_mm2 = transistors / 10000  # Rough estimate
+            if die_size_mm2 < 1:
+                gate_data['die_size'] = f"{die_size_mm2:.2f}mm²"
+            else:
+                gate_data['die_size'] = f"{die_size_mm2:.1f}mm²"
+    
+    # Also check for comprehensive report
+    comp_report_path = 'flow/yosys/reports/comprehensive_report.md'
+    if os.path.exists(comp_report_path):
+        with open(comp_report_path, 'r') as f:
+            content = f.read()
+            
+        # Extract total gates if not found in main report
+        if gate_data['total_gates'] == '0':
+            gates_match = re.search(r'\*\*Primitive Gates\*\*:\s*([\d,]+)', content)
+            if gates_match:
+                gate_data['total_gates'] = gates_match.group(1)
+                
+        # Extract transistor count if not found in main report
+        if gate_data['die_size'] == 'N/A':
+            transistors_match = re.search(r'\*\*Estimated Transistors\*\*:\s*([\d,]+)', content)
+            if transistors_match:
+                transistors = int(transistors_match.group(1).replace(',', ''))
+                die_size_mm2 = transistors / 10000  # Rough estimate
+                if die_size_mm2 < 1:
+                    gate_data['die_size'] = f"{die_size_mm2:.2f}mm²"
+                else:
+                    gate_data['die_size'] = f"{die_size_mm2:.1f}mm²"
+    
+    return gate_data
+
 def extract_code_metrics():
     """Extract code metrics from code_kpis.txt"""
     metrics = {
         'rtl_files': '16',
         'rtl_lines': '12,567',
         'test_files': '9',
-        'overall_score': '88.8'
+        'overall_score': '88.8',
+        'total_gates': '0',
+        'die_size': 'N/A'
     }
     
     if os.path.exists('code_kpis.txt'):
@@ -154,6 +211,11 @@ def extract_code_metrics():
         score_match = re.search(r'OVERALL SCORE:\s*(\d+\.?\d*)/100', content)
         if score_match:
             metrics['overall_score'] = score_match.group(1)
+    
+    # Extract gate analysis data
+    gate_data = extract_gate_analysis()
+    metrics['total_gates'] = gate_data['total_gates']
+    metrics['die_size'] = gate_data['die_size']
             
     return metrics
 
@@ -227,6 +289,8 @@ def generate_index_html():
         '{{RTL_FILES}}': code_metrics['rtl_files'],
         '{{RTL_LINES}}': code_metrics['rtl_lines'],
         '{{TEST_FILES}}': code_metrics['test_files'],
+        '{{TOTAL_GATES}}': code_metrics['total_gates'],
+        '{{DIE_SIZE}}': code_metrics['die_size'],
         '{{PASSED_TESTS}}': test_data['passed_tests'],
         '{{TOTAL_TESTS}}': test_data['total_tests'],
         '{{SUCCESS_RATE}}': test_data['success_rate'],

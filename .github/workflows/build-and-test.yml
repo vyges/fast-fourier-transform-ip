@@ -577,6 +577,17 @@ jobs:
             echo "ℹ️ No Yosys synthesis configuration found"
           fi
           
+          # Check Yosys gate analysis configuration
+          if [ -d "flow/yosys" ]; then
+            echo "✅ Found Yosys gate analysis configuration"
+            if [ -f "flow/yosys/Makefile" ]; then
+              echo "✅ Found Yosys Makefile with gate analysis"
+              echo "✅ Gate analysis includes comprehensive reporting and transistor estimates"
+            fi
+          else
+            echo "ℹ️ No Yosys gate analysis configuration found"
+          fi
+          
           # Check commercial FPGA configuration
           if [ -d "flow/vivado" ]; then
             echo "✅ Found Vivado configuration for FPGA"
@@ -611,6 +622,21 @@ jobs:
             echo "No Makefile for synthesis found in flow/synthesis/"
           fi
           echo "✅ ASIC synthesis complete"
+
+      - name: Run gate analysis
+        if: ${{ github.event.inputs.test_synthesis == 'true' }}
+        run: |
+          set -e
+          echo "🔧 Running gate analysis using Yosys..."
+          if [ -d "flow/yosys" ] && [ -f "flow/yosys/Makefile" ]; then
+            cd flow/yosys
+            # Run complete gate analysis and comprehensive reporting
+            make all || echo "⚠️ Gate analysis failed"
+            cd ../..
+          else
+            echo "No Makefile for gate analysis found in flow/yosys/"
+          fi
+          echo "✅ Gate analysis complete"
 
       - name: Run synthesis (FPGA)
         run: |
@@ -659,6 +685,7 @@ jobs:
           echo "- Linting: ${{ github.event.inputs.test_linting == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
           echo "- Simulation: ${{ github.event.inputs.test_simulation == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
           echo "- Synthesis: ${{ github.event.inputs.test_synthesis == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
+          echo "- Gate Analysis: ${{ github.event.inputs.test_synthesis == 'true' && '✅ ENABLED' || '⏭️ DISABLED' }}"
           echo ""
           echo "Note: This is a template repository. Actual tests require IP-specific implementation."
 
@@ -718,6 +745,16 @@ jobs:
           fi
           if [ -f "flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md" ]; then
             cp flow/fpga/openfpga/FPGA_FLOW_SUMMARY.md public/
+          fi
+          
+          # Copy gate analysis reports to public/
+          if [ -f "flow/yosys/gate_analysis_report.md" ]; then
+            cp flow/yosys/gate_analysis_report.md public/
+            echo "✅ Gate analysis report copied to public directory"
+          fi
+          if [ -f "flow/yosys/reports/comprehensive_report.md" ]; then
+            cp flow/yosys/reports/comprehensive_report.md public/
+            echo "✅ Comprehensive gate analysis report copied to public directory"
           fi
           # Create CSS for HTML reports
           cat > public/report-style.css << 'EOF'
@@ -846,6 +883,8 @@ jobs:
             flow/*/reports/
             flow/*/build/
             flow/*/netlists/
+            flow/yosys/gate_analysis_report.md
+            flow/yosys/reports/
             tb/*/build/
             tb/*/waves/
             tb/*/coverage/
