@@ -1,5 +1,5 @@
 # FPGA Flow Summary for fft_top
-Generated: Tue Jul 29 15:55:12 UTC 2025
+Generated: Tue Jul 29 16:10:08 UTC 2025
 FPGA Family: ice40
 Top Module: fft_top
 See detailed synthesis and implementation reports in this directory.
