@@ -1,16 +1,16 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-23T00:56:16.330225",
+    "analysis_date": "2025-07-29T13:58:54.026728",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 120,
+    "total_files": 121,
     "total_directories": 47,
     "file_types": {
-      ".md": 26,
+      ".md": 27,
       ".json": 5,
       ".py": 9,
       "no_extension": 34,
@@ -39,6 +39,7 @@
           "NOTICE",
           "LICENSE",
           ".cursorrules",
+          "LICENSE_SCOPE.md",
           ".gitignore",
           "vyges-metadata.json"
         ],
@@ -447,7 +448,7 @@
   },
   "documentation_metrics": {
     "documentation_files": 8,
-    "documentation_lines": 5715,
+    "documentation_lines": 5719,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
