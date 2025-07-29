@@ -1,19 +1,19 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-29T14:03:36.721097",
+    "analysis_date": "2025-07-29T15:55:17.757917",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 121,
-    "total_directories": 47,
+    "total_files": 125,
+    "total_directories": 49,
     "file_types": {
-      ".md": 27,
+      ".md": 29,
       ".json": 5,
-      ".py": 9,
-      "no_extension": 34,
+      ".py": 10,
+      "no_extension": 35,
       ".html": 7,
       ".txt": 4,
       ".css": 1,
@@ -215,7 +215,8 @@
           "fpga",
           "vivado",
           "synthesis",
-          "openlane2"
+          "openlane2",
+          "yosys"
         ]
       },
       "flow/verilator": {
@@ -315,6 +316,22 @@
       "flow/openlane2": {
         "files": [
           ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "flow/yosys": {
+        "files": [
+          "gate_analysis_report.md",
+          "gate_analysis.py",
+          "Makefile"
+        ],
+        "subdirectories": [
+          "reports"
+        ]
+      },
+      "flow/yosys/reports": {
+        "files": [
+          "comprehensive_report.md"
         ],
         "subdirectories": []
       },
@@ -444,7 +461,7 @@
     "constraint_files": 5,
     "constraint_lines": 528,
     "script_files": 3,
-    "script_lines": 1563
+    "script_lines": 1627
   },
   "documentation_metrics": {
     "documentation_files": 8,
