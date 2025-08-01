@@ -1,21 +1,21 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-08-01T20:09:13.485114",
+    "analysis_date": "2025-08-01T22:51:02.865646",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 154,
-    "total_directories": 51,
+    "total_files": 152,
+    "total_directories": 50,
     "file_types": {
       ".md": 29,
       ".json": 5,
       ".py": 11,
       "no_extension": 35,
-      ".html": 7,
-      ".txt": 11,
+      ".html": 4,
+      ".txt": 9,
       ".css": 1,
       ".vcd": 2,
       ".sv": 14,
@@ -28,7 +28,10 @@
       ".mk": 2,
       ".cpp": 12,
       ".dat": 1,
-      ".vvp": 1
+      ".xml": 1,
+      ".vvp": 1,
+      ".f": 1,
+      ".pyc": 1
     },
     "directory_structure": {
       "root": {
@@ -178,22 +181,13 @@
           "waveforms_template.html"
         ],
         "subdirectories": [
-          "waveforms",
-          "coverage"
+          "waveforms"
         ]
       },
       "public/waveforms": {
         "files": [
           "index.html",
           "tb_example.vcd"
-        ],
-        "subdirectories": []
-      },
-      "public/coverage": {
-        "files": [
-          "coverage_report.txt",
-          "coverage_report.html",
-          "index.html"
         ],
         "subdirectories": []
       },
@@ -477,23 +471,24 @@
           "test_fft_basic.py",
           "test_example.py",
           "generate_coverage_report.py",
+          "results.xml",
           "test_fft_rescaling.py"
         ],
         "subdirectories": [
-          "work",
-          "coverage"
+          "sim_build",
+          "__pycache__"
         ]
       },
-      "tb/cocotb/work": {
+      "tb/cocotb/sim_build": {
         "files": [
-          "fft_top.vvp"
+          "sim.vvp",
+          "cmds.f"
         ],
         "subdirectories": []
       },
-      "tb/cocotb/coverage": {
+      "tb/cocotb/__pycache__": {
         "files": [
-          "coverage_report.txt",
-          "coverage_report.html"
+          "test_fft_basic.cpython-312-pytest-8.4.1.pyc"
         ],
         "subdirectories": []
       }
@@ -504,7 +499,7 @@
     "rtl_lines": 2621,
     "rtl_modules": 30,
     "testbench_files": 10,
-    "testbench_lines": 2304,
+    "testbench_lines": 2054,
     "constraint_files": 5,
     "constraint_lines": 528,
     "script_files": 4,
@@ -521,21 +516,21 @@
   },
   "test_metrics": {
     "test_files": 10,
-    "test_lines": 2304,
+    "test_lines": 2054,
     "test_types": {
       "systemverilog": 6,
       "cocotb": 4,
       "uvm": 0,
       "formal": 0
     },
-    "coverage_files": 2,
+    "coverage_files": 0,
     "test_vectors": 0
   },
   "quality_metrics": {
     "linting_clean": false,
     "synthesis_clean": true,
     "simulation_passing": true,
-    "coverage_goals_met": true,
+    "coverage_goals_met": false,
     "documentation_complete": true,
     "metadata_complete": true,
     "synthesis_stats_available": true,
@@ -584,7 +579,7 @@
     "recommendations": []
   },
   "summary": {
-    "overall_score": 98.76666666666667,
+    "overall_score": 88.76666666666667,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",

@@ -1,8 +1,8 @@
 Coverage Summary
 =================
-Generated: Fri Aug  1 20:06:46 UTC 2025
+Generated: Fri Aug  1 22:48:35 UTC 2025
 Repository: vyges/fast-fourier-transform-ip
-Run ID: 16684081568
+Run ID: 16686624507
 
 Test Files:
 - test_fft_basic.py (4 tests)
@@ -24,11 +24,11 @@ Coverage Areas:
 - Performance measurement and timing
 
 Test Status: 
-- Verilator: Attempted (may fail due to cocotb linking issues)
+- Verilator: Attempted (should work correctly)
 - Icarus: Attempted (should work correctly)
-- Coverage: Enabled for Icarus tests
+- Coverage: Enabled for both simulators
 
-Note: Verilator tests may fail due to known cocotb linking issues.
-Icarus Verilog tests should work correctly and provide full coverage.
+Note: Both Verilator and Icarus Verilog tests should work correctly.
+Cocotb integration is now fully functional with both simulators.
 
 Coverage files available in: public/coverage/ (if generated)
