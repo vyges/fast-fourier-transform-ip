@@ -1,21 +1,21 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-08-01T05:31:17.712879",
+    "analysis_date": "2025-08-01T20:09:13.485114",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 147,
-    "total_directories": 50,
+    "total_files": 154,
+    "total_directories": 51,
     "file_types": {
       ".md": 29,
       ".json": 5,
-      ".py": 10,
+      ".py": 11,
       "no_extension": 35,
       ".html": 7,
-      ".txt": 5,
+      ".txt": 11,
       ".css": 1,
       ".vcd": 2,
       ".sv": 14,
@@ -314,8 +314,20 @@
           "test_twiddle_rom_synth.sh"
         ],
         "subdirectories": [
+          "reports",
           "netlists"
         ]
+      },
+      "flow/synthesis/reports": {
+        "files": [
+          "twiddle_rom_stats.txt",
+          "scale_factor_tracker_stats.txt",
+          "rescale_unit_stats.txt",
+          "fft_control_stats.txt",
+          "memory_interface_stats.txt",
+          "fft_engine_stats.txt"
+        ],
+        "subdirectories": []
       },
       "flow/synthesis/netlists": {
         "files": [],
@@ -375,7 +387,8 @@
           "generate_github_pages.py",
           "generate_test_harness_report.py",
           "README.md",
-          "code_kpis.py"
+          "code_kpis.py",
+          "generate_comprehensive_report.py"
         ],
         "subdirectories": []
       },
@@ -494,8 +507,8 @@
     "testbench_lines": 2304,
     "constraint_files": 5,
     "constraint_lines": 528,
-    "script_files": 3,
-    "script_lines": 1627
+    "script_files": 4,
+    "script_lines": 1884
   },
   "documentation_metrics": {
     "documentation_files": 8,
@@ -524,7 +537,18 @@
     "simulation_passing": true,
     "coverage_goals_met": true,
     "documentation_complete": true,
-    "metadata_complete": true
+    "metadata_complete": true,
+    "synthesis_stats_available": true,
+    "synthesis_modules_count": 7,
+    "total_gate_count": 74217,
+    "module_gate_counts": {
+      "twiddle_rom": 85,
+      "scale_factor_tracker": 188,
+      "rescale_unit": 429,
+      "fft_control": 55,
+      "memory_interface": 67754,
+      "fft_engine": 5706
+    }
   },
   "metadata_analysis": {
     "metadata_exists": true,
