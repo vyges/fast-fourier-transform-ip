@@ -27,7 +27,6 @@ module twiddle_rom #(
 );
 
     // Type definitions
-    typedef real real_t;
     typedef int int_t;
     
     // ROM size calculation
@@ -59,16 +58,11 @@ module twiddle_rom #(
         
         // For 4096-point FFT (N=4096), we need 2048 twiddle factors
         for (int k = 0; k < 2048; k++) begin
-            real_t cos_val, sin_val;
             int_t cos_int, sin_int;
             
-            // Calculate trigonometric values
-            cos_val = $cos(2.0 * 3.14159265359 * k / 4096.0);
-            sin_val = $sin(2.0 * 3.14159265359 * k / 4096.0);
-            
-            // Convert to Q1.15 fixed-point format
-            cos_int = int'(cos_val * 32767.0);
-            sin_int = int'(sin_val * 32767.0);
+            // Calculate trigonometric values and convert to Q1.15 fixed-point format
+            cos_int = int'($cos(2.0 * 3.14159265359 * k / 4096.0) * 32767.0);
+            sin_int = int'($sin(2.0 * 3.14159265359 * k / 4096.0) * 32767.0);
             
             // Pack into 32-bit word (real:imag)
             rom_memory[k] = {cos_int[15:0], sin_int[15:0]};

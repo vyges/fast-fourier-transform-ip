@@ -36,6 +36,8 @@ help:
 	@echo "  make test_basic                    # Run basic test with default settings"
 	@echo "  make test_all                      # Run all tests with default settings"
 	@echo "  make test_all TESTBENCH_TYPE=cocotb SIM=verilator"
+	@echo "  make test_both_simulators          # Run tests with both Icarus and Verilator"
+	@echo "  make test_all_simulators           # Run all testbench types with all simulators"
 	@echo "  make clean                         # Clean all testbench artifacts"
 	@echo "  make waves                         # View waveforms (VCD files)"
 	@echo "  make help                          # Show this help message"
@@ -81,10 +83,10 @@ test_basic: validate_testbench_type validate_simulator
 	@echo "Running basic test with $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) test_basic SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) test_basic SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_basic SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) test_basic SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Basic test completed successfully!"
@@ -93,10 +95,10 @@ test_random: validate_testbench_type validate_simulator
 	@echo "Running random test with $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) test_random SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) test_random SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_random SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) test_random SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Random test completed successfully!"
@@ -105,13 +107,33 @@ test_all: validate_testbench_type validate_simulator
 	@echo "Running all tests with $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) test_all SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) test_all SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_all SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) test_all SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "All tests completed successfully!"
+
+# New target to run both simulators
+test_both_simulators:
+	@echo "Running tests with both Icarus Verilog and Verilator simulators..."
+	@echo "Testing with Icarus Verilog..."
+	$(MAKE) test_basic TESTBENCH_TYPE=sv SIM=icarus
+	@echo "Testing with Verilator..."
+	$(MAKE) test_basic TESTBENCH_TYPE=sv SIM=verilator
+	@echo "Both simulator tests completed successfully!"
+
+# New target to run all testbench types with both simulators
+test_all_simulators:
+	@echo "Running all testbench types with all simulators..."
+	@for tb_type in $(TB_TYPES); do \
+		echo "Testing $$tb_type testbench with Icarus Verilog..."; \
+		$(MAKE) test_basic TESTBENCH_TYPE=$$tb_type SIM=icarus || exit 1; \
+		echo "Testing $$tb_type testbench with Verilator..."; \
+		$(MAKE) test_basic TESTBENCH_TYPE=$$tb_type SIM=verilator || exit 1; \
+	done
+	@echo "All testbench types with all simulators completed successfully!"
 
 coverage: validate_testbench_type validate_simulator
 	@if [ "$(SIM)" != "verilator" ]; then \
@@ -121,10 +143,10 @@ coverage: validate_testbench_type validate_simulator
 	@echo "Running coverage with $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) coverage SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) coverage SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) coverage SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) coverage SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Coverage completed successfully!"
@@ -141,10 +163,10 @@ waves: validate_testbench_type validate_simulator
 	@echo "Viewing waveforms for $(TESTBENCH_TYPE) testbench..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) waves SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) waves SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) waves SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) waves SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 
@@ -153,10 +175,10 @@ compile: validate_testbench_type validate_simulator
 	@echo "Compiling $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) compile SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) compile SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) compile SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) compile SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Compilation completed successfully!"
@@ -166,10 +188,10 @@ run: validate_testbench_type validate_simulator
 	@echo "Running $(TESTBENCH_TYPE) testbench using $(SIM) simulator..."
 	@case "$(TESTBENCH_TYPE)" in \
 		sv) \
-			cd tb/sv_tb && $(MAKE) run SIM=$(SIM) || exit 1; \
+			cd tb/sv_tb && $(MAKE) run SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) run SIM=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) run SIMULATOR=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Simulation completed successfully!"
@@ -209,37 +231,37 @@ benchmark:
 # FPGA Synthesis targets
 fpga_synth:
 	@echo "Running FPGA synthesis..."
-	@if [ -d "flow/fpga" ]; then \
-		cd flow/fpga && $(MAKE) all || exit 1; \
+	@if [ -d "flow/synthesis" ]; then \
+		cd flow/synthesis && $(MAKE) synth_individual || exit 1; \
 	else \
-		echo "Warning: FPGA flow directory not found. Create flow/fpga/ with appropriate Makefile."; \
+		echo "Warning: Synthesis flow directory not found. Create flow/synthesis/ with appropriate Makefile."; \
 	fi
 	@echo "FPGA synthesis completed successfully!"
 
 fpga_analysis:
 	@echo "Running FPGA analysis..."
-	@if [ -d "flow/fpga" ]; then \
-		cd flow/fpga && $(MAKE) fpga_analysis || exit 1; \
+	@if [ -d "flow/synthesis" ]; then \
+		cd flow/synthesis && $(MAKE) reports || exit 1; \
 	else \
-		echo "Warning: FPGA flow directory not found. Create flow/fpga/ with appropriate Makefile."; \
+		echo "Warning: Synthesis flow directory not found. Create flow/synthesis/ with appropriate Makefile."; \
 	fi
 	@echo "FPGA analysis completed successfully!"
 
 fpga_report:
 	@echo "Generating comprehensive FPGA report..."
-	@if [ -d "flow/fpga" ]; then \
-		cd flow/fpga && $(MAKE) comprehensive_report || exit 1; \
+	@if [ -d "flow/synthesis" ]; then \
+		cd flow/synthesis && $(MAKE) synth_test || exit 1; \
 	else \
-		echo "Warning: FPGA flow directory not found. Create flow/fpga/ with appropriate Makefile."; \
+		echo "Warning: Synthesis flow directory not found. Create flow/synthesis/ with appropriate Makefile."; \
 	fi
 	@echo "FPGA report generation completed successfully!"
 
 fpga_clean:
 	@echo "Cleaning FPGA synthesis artifacts..."
-	@if [ -d "flow/fpga" ]; then \
-		cd flow/fpga && $(MAKE) clean || exit 1; \
+	@if [ -d "flow/synthesis" ]; then \
+		cd flow/synthesis && $(MAKE) clean || exit 1; \
 	else \
-		echo "Warning: FPGA flow directory not found. Create flow/fpga/ with appropriate Makefile."; \
+		echo "Warning: Synthesis flow directory not found. Create flow/synthesis/ with appropriate Makefile."; \
 	fi
 	@echo "FPGA clean completed successfully!"
 
@@ -261,4 +283,4 @@ status:
 		cocotb) echo "  $(COCOTB_SIMS)" ;; \
 	esac
 
-.PHONY: help test_basic test_random test_all coverage gui waves compile run clean test_all_types benchmark status fpga_synth fpga_analysis fpga_report fpga_clean fpga_all 
+.PHONY: help test_basic test_random test_all test_both_simulators test_all_simulators coverage gui waves compile run clean test_all_types benchmark status fpga_synth fpga_analysis fpga_report fpga_clean fpga_all 

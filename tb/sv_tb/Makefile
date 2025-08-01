@@ -20,7 +20,7 @@ COVERAGE = 1
 ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
     SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint -Wno-MULTITOP --top-module tb_simple
-    SIM_FILES = $(RTL_DIR)/*.sv tb_simple.sv
+    SIM_FILES = $(RTL_DIR)/*.sv tb_simple.sv verilator_tb_simple.cpp
     SIM_TARGET = obj_dir/Vtb_simple
     RUN_CMD = ./obj_dir/Vtb_simple
 else ifeq ($(SIMULATOR),iverilog)
@@ -63,7 +63,7 @@ $(WORK_DIR):
 compile: $(WORK_DIR)
 	mkdir -p waveforms
 ifeq ($(SIMULATOR),verilator)
-	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES) -o $(SIM_TARGET)
+	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES)
 else ifeq ($(SIMULATOR),iverilog)
 	$(SIM_CMD) $(SIM_FLAGS) -o $(SIM_TARGET) $(SIM_FILES)
 else ifeq ($(SIMULATOR),vcs)

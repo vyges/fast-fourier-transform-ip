@@ -380,13 +380,29 @@ jobs:
           echo "🧪 Running simulation tests using Makefile..."
           if [ -d "tb/sv_tb" ] && [ -f "tb/sv_tb/Makefile" ]; then
             cd tb/sv_tb
-            # Use Icarus Verilog for simulation
-            make all SIMULATOR=iverilog || echo "⚠️ Icarus Verilog simulation failed"
+            # Test with Icarus Verilog
+            echo "Testing with Icarus Verilog..."
+            make test_basic SIMULATOR=iverilog || echo "⚠️ Icarus Verilog simulation failed"
+            # Test with Verilator
+            echo "Testing with Verilator..."
+            make test_basic SIMULATOR=verilator || echo "⚠️ Verilator simulation failed"
             cd ../..
           else
             echo "No Makefile for simulation found in tb/sv_tb/"
           fi
           echo "✅ Simulation tests complete"
+
+      - name: Run both simulators test
+        run: |
+          set -e
+          echo "🧪 Running both simulators test using main Makefile..."
+          if [ -f "Makefile" ]; then
+            # Test both simulators using the new target
+            make test_both_simulators || echo "⚠️ Both simulators test failed"
+          else
+            echo "No main Makefile found"
+          fi
+          echo "✅ Both simulators test complete"
 
       - name: Run Cocotb testbench tests
         run: |

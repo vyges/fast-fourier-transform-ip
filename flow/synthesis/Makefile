@@ -31,20 +31,20 @@ $(REPORTS_DIR):
 # Individual module synthesis (recommended)
 synth_individual: $(REPORTS_DIR) $(NETLISTS_DIR)
 	@echo "=== FFT IP Individual Module Synthesis ==="
-	@echo "Testing each module individually with timeout protection..."
+	@echo "Testing each module individually..."
 	@echo ""
 	@echo "1. fft_engine:"
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_engine.sv; hierarchy -top fft_engine; synth -top fft_engine; stat"' && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_engine.sv; hierarchy -top fft_engine; synth -top fft_engine; stat" && echo "PASS" || echo "FAIL"
 	@echo "2. fft_control:"
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_control.sv; hierarchy -top fft_control; synth -top fft_control; stat"' && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_control.sv; hierarchy -top fft_control; synth -top fft_control; stat" && echo "PASS" || echo "FAIL"
 	@echo "3. rescale_unit:"
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/rescale_unit.sv; hierarchy -top rescale_unit; synth -top rescale_unit; stat"' && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/rescale_unit.sv; hierarchy -top rescale_unit; synth -top rescale_unit; stat" && echo "PASS" || echo "FAIL"
 	@echo "4. scale_factor_tracker:"
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat"' && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat" && echo "PASS" || echo "FAIL"
 	@echo "5. twiddle_rom_synth:"
-	./timeout_wrapper.sh 60 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat"' && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat" && echo "PASS" || echo "FAIL"
 	@echo "6. memory_interface (simplified):"
-	./timeout_wrapper.sh 30 ./test_memory_interface_simple.sh && echo "PASS" || echo "FAIL"
+	./test_memory_interface_simple.sh && echo "PASS" || echo "FAIL"
 	@echo ""
 	@echo "=== Individual Module Synthesis Complete ==="
 	@echo "Note: memory_interface requires simplified version due to large memory array"
@@ -53,15 +53,15 @@ synth_individual: $(REPORTS_DIR) $(NETLISTS_DIR)
 synth_simple: $(REPORTS_DIR) $(NETLISTS_DIR)
 	@echo "Running simplified synthesis for individual modules..."
 	@echo "Step 1: Synthesizing memory_interface..."
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/memory_interface.sv; hierarchy -top memory_interface; synth -top memory_interface; stat"' || (echo "memory_interface synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/memory_interface.sv; hierarchy -top memory_interface; synth -top memory_interface; stat'" || (echo "memory_interface synthesis failed or timed out"; exit 1)
 	@echo "Step 2: Synthesizing fft_control..."
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_control.sv; hierarchy -top fft_control; synth -top fft_control; stat"' || (echo "fft_control synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/fft_control.sv; hierarchy -top fft_control; synth -top fft_control; stat'" || (echo "fft_control synthesis failed or timed out"; exit 1)
 	@echo "Step 3: Synthesizing rescale_unit..."
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/rescale_unit.sv; hierarchy -top rescale_unit; synth -top rescale_unit; stat"' || (echo "rescale_unit synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/rescale_unit.sv; hierarchy -top rescale_unit; synth -top rescale_unit; stat'" || (echo "rescale_unit synthesis failed or timed out"; exit 1)
 	@echo "Step 4: Synthesizing scale_factor_tracker..."
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat"' || (echo "scale_factor_tracker synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat'" || (echo "scale_factor_tracker synthesis failed or timed out"; exit 1)
 	@echo "Step 5: Synthesizing twiddle_rom_synth..."
-	./timeout_wrapper.sh 30 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat"' || (echo "twiddle_rom_synth synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat'" || (echo "twiddle_rom_synth synthesis failed or timed out"; exit 1)
 	@echo "Simplified synthesis completed!"
 
 # Full synthesis (WARNING: May hang due to memory interface)
