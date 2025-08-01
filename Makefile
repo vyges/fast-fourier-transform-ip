@@ -86,7 +86,7 @@ test_basic: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) test_basic SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_basic SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Basic test completed successfully!"
@@ -98,7 +98,7 @@ test_random: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) test_random SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_random SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Random test completed successfully!"
@@ -110,7 +110,7 @@ test_all: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) test_all SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) test_all SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) test_all SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "All tests completed successfully!"
@@ -120,10 +120,9 @@ test_both_simulators:
 	@echo "Running tests with both Icarus Verilog and Verilator simulators..."
 	@echo "Testing with Icarus Verilog..."
 	$(MAKE) test_basic TESTBENCH_TYPE=sv SIM=icarus
-	@echo "⚠️  Verilator tests are currently disabled due to linking issues"
-	@echo "   See https://github.com/cocotb/cocotb/issues/4842 for details"
-	@echo "   Skipping Verilator tests - only Icarus Verilog is functional"
-	@echo "Both simulator tests completed successfully! (Verilator skipped)"
+	@echo "Testing with Verilator..."
+	$(MAKE) test_basic TESTBENCH_TYPE=sv SIM=verilator
+	@echo "Both simulator tests completed successfully!"
 
 # New target to run all testbench types with both simulators
 test_all_simulators:
@@ -131,11 +130,10 @@ test_all_simulators:
 	@for tb_type in $(TB_TYPES); do \
 		echo "Testing $$tb_type testbench with Icarus Verilog..."; \
 		$(MAKE) test_basic TESTBENCH_TYPE=$$tb_type SIM=icarus || exit 1; \
-		echo "⚠️  Verilator tests are currently disabled due to linking issues"; \
-		echo "   See https://github.com/cocotb/cocotb/issues/4842 for details"; \
-		echo "   Skipping Verilator tests for $$tb_type testbench"; \
+		echo "Testing $$tb_type testbench with Verilator..."; \
+		$(MAKE) test_basic TESTBENCH_TYPE=$$tb_type SIM=verilator || exit 1; \
 	done
-	@echo "All testbench types with all simulators completed successfully! (Verilator skipped)"
+	@echo "All testbench types with all simulators completed successfully!"
 
 coverage: validate_testbench_type validate_simulator
 	@if [ "$(SIM)" != "verilator" ]; then \
@@ -148,7 +146,7 @@ coverage: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) coverage SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) coverage SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) coverage SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Coverage completed successfully!"
@@ -168,7 +166,7 @@ waves: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) waves SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) waves SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) waves SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 
@@ -180,7 +178,7 @@ compile: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) compile SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) compile SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) compile SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Compilation completed successfully!"
@@ -193,7 +191,7 @@ run: validate_testbench_type validate_simulator
 			cd tb/sv_tb && $(MAKE) run SIMULATOR=$(SIM) || exit 1; \
 			;; \
 		cocotb) \
-			cd tb/cocotb && $(MAKE) run SIMULATOR=$(SIM) || exit 1; \
+			cd tb/cocotb && $(MAKE) SIM=$(SIM) || exit 1; \
 			;; \
 	esac
 	@echo "Simulation completed successfully!"
