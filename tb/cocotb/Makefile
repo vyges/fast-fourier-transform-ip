@@ -6,6 +6,12 @@
 # Author:      Vyges IP Development Team
 # Date:        2025-07-21
 # License:     Apache-2.0
+#
+# NOTE: Verilator integration with cocotb is currently not working
+# The manual compilation approach fails at linking stage with undefined references
+# TODO: Fix Verilator + cocotb integration or use alternative approach
+# For now, only Icarus Verilog simulator is fully functional
+# https://github.com/cocotb/cocotb/issues/4842
 #=============================================================================
 
 # Configuration
@@ -23,11 +29,13 @@ COCOTB_REDUCED_LOG_FMT = 1
 
 # Simulator-specific settings
 ifeq ($(SIMULATOR),verilator)
+    # NOTE: Verilator integration is currently broken - linking fails with undefined references
+    # TODO: Fix Verilator + cocotb integration
     SIM_CMD = verilator
-    SIM_FLAGS = --sc --build --trace --coverage
+    SIM_FLAGS = --cc --trace --coverage
     SIM_FILES = $(RTL_DIR)/*.sv
     SIM_TARGET = V$(TOP_MODULE)
-    RUN_CMD = $(WORK_DIR)/obj_dir/$(SIM_TARGET)
+    RUN_CMD = $(WORK_DIR)/obj_dir/V$(TOP_MODULE)
     COCOTB_HDL_TIMEPRECISION = 1ps
     COCOTB_HDL_TIMEUNIT = 1ns
 else ifeq ($(SIMULATOR),icarus)
@@ -61,6 +69,11 @@ MODULE = test_fft_basic
 TOPLEVEL = $(TOP_MODULE)
 TOPLEVEL_LANG = verilog
 
+# For Verilator, we need to set SIM to verilator
+ifeq ($(SIMULATOR),verilator)
+    SIM = verilator
+endif
+
 # Test configuration
 TEST_NAME ?= all
 COCOTB_LOG_LEVEL = INFO
@@ -87,8 +100,11 @@ compile:
 	@echo "Compiling FFT design with $(SIMULATOR)..."
 	@mkdir -p $(WORK_DIR)
 ifeq ($(SIMULATOR),verilator)
-	@mkdir -p $(WORK_DIR)
-	cd $(WORK_DIR) && $(SIM_CMD) $(SIM_FLAGS) --top-module $(TOP_MODULE) ../$(RTL_DIR)/*.sv -o $(SIM_TARGET)
+	@echo "⚠️  Verilator integration is currently disabled due to linking issues"
+	@echo "   See https://github.com/cocotb/cocotb/issues/4842 for details"
+	@echo "   Skipping Verilator tests - only Icarus Verilog is functional"
+	@echo "   To run tests, use: make test_basic SIMULATOR=icarus"
+	@exit 1
 else ifeq ($(SIMULATOR),icarus)
 	$(SIM_CMD) $(SIM_FLAGS) $(SIM_FILES)
 else ifeq ($(SIMULATOR),vcs)

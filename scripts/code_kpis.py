@@ -315,11 +315,15 @@ class VygesCodeKPIs:
         if lint_files:
             quality["linting_clean"] = True
         
-        # Check for synthesis results
+        # Check for synthesis results with detailed metrics
         synth_files = list(self.project_root.rglob("*synthesis*.log"))
         synth_files.extend(list(self.project_root.rglob("*yosys*.log")))
         synth_files.extend(list(self.project_root.rglob("*synth*.v")))
         synth_files.extend(list(self.project_root.rglob("flow/synthesis/*.v")))
+        
+        # Check for synthesis statistics files
+        synth_stats_files = list(self.project_root.rglob("flow/synthesis/reports/*_stats.txt"))
+        synth_stats_files.extend(list(self.project_root.rglob("flow/synthesis/*_stats.txt")))
         
         # Check for FPGA synthesis results
         fpga_synth_files = list(self.project_root.rglob("flow/fpga/openfpga/netlists/*.json"))
@@ -328,8 +332,31 @@ class VygesCodeKPIs:
         fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/build/*.bit")))
         fpga_synth_files.extend(list(self.project_root.rglob("flow/fpga/openfpga/reports/*.txt")))
         
-        if synth_files or fpga_synth_files:
-            quality["synthesis_clean"] = True
+        # Enhanced synthesis metrics
+        quality["synthesis_clean"] = bool(synth_files or fpga_synth_files)
+        quality["synthesis_stats_available"] = bool(synth_stats_files)
+        quality["synthesis_modules_count"] = len(synth_stats_files)
+        
+        # Calculate total gate count from synthesis statistics
+        total_gates = 0
+        module_gates = {}
+        for stats_file in synth_stats_files:
+            try:
+                with open(stats_file, 'r') as f:
+                    content = f.read()
+                    # Extract cell count
+                    import re
+                    cell_match = re.search(r'Number of cells:\s+(\d+)', content)
+                    if cell_match:
+                        cell_count = int(cell_match.group(1))
+                        module_name = stats_file.stem.replace('_stats', '')
+                        module_gates[module_name] = cell_count
+                        total_gates += cell_count
+            except Exception:
+                pass
+        
+        quality["total_gate_count"] = total_gates
+        quality["module_gate_counts"] = module_gates
         
         # Check for simulation results
         sim_files = list(self.project_root.rglob("*.vcd"))
@@ -797,6 +824,16 @@ class VygesCodeKPIs:
         print(f"   Documentation Complete: {'✅' if quality_metrics.get('documentation_complete', False) else '❌'}")
         print(f"   Linting Clean: {'✅' if quality_metrics.get('linting_clean', False) else '❌'}")
         print(f"   Synthesis Clean: {'✅' if quality_metrics.get('synthesis_clean', False) else '❌'}")
+        
+        # Synthesis Metrics
+        if quality_metrics.get('synthesis_stats_available', False):
+            print(f"\n🔧 SYNTHESIS METRICS:")
+            print(f"   Total Gate Count: {quality_metrics.get('total_gate_count', 0):,} cells")
+            print(f"   Modules Synthesized: {quality_metrics.get('synthesis_modules_count', 0)}")
+            if quality_metrics.get('module_gate_counts'):
+                print(f"   Module Breakdown:")
+                for module, gates in quality_metrics['module_gate_counts'].items():
+                    print(f"     {module}: {gates:,} cells")
         
         # Vyges Metadata Analysis
         metadata_analysis = self.kpis.get("metadata_analysis", {})

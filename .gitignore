@@ -372,3 +372,5 @@ gh-pages/
 !*/config.yaml
 !*/config.yml
 
+README_run_ubuntu.md
+run_ubuntu.sh

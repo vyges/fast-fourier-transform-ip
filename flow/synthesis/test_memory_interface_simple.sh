@@ -140,6 +140,6 @@ module memory_interface #(
 endmodule
 EOF
 
-yosys -q -p "read_verilog -sv temp_memory_interface.sv; hierarchy -top memory_interface; synth -top memory_interface; stat"
+yosys -p "read_verilog -sv temp_memory_interface.sv; hierarchy -top memory_interface; synth -top memory_interface; stat"
 rm temp_memory_interface.sv
 echo "memory_interface synthesis completed" 
