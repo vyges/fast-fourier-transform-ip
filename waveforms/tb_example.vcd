@@ -1,5 +1,5 @@
 $date
-	Tue Jul 29 16:07:28 2025
+	Fri Aug  1 05:28:29 2025
 $end
 $version
 	Icarus Verilog
@@ -117,17 +117,15 @@ $scope begin $ivl_for_loop0 $end
 $var integer 32 d k [31:0] $end
 $scope begin $unm_blk_167 $end
 $var integer 32 e cos_int [31:0] $end
-$var real 1 f cos_val $end
-$var integer 32 g sin_int [31:0] $end
-$var real 1 h sin_val $end
+$var integer 32 f sin_int [31:0] $end
 $upscope $end
 $upscope $end
 $scope begin $ivl_for_loop1 $end
-$var integer 32 i k [31:0] $end
+$var integer 32 g k [31:0] $end
 $upscope $end
 $upscope $end
 $scope begin $ivl_for_loop4 $end
-$var integer 32 j i [31:0] $end
+$var integer 32 h i [31:0] $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
@@ -143,11 +141,9 @@ b1010 !
 $end
 #0
 $dumpvars
-b0 j
-b100000000000 i
-r0.001533980186078104 h
-b110010 g
-r-0.9999988234517022 f
+b0 h
+b100000000000 g
+b110010 f
 b11111111111111111000000000000001 e
 b100000000000 d
 bx c
@@ -936,7 +932,7 @@ b10 ^
 1Y
 b10 X
 b10 \
-b10 j
+b10 h
 00
 #104500
 1V
@@ -996,7 +992,7 @@ b11100000000000 M
 1Y
 b11 X
 b11 \
-b11 j
+b11 h
 10
 16
 #106500
@@ -1036,7 +1032,7 @@ b100 ^
 1Y
 b100 X
 b100 \
-b100 j
+b100 h
 #108500
 1V
 b1111111111111100000000011001001 W
@@ -1096,7 +1092,7 @@ b101 ^
 1Y
 b101 X
 b101 \
-b101 j
+b101 h
 00
 0"
 #110500
@@ -1140,7 +1136,7 @@ b110 ^
 1Y
 b110 X
 b110 \
-b110 j
+b110 h
 10
 b110000000000000 .
 b110000000000000 9
@@ -1197,7 +1193,7 @@ b111 ^
 1Y
 b111 X
 b111 \
-b111 j
+b111 h
 #114500
 1V
 b1111111111111010000000101100000 W
@@ -1254,7 +1250,7 @@ b1000 ^
 1Y
 b1000 X
 b1000 \
-b1000 j
+b1000 h
 00
 #116500
 1V
@@ -1291,7 +1287,7 @@ b1001 ^
 1Y
 b1001 X
 b1001 \
-b1001 j
+b1001 h
 10
 b1000000000000000 .
 b1000000000000000 9
@@ -1348,7 +1344,7 @@ b10000 P
 #120000
 0Z
 0-
-b1010 j
+b1010 h
 0"
 #120500
 b10001 '

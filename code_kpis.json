@@ -1,27 +1,33 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-07-29T16:10:13.226424",
+    "analysis_date": "2025-08-01T05:31:17.712879",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 125,
-    "total_directories": 49,
+    "total_files": 147,
+    "total_directories": 50,
     "file_types": {
       ".md": 29,
       ".json": 5,
       ".py": 10,
       "no_extension": 35,
       ".html": 7,
-      ".txt": 4,
+      ".txt": 5,
       ".css": 1,
       ".vcd": 2,
       ".sv": 14,
       ".tcl": 4,
       ".sh": 12,
       ".pcf": 1,
+      ".ys": 1,
+      ".h": 4,
+      ".d": 1,
+      ".mk": 2,
+      ".cpp": 12,
+      ".dat": 1,
       ".vvp": 1
     },
     "directory_structure": {
@@ -288,12 +294,14 @@
       },
       "flow/synthesis": {
         "files": [
+          "synth_stats.txt",
           "synthesis_analysis_report.md",
           "test_rescale_unit.sh",
           "synthesis_report.md",
           "yosys_synth_generic.tcl",
           "test_fft_engine.sh",
           "Makefile",
+          "yosys_synth.ys",
           "yosys_synth.tcl",
           "test_fft_control.sh",
           "test_scale_factor_tracker.sh",
@@ -406,9 +414,35 @@
           "tb_rescale_unit.sv"
         ],
         "subdirectories": [
+          "obj_dir",
           "waveforms",
           "work"
         ]
+      },
+      "tb/sv_tb/obj_dir": {
+        "files": [
+          "Vtb_simple__Syms.h",
+          "Vtb_simple__ver.d",
+          "Vtb_simple.mk",
+          "Vtb_simple___024root.h",
+          "Vtb_simple__pch.h",
+          "Vtb_simple__Trace__0.cpp",
+          "Vtb_simple.h",
+          "Vtb_simple__Syms.cpp",
+          "Vtb_simple__Trace__0__Slow.cpp",
+          "Vtb_simple__TraceDecls__0__Slow.cpp",
+          "Vtb_simple_classes.mk",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0.cpp",
+          "Vtb_simple___024root__DepSet_h74eeff05__0.cpp",
+          "Vtb_simple___024root__Slow.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__1__Slow.cpp",
+          "Vtb_simple.cpp",
+          "Vtb_simple___024root__DepSet_h74eeff05__0__Slow.cpp",
+          "Vtb_simple___024root__DepSet_h8dbf6dea__0__Slow.cpp",
+          "Vtb_simple__verFiles.dat"
+        ],
+        "subdirectories": []
       },
       "tb/sv_tb/waveforms": {
         "files": [
@@ -454,7 +488,7 @@
   },
   "code_metrics": {
     "rtl_files": 14,
-    "rtl_lines": 2627,
+    "rtl_lines": 2621,
     "rtl_modules": 30,
     "testbench_files": 10,
     "testbench_lines": 2304,
