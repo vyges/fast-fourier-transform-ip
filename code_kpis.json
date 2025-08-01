@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-08-01T22:51:02.865646",
+    "analysis_date": "2025-08-01T23:10:09.940367",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -562,24 +562,24 @@
       "files": false,
       "test": true,
       "flows": true,
-      "meta": false,
+      "meta": true,
       "created": true,
       "updated": true
     },
     "validation_status": "valid",
-    "quality_score": 87.66666666666666,
+    "quality_score": 98.66666666666666,
     "catalog_readiness": "ready",
-    "field_completeness": 86.66666666666667,
+    "field_completeness": 93.33333333333333,
     "interface_quality": 133.33333333333331,
     "test_coverage_metadata": 100,
     "flow_configuration": 100,
-    "documentation_metadata": 0,
+    "documentation_metadata": 60,
     "ai_generation_ready": true,
     "issues": [],
     "recommendations": []
   },
   "summary": {
-    "overall_score": 88.76666666666667,
+    "overall_score": 89.86666666666666,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
