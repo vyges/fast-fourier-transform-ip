@@ -3,7 +3,7 @@ VYGES CODE KPIs ANALYSIS REPORT
 ============================================================
 
 📁 PROJECT: fast-fourier-transform-ip
-📅 Analysis Date: 2025-08-01T23:10:10.143369
+📅 Analysis Date: 2025-08-11T01:00:02.165609
 🔗 Git Status: dirty
 
 📊 OVERALL SCORE: 89.86666666666666/100
@@ -36,11 +36,11 @@ VYGES CODE KPIs ANALYSIS REPORT
    Total Gate Count: 74,217 cells
    Modules Synthesized: 7
    Module Breakdown:
-     twiddle_rom: 85 cells
-     scale_factor_tracker: 188 cells
-     rescale_unit: 429 cells
-     fft_control: 55 cells
      memory_interface: 67,754 cells
+     twiddle_rom: 85 cells
+     rescale_unit: 429 cells
+     scale_factor_tracker: 188 cells
+     fft_control: 55 cells
      fft_engine: 5,706 cells
 
 📋 VYGES METADATA ANALYSIS:

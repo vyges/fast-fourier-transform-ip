@@ -1,7 +1,7 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2025-08-01 23:10:10
+**Generated:** 2025-08-11 01:00:02
 **Project:** 
 
 ## 📊 Code KPIs Summary
@@ -21,11 +21,11 @@
 - **Modules Synthesized:** 7
 - **Total Gate Count:** 74,217 cells
 - **Module Breakdown:**
-  - twiddle_rom: 85 cells
-  - scale_factor_tracker: 188 cells
-  - rescale_unit: 429 cells
-  - fft_control: 55 cells
   - memory_interface: 67,754 cells
+  - twiddle_rom: 85 cells
+  - rescale_unit: 429 cells
+  - scale_factor_tracker: 188 cells
+  - fft_control: 55 cells
   - fft_engine: 5,706 cells
 
 ### Vyges Metadata Analysis
