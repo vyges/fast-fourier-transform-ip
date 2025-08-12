@@ -1,7 +1,7 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2025-08-12 17:04:05
+**Generated:** 2025-08-12 17:48:09
 **Project:** 
 
 ## 📊 Code KPIs Summary
@@ -31,6 +31,16 @@
 ## 🔧 Gate Analysis Summary
 
 Detailed gate analysis report: `public/gate_analysis_report.md`
+
+## 💾 Memory Analysis Summary
+
+Detailed memory analysis report: `memory_analysis_report.md`
+
+**Memory Usage Overview:**
+- **Memory Interface:** 2048×32-bit (64KB) with BRAM synthesis
+- **Twiddle ROM:** 1024×16-bit (16KB) with symmetry optimization
+- **Total Memory:** ~80KB optimized for FFT operations
+- **Expected Cell Count:** ~150-700 cells (dramatically reduced)
 
 **Total Gate Count:** ~74217 cells
 

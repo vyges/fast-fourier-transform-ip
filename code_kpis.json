@@ -1,18 +1,18 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T17:04:04.981146",
+    "analysis_date": "2025-08-12T17:48:08.611410",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 163,
+    "total_files": 164,
     "total_directories": 50,
     "file_types": {
       ".md": 32,
       "no_extension": 34,
-      ".py": 12,
+      ".py": 13,
       ".test": 1,
       ".xml": 1,
       ".f": 1,
@@ -245,6 +245,7 @@
           "generate_test_harness_report.py",
           "test_synthesis_optimization.sh",
           "code_kpis.py",
+          "generate_memory_analysis_report.py",
           "test_runner.py"
         ],
         "subdirectories": []
@@ -513,8 +514,8 @@
     "testbench_lines": 4149,
     "constraint_files": 7,
     "constraint_lines": 636,
-    "script_files": 6,
-    "script_lines": 2921
+    "script_files": 7,
+    "script_lines": 3196
   },
   "documentation_metrics": {
     "documentation_files": 9,
