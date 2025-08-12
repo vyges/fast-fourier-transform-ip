@@ -1,19 +1,20 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T17:53:30.702062",
+    "analysis_date": "2025-08-12T18:45:10.792545",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 164,
+    "total_files": 169,
     "total_directories": 50,
     "file_types": {
       ".md": 32,
       "no_extension": 34,
       ".py": 13,
       ".test": 1,
+      ".sh": 17,
       ".xml": 1,
       ".f": 1,
       ".vvp": 1,
@@ -24,15 +25,15 @@
       ".mk": 2,
       ".d": 1,
       ".dat": 1,
-      ".sh": 15,
       ".html": 3,
-      ".json": 2,
+      ".json": 3,
       ".txt": 9,
       ".css": 1,
       ".tcl": 6,
       ".cfg": 1,
       ".pcf": 1,
-      ".ys": 1
+      ".ys": 2,
+      ".v": 1
     },
     "directory_structure": {
       "root": {
@@ -49,7 +50,8 @@
           "test_harness_report.md",
           "install_tools.md",
           "LICENSE",
-          "NOTICE"
+          "NOTICE",
+          "run_ubuntu.sh"
         ],
         "subdirectories": [
           "tb",
@@ -479,10 +481,14 @@
           "timeout_wrapper.sh",
           "Makefile",
           "yosys_synth.ys",
+          "memory_interface_mapped.v",
+          "memory_interface.yosys.json",
           "test_memory_interface.sh",
           "synth_stats.txt",
           "synth_memory_interface.tcl",
-          "test_full_synthesis.sh"
+          "run_yosys_bram.sh",
+          "test_full_synthesis.sh",
+          "synth_bram_yosys.ys"
         ],
         "subdirectories": [
           "netlists",
@@ -507,9 +513,9 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 21,
-    "rtl_lines": 4624,
-    "rtl_modules": 38,
+    "rtl_files": 22,
+    "rtl_lines": 5017,
+    "rtl_modules": 39,
     "testbench_files": 16,
     "testbench_lines": 4149,
     "constraint_files": 7,
@@ -547,9 +553,8 @@
     "metadata_complete": false,
     "synthesis_stats_available": true,
     "synthesis_modules_count": 7,
-    "total_gate_count": 142590,
+    "total_gate_count": 6463,
     "module_gate_counts": {
-      "memory_interface": 136127,
       "twiddle_rom": 85,
       "rescale_unit": 429,
       "scale_factor_tracker": 188,

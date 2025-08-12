@@ -1,7 +1,7 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2025-08-12 17:53:31
+**Generated:** 2025-08-12 18:45:11
 **Project:** 
 
 ## 📊 Code KPIs Summary
@@ -9,9 +9,9 @@
 **Overall Score:** 75.0/100
 
 ### Code Metrics
-- **RTL Files:** 21
-- **RTL Lines:** 4,624
-- **RTL Modules:** 38
+- **RTL Files:** 22
+- **RTL Lines:** 5,017
+- **RTL Modules:** 39
 - **Testbench Files:** 16
 - **Testbench Lines:** 4,149
 
@@ -19,9 +19,8 @@
 - **Synthesis Clean:** ✅
 - **Synthesis Stats Available:** ✅
 - **Modules Synthesized:** 7
-- **Total Gate Count:** 142,590 cells
+- **Total Gate Count:** 6,463 cells
 - **Module Breakdown:**
-  - memory_interface: 136,127 cells
   - twiddle_rom: 85 cells
   - rescale_unit: 429 cells
   - scale_factor_tracker: 188 cells
@@ -42,9 +41,9 @@ Detailed memory analysis report: `memory_analysis_report.md`
 - **Total Memory:** ~80KB optimized for FFT operations
 - **Expected Cell Count:** ~150-700 cells (dramatically reduced)
 
-**Total Gate Count:** ~142590 cells
+**Total Gate Count:** ~6463 cells
 
-**Estimated Die Area:** ~0.6188 mm² (45nm process)
+**Estimated Die Area:** ~0.5054 mm² (45nm process)
 
 ## 🎯 Key Recommendations
 
