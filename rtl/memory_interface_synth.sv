@@ -1,0 +1,304 @@
+`timescale 1ns/1ps
+
+//=============================================================================
+// Memory Interface Module (Synthesis Optimized)
+//=============================================================================
+// Description: Memory interface module optimized for synthesis with proper
+//              memory macro instantiation and synthesis attributes.
+// Author:      Vyges IP Development Team
+// Date:        2025-08-11
+// License:     Apache-2.0
+//=============================================================================
+
+module memory_interface_synth #(
+    parameter int APB_ADDR_WIDTH = 16,         // APB address width
+    parameter int AXI_ADDR_WIDTH = 32,         // AXI address width
+    parameter int AXI_DATA_WIDTH = 64,         // AXI data width
+    parameter int MEMORY_DEPTH = 2048,         // Memory depth (1024 complex × 2 buffers)
+    parameter int MEMORY_WIDTH = 32            // Memory width in bits
+) (
+    // Clock and Reset
+    input  logic        clk_i,
+    input  logic        reset_n_i,
+    
+    // APB Interface
+    input  logic        pclk_i,
+    input  logic        preset_n_i,
+    input  logic        psel_i,
+    input  logic        penable_i,
+    input  logic        pwrite_i,
+    input  logic [APB_ADDR_WIDTH-1:0] paddr_i,
+    input  logic [31:0] pwdata_i,
+    output logic [31:0] prdata_o,
+    output logic        pready_o,
+    
+    // AXI Interface
+    input  logic        axi_aclk_i,
+    input  logic        axi_areset_n_i,
+    input  logic [AXI_ADDR_WIDTH-1:0] axi_awaddr_i,
+    input  logic        axi_awvalid_i,
+    output logic        axi_awready_o,
+    input  logic [AXI_DATA_WIDTH-1:0] axi_wdata_i,
+    input  logic        axi_wvalid_i,
+    output logic        axi_wready_o,
+    input  logic [AXI_ADDR_WIDTH-1:0] axi_araddr_i,
+    input  logic        axi_arvalid_i,
+    output logic        axi_arready_o,
+    output logic [AXI_DATA_WIDTH-1:0] axi_rdata_o,
+    output logic        axi_rvalid_o,
+    input  logic        axi_rready_i,
+    
+    // FFT Engine Interface
+    input  logic [15:0] mem_addr_i,
+    input  logic [31:0] mem_data_i,
+    input  logic        mem_write_i,
+    output logic [31:0] mem_data_o,
+    output logic        mem_ready_o,
+    
+    // Control Interface
+    output logic        fft_start_o,
+    output logic        fft_reset_o,
+    output logic [11:0] fft_length_log2_o,
+    output logic        rescale_en_o,
+    output logic        scale_track_en_o,
+    output logic        rescale_mode_o,
+    output logic        rounding_mode_o,
+    output logic        saturation_en_o,
+    output logic        overflow_detect_o,
+    output logic        buffer_swap_o,
+    output logic [1:0]  buffer_sel_o,
+    output logic [7:0]  int_enable_o,
+    
+    // Status Interface
+    input  logic        fft_busy_i,
+    input  logic        fft_done_i,
+    input  logic        fft_error_i,
+    input  logic        buffer_active_i,
+    input  logic        rescaling_active_i,
+    input  logic        overflow_detected_i,
+    input  logic [7:0]  scale_factor_i,
+    input  logic [7:0]  stage_count_i,
+    input  logic [7:0]  overflow_count_i,
+    input  logic [7:0]  last_overflow_stage_i,
+    input  logic [7:0]  max_overflow_magnitude_i,
+    input  logic [7:0]  int_status_i
+);
+
+    // Internal registers
+    logic [31:0] fft_ctrl_reg;
+    logic [31:0] fft_status_reg;
+    logic [31:0] fft_config_reg;
+    logic [31:0] fft_length_reg;
+    logic [31:0] buffer_sel_reg;
+    logic [31:0] int_enable_reg;
+    logic [31:0] int_status_reg;
+    logic [31:0] scale_factor_reg;
+    logic [31:0] rescale_ctrl_reg;
+    logic [31:0] overflow_status_reg;
+    
+    // APB state machine
+    typedef enum logic [1:0] {
+        APB_IDLE,
+        APB_SETUP,
+        APB_ACCESS
+    } apb_state_t;
+    
+    apb_state_t apb_state, apb_next_state;
+    
+    // APB state machine
+    always_ff @(posedge pclk_i or negedge preset_n_i) begin
+        if (!preset_n_i) begin
+            apb_state <= APB_IDLE;
+        end else begin
+            apb_state <= apb_next_state;
+        end
+    end
+    
+    // APB next state logic
+    always_comb begin
+        apb_next_state = apb_state;
+        
+        case (apb_state)
+            APB_IDLE: begin
+                if (psel_i && !penable_i) begin
+                    apb_next_state = APB_SETUP;
+                end
+            end
+            
+            APB_SETUP: begin
+                if (psel_i && penable_i) begin
+                    apb_next_state = APB_ACCESS;
+                end else begin
+                    apb_next_state = APB_IDLE;
+                end
+            end
+            
+            APB_ACCESS: begin
+                apb_next_state = APB_IDLE;
+            end
+            
+            default: begin
+                apb_next_state = APB_IDLE;
+            end
+        endcase
+    end
+    
+    // APB control logic
+    always_ff @(posedge pclk_i or negedge preset_n_i) begin
+        if (!preset_n_i) begin
+            fft_ctrl_reg <= 32'h00000000;
+            fft_config_reg <= 32'h00000000;
+            fft_length_reg <= 32'h00000000;
+            buffer_sel_reg <= 32'h00000000;
+            int_enable_reg <= 32'h00000000;
+        end else if (apb_state == APB_ACCESS && pwrite_i) begin
+            case (paddr_i)
+                16'h0000: fft_ctrl_reg <= pwdata_i;
+                16'h0004: fft_config_reg <= pwdata_i;
+                16'h0008: fft_length_reg <= pwdata_i;
+                16'h0010: buffer_sel_reg <= pwdata_i;
+                16'h0014: int_enable_reg <= pwdata_i;
+                default: ; // Ignore writes to read-only registers
+            endcase
+        end
+    end
+    
+    // APB read logic
+    always_comb begin
+        case (paddr_i)
+            16'h0000: prdata_o = fft_ctrl_reg;
+            16'h0004: fft_status_reg;
+            16'h0008: fft_config_reg;
+            16'h000C: fft_length_reg;
+            16'h0010: buffer_sel_reg;
+            16'h0014: int_enable_reg;
+            16'h0018: int_status_reg;
+            16'h001C: scale_factor_reg;
+            16'h0020: rescale_ctrl_reg;
+            16'h0024: overflow_status_reg;
+            default: prdata_o = 32'h00000000;
+        endcase
+    end
+    
+    // Status register updates
+    always_comb begin
+        fft_status_reg = {
+            2'h0,                           // Reserved
+            overflow_count_i,               // Overflow count (8 bits)
+            stage_count_i,                  // Stage count (8 bits)
+            scale_factor_i,                 // Scale factor (8 bits)
+            overflow_detected_i,            // Overflow detected (1 bit)
+            rescaling_active_i,             // Rescaling active (1 bit)
+            buffer_active_i,                // Buffer active (1 bit)
+            fft_error_i,                    // FFT error (1 bit)
+            fft_done_i,                     // FFT done (1 bit)
+            fft_busy_i                      // FFT busy (1 bit)
+        };
+        
+        int_status_reg = {
+            24'h000000,                     // Reserved
+            int_status_i                    // Interrupt status (8 bits)
+        };
+        
+        scale_factor_reg = {
+            overflow_count_i,               // Overflow count
+            8'h00,                          // Reserved
+            stage_count_i,                  // Stage count
+            scale_factor_i                  // Scale factor
+        };
+        
+        overflow_status_reg = {
+            8'h00,                          // Reserved
+            max_overflow_magnitude_i,       // Max overflow magnitude
+            last_overflow_stage_i,          // Last overflow stage
+            overflow_count_i                // Overflow count
+        };
+    end
+    
+    // Control signal assignments
+    assign fft_start_o = fft_ctrl_reg[0];
+    assign fft_reset_o = fft_ctrl_reg[1];
+    assign buffer_swap_o = fft_ctrl_reg[2];
+    assign rescale_en_o = fft_ctrl_reg[4];
+    assign scale_track_en_o = fft_ctrl_reg[5];
+    
+    assign fft_length_log2_o = fft_config_reg[11:0];
+    assign rescale_mode_o = fft_config_reg[16];
+    assign rounding_mode_o = fft_config_reg[17];
+    assign saturation_en_o = fft_config_reg[18];
+    assign overflow_detect_o = fft_config_reg[19];
+    
+    assign buffer_sel_o = buffer_sel_reg[1:0];
+    assign int_enable_o = int_enable_reg[7:0];
+    
+    // AXI interface (simplified for this example)
+    assign axi_awready_o = 1'b1;
+    assign axi_wready_o = 1'b1;
+    assign axi_arready_o = 1'b1;
+    assign axi_rdata_o = 64'h0000000000000000;
+    assign axi_rvalid_o = 1'b0;
+    
+    // APB ready signal
+    assign pready_o = (apb_state == APB_ACCESS);
+
+    // ============================================================================
+    // SYNTHESIS-OPTIMIZED MEMORY IMPLEMENTATION
+    // ============================================================================
+    
+    // Memory parameters
+    localparam int ADDR_WIDTH = $clog2(MEMORY_DEPTH);
+    
+    // Memory interface signals
+    logic [ADDR_WIDTH-1:0] mem_addr;
+    logic [MEMORY_WIDTH-1:0] mem_data_in, mem_data_out;
+    logic mem_write_en, mem_read_en;
+    
+    // Address and control logic
+    assign mem_addr = mem_addr_i[ADDR_WIDTH-1:0];
+    assign mem_write_en = mem_write_i;
+    assign mem_read_en = !mem_write_i;
+    assign mem_data_in = mem_data_i;
+    
+    // ============================================================================
+    // MEMORY MACRO INSTANTIATION (Synthesis Tool Specific)
+    // ============================================================================
+    
+    // For ASIC: Use memory compiler macros
+    // For FPGA: Use vendor-specific primitives
+    
+    // Generic memory implementation with synthesis attributes
+    (* ram_style = "block" *)  // Force block RAM synthesis
+    (* ram_init_file = "" *)    // No initialization file
+    logic [MEMORY_WIDTH-1:0] fft_memory [0:MEMORY_DEPTH-1];
+    
+    // Memory read operation (registered for better timing)
+    always_ff @(posedge clk_i) begin
+        if (!reset_n_i) begin
+            mem_data_out <= '0;
+        end else if (mem_read_en) begin
+            mem_data_out <= fft_memory[mem_addr];
+        end
+    end
+    
+    // Memory write operation
+    always_ff @(posedge clk_i) begin
+        if (mem_write_en) begin
+            fft_memory[mem_addr] <= mem_data_in;
+        end
+    end
+    
+    // Output assignment
+    assign mem_data_o = mem_data_out;
+    
+    // Memory ready signal (pipelined)
+    logic mem_ready_reg;
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            mem_ready_reg <= 1'b0;
+        end else begin
+            mem_ready_reg <= 1'b1;  // Always ready after reset
+        end
+    end
+    assign mem_ready_o = mem_ready_reg;
+
+endmodule

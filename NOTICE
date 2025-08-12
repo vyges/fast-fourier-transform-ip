@@ -1,0 +1,66 @@
+Vyges IP Package
+Copyright (c) 2025 Vyges
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+---
+
+## License Scope Clarification
+
+**This Apache-2.0 license applies to:**
+- Hardware IP content (RTL, SystemVerilog, VHDL files)
+- IP documentation and specifications
+- Testbenches and verification code
+- Design constraints and configuration files
+- Generated reports and analysis results
+
+**This license does NOT apply to:**
+- The template structure and directory organization
+- Build processes and CI/CD workflows
+- Tool installation and setup procedures
+- Template metadata and configuration templates
+- The Vyges CLI tool and related tooling
+- **AI context and processing engine components:**
+  - `.vyges-ai-context.json` - AI development context and prompts
+  - `.copilot-chat-context.md` - GitHub Copilot integration context
+  - `.cursorrules` - Cursor editor AI rules and conventions
+  - AI-generated code patterns and development workflows
+  - AI prompt engineering and context management systems
+
+The template provides a framework for IP development but the licensing terms apply specifically to the hardware IP content you create using this framework. The AI context and processing engine are proprietary Vyges components provided as-is for enhanced development experience.
+
+---
+
+This repository was created using the vyges-ip-template:
+https://github.com/vyges/vyges-ip-template
+
+This IP block was created as part of the Vyges open silicon ecosystem:
+https://vyges.com
+
+Includes design concepts or testbench inspiration adapted from:
+- [cocotb](https://github.com/cocotb/cocotb) - BSD License
+- [Verilator](https://github.com/verilator/verilator) - LGPLv3
+- [OpenLane](https://github.com/The-OpenROAD-Project/OpenLane) - Apache 2.0
+
+You may redistribute and use this IP in accordance with the license file (LICENSE).
+
+This product includes no commercial EDA vendor IP or confidential third-party content.
+
+All trademarks mentioned belong to their respective owners.
+
+---
+
+# IP Developer/Project Attribution
+# (Add your own copyright, maintainer, and project info below)
+
+Maintainers:
+<Your Name> <your.email@example.com>
+<GitHub handle, website, or affiliation>
+

@@ -1,0 +1,376 @@
+# OpenLane
+runs/
+results/
+
+# Python (cocotb)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Configuration files with sensitive data
+*.key
+*.pem
+*.p12
+*.pfx
+config.ini
+secrets.json
+.env
+.env.local
+.env.production
+
+# Vyges AI context backup and hash files
+.vyges-ai-context.json.backup.*
+.vyges-ai-context.sha256
+
+# Analog design intermediate files (following Efabless recommendations)
+*.ext                    # Magic extraction files
+*.raw                    # SPICE raw files
+*.sp                     # SPICE files (if large)
+*.log                    # Tool log files
+
+# Layout intermediate files
+*.mag                    # Magic database files
+*.gds                    # GDS files (if large)
+*.lef                    # LEF files (if large)
+
+# Simulation results (large files)
+simulation/results/      # Large simulation outputs
+simulation/waveforms/    # Waveform files
+
+# Macros directory (should be separate repositories)
+analog/macros/          # Symbolic links to other projects
+
+# Analog tool temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# =============================================================================
+# Digital Design Build Artifacts
+# =============================================================================
+
+# Synthesis artifacts
+flow/synthesis/reports/
+flow/synthesis/netlists/
+flow/synthesis/build/
+flow/synthesis/*.log
+flow/synthesis/*.rpt
+flow/synthesis/*.json
+flow/synthesis/*.v
+flow/synthesis/*.blif
+flow/synthesis/*.dot
+flow/synthesis/*.svg
+
+# FPGA build artifacts
+flow/fpga/openfpga/reports/
+flow/fpga/openfpga/netlists/
+flow/fpga/openfpga/build/
+flow/fpga/openfpga/*.log
+flow/fpga/openfpga/*.rpt
+flow/fpga/openfpga/*.json
+flow/fpga/openfpga/*.asc
+flow/fpga/openfpga/*.bin
+flow/fpga/openfpga/*.bit
+flow/fpga/openfpga/*.fasm
+flow/fpga/openfpga/*.eblif
+flow/fpga/openfpga/*.place
+flow/fpga/openfpga/*.route
+
+# Commercial FPGA tools
+flow/fpga/vivado/build/
+flow/fpga/vivado/reports/
+flow/fpga/vivado/*.log
+flow/fpga/vivado/*.rpt
+flow/fpga/vivado/*.bit
+flow/fpga/vivado/*.xsa
+flow/fpga/quartus/build/
+flow/fpga/quartus/reports/
+flow/fpga/quartus/*.log
+flow/fpga/quartus/*.rpt
+flow/fpga/quartus/*.sof
+
+# ASIC build artifacts
+flow/openlane/runs/
+flow/openlane/results/
+flow/openlane/reports/
+flow/openlane/build/
+flow/openlane/*.log
+flow/openlane/*.rpt
+flow/openlane/*.gds
+flow/openlane/*.lef
+flow/openlane/*.def
+flow/openlane/*.v
+flow/openlane/*.sdc
+
+# =============================================================================
+# Simulation and Test Artifacts
+# =============================================================================
+
+# SystemVerilog simulation artifacts
+tb/sv_tb/obj_dir/
+tb/sv_tb/work/
+tb/sv_tb/*.vcd
+tb/sv_tb/*.fst
+tb/sv_tb/*.log
+tb/sv_tb/a.out
+tb/sv_tb/*_synth.v
+tb/sv_tb/build/
+tb/sv_tb/waves/
+tb/sv_tb/coverage/
+
+# Verilator artifacts
+*.cpp
+*.h
+*.mk
+*.d
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+V*.mk
+V*.cpp
+V*.h
+
+# Icarus Verilog artifacts
+*.vvp
+*.vcd
+*.fst
+*.lxt
+*.vst
+*.ghw
+*.fst
+*.vcd.gz
+*.fst.gz
+
+# Cocotb artifacts
+tb/cocotb/build/
+tb/cocotb/results/
+tb/cocotb/waves/
+tb/cocotb/coverage/
+tb/cocotb/*.log
+tb/cocotb/*.xml
+tb/cocotb/*.html
+
+# UVM artifacts
+tb/uvm_tb/build/
+tb/uvm_tb/results/
+tb/uvm_tb/waves/
+tb/uvm_tb/coverage/
+tb/uvm_tb/*.log
+tb/uvm_tb/*.xml
+tb/uvm_tb/*.html
+
+# =============================================================================
+# Report and Documentation Artifacts
+# =============================================================================
+
+# Generated reports (keep templates, ignore generated)
+test_harness_report.md
+code_kpis.json
+code_kpis.txt
+public/*.html
+public/*.json
+public/*.txt
+public/*.md
+gh-pages/
+
+# Keep template files
+!public/index_template.html
+!public/report-style.css
+
+# =============================================================================
+# Tool-specific Artifacts
+# =============================================================================
+
+# Yosys artifacts
+*.blif
+*.json
+*.dot
+*.svg
+*.v
+*.log
+
+# NextPNR artifacts
+*.json
+*.asc
+*.bin
+*.log
+
+# IceStorm artifacts
+*.asc
+*.bin
+*.log
+
+# PrjTrellis artifacts
+*.json
+*.config
+*.bit
+*.log
+
+# SymbiFlow artifacts
+*.eblif
+*.fasm
+*.bit
+*.log
+
+# OpenROAD artifacts
+*.def
+*.lef
+*.gds
+*.v
+*.sdc
+*.log
+
+# =============================================================================
+# Temporary and Cache Files
+# =============================================================================
+
+# Makefile artifacts
+*.d
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Git artifacts
+.git/
+.gitignore~
+
+# Editor temporary files
+*~
+.#*
+\#*#
+.#*
+*~
+
+# OS temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# Large Binary Files
+# =============================================================================
+
+# Large binary files that shouldn't be in git
+*.bin
+*.bit
+*.sof
+*.xsa
+*.gds
+*.lef
+*.def
+*.vcd
+*.fst
+*.lxt
+*.vst
+*.ghw
+
+# Compressed files
+*.gz
+*.bz2
+*.xz
+*.zip
+*.tar
+*.rar
+*.7z
+
+# =============================================================================
+# Keep Important Files
+# =============================================================================
+
+# Keep .gitkeep files
+!.gitkeep
+
+# Keep README files in build directories
+!*/README.md
+!*/README.txt
+
+# Keep Makefiles
+!*/Makefile
+!*/makefile
+
+# Keep constraint files
+!*/constraints/*.pcf
+!*/constraints/*.sdc
+!*/constraints/*.xdc
+!*/constraints/*.qsf
+!*/constraints/*.srf
+
+# Keep configuration files
+!*/config.tcl
+!*/config.json
+!*/config.yaml
+!*/config.yml
+
+README_run_ubuntu.md
+run_ubuntu.sh
