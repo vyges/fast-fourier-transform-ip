@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_MEMORY_INTERFACE_SV
+`define FFT_MEMORY_INTERFACE_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // Memory Interface Module
@@ -288,4 +292,6 @@ module memory_interface #(
     end
     assign mem_ready_o = mem_ready_reg;
 
-endmodule 
+endmodule
+
+`endif // FFT_MEMORY_INTERFACE_SV 

@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_RESCALE_UNIT_SV
+`define FFT_RESCALE_UNIT_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // Rescale Unit Module
@@ -192,4 +196,6 @@ module rescale_unit #(
     assign rescaling_active_o = rescaling_active_reg;
     assign rescale_count_o = rescale_count_reg;
 
-endmodule 
+endmodule
+
+`endif // FFT_RESCALE_UNIT_SV 

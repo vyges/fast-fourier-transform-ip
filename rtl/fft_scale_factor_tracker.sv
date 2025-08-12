@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_SCALE_FACTOR_TRACKER_SV
+`define FFT_SCALE_FACTOR_TRACKER_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // Scale Factor Tracker Module
@@ -103,4 +107,6 @@ module scale_factor_tracker #(
     assign scale_factor_overflow_o = scale_factor_overflow_reg;
     assign tracking_active_o = tracking_active_reg;
 
-endmodule 
+endmodule
+
+`endif // FFT_SCALE_FACTOR_TRACKER_SV 

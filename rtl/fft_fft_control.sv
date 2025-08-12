@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_FFT_CONTROL_SV
+`define FFT_FFT_CONTROL_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // FFT Control Module
@@ -211,4 +215,6 @@ module fft_control #(
     assign buffer_active_o = buffer_active_reg[0];
     assign int_status_o = int_status_reg;
 
-endmodule 
+endmodule
+
+`endif // FFT_FFT_CONTROL_SV 

@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_TWIDDLE_ROM_SV
+`define FFT_TWIDDLE_ROM_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // Twiddle Factor ROM Module
@@ -99,4 +103,6 @@ module twiddle_rom #(
         end
     end
 
-endmodule 
+endmodule
+
+`endif // FFT_TWIDDLE_ROM_SV 

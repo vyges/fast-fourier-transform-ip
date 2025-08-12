@@ -157,7 +157,7 @@ test-memory-opt: test-memory-interface test-twiddle-rom
 test-memory-interface: $(TB_DIR)/tb_memory_interface_simple.sv
 	@echo "🧪 Testing Memory Interface Optimization..."
 	@cd $(TB_DIR) && \
-	$(IVERILOG) -g2012 -o memory_interface_simple.vvp tb_memory_interface_simple.sv $(RTL_DIR)/memory_interface.sv && \
+	$(IVERILOG) -g2012 -o memory_interface_simple.vvp tb_memory_interface_simple.sv $(RTL_DIR)/fft_memory_interface.sv && \
 	$(VVP) memory_interface_simple.vvp && \
 	rm -f memory_interface_simple.vvp
 	@echo "✅ Memory Interface test completed"
@@ -166,7 +166,7 @@ test-memory-interface: $(TB_DIR)/tb_memory_interface_simple.sv
 test-twiddle-rom: $(TB_DIR)/tb_twiddle_rom.sv
 	@echo "🧪 Testing Twiddle ROM Optimization..."
 	@cd $(TB_DIR) && \
-	$(IVERILOG) -g2012 -o twiddle_rom_simple.vvp tb_twiddle_rom.sv $(RTL_DIR)/twiddle_rom.sv && \
+	$(IVERILOG) -g2012 -o twiddle_rom_simple.vvp tb_twiddle_rom.sv $(RTL_DIR)/fft_twiddle_rom.sv && \
 	$(VVP) twiddle_rom_simple.vvp && \
 	rm -f twiddle_rom_simple.vvp
 	@echo "✅ Twiddle ROM test completed"
@@ -180,14 +180,14 @@ test-memory-interface-synth:
 	@echo "🧪 Testing Memory Interface Synthesis..."
 	@mkdir -p $(SYNTH_DIR)
 	@cd $(SYNTH_DIR) && \
-	$(YOSYS) -q -p "read_verilog -sv $(RTL_DIR)/memory_interface.sv; hierarchy -top memory_interface; proc; opt; memory; opt; stat; write_verilog memory_interface_synth.v"
+	$(YOSYS) -q -p "read_verilog -sv $(RTL_DIR)/fft_memory_interface.sv; hierarchy -top memory_interface; proc; opt; memory; opt; stat; write_verilog memory_interface_synth.v"
 	@echo "✅ Memory Interface synthesis completed"
 
 test-twiddle-rom-synth:
 	@echo "🧪 Testing Twiddle ROM Synthesis..."
 	@mkdir -p $(SYNTH_DIR)
 	@cd $(SYNTH_DIR) && \
-	$(YOSYS) -q -p "read_verilog -sv $(RTL_DIR)/twiddle_rom.sv; hierarchy -top twiddle_rom; proc; opt; memory; opt; stat; write_verilog twiddle_rom_synth.v"
+	$(YOSYS) -q -p "read_verilog -sv $(RTL_DIR)/fft_twiddle_rom.sv; hierarchy -top twiddle_rom; proc; opt; memory; opt; stat; write_verilog twiddle_rom_synth.v"
 	@echo "✅ Twiddle ROM synthesis completed"
 
 # Verilator-based tests with VCD generation
@@ -200,7 +200,7 @@ test-verilator-memory:
 	@mkdir -p $(SYNTH_DIR)/verilator
 	@cd $(SYNTH_DIR)/verilator && \
 	$(VERILATOR) --cc --exe --build --trace --timing --Wno-fatal --top-module tb_memory_interface_verilator \
-		$(RTL_DIR)/memory_interface.sv \
+		$(RTL_DIR)/fft_memory_interface.sv \
 		$(TB_DIR)/tb_memory_interface_verilator.sv \
 		--exe $(TB_DIR)/tb_memory_interface_verilator.sv \
 		-CFLAGS "-I$(TB_DIR)" && \
@@ -214,7 +214,7 @@ test-verilator-rom:
 	@mkdir -p $(SYNTH_DIR)/verilator/rom
 	@cd $(SYNTH_DIR)/verilator/rom && \
 	$(VERILATOR) --cc --exe --build --trace --timing --Wno-fatal --top-module tb_twiddle_rom_verilator \
-		$(RTL_DIR)/twiddle_rom.sv \
+		$(RTL_DIR)/fft_twiddle_rom.sv \
 		$(TB_DIR)/tb_twiddle_rom_verilator.sv \
 		--exe $(TB_DIR)/tb_twiddle_rom_verilator.sv \
 		-CFLAGS "-I$(TB_DIR)" && \
@@ -227,26 +227,26 @@ test-memory-size:
 	@echo "Expected Memory Size: 2048 x 32-bit = 64K bits"
 	@echo "Expected ROM Size: 1024 x 16-bit = 4K bits"
 	@echo "Checking RTL files for correct sizing..."
-	@grep -n "fft_memory.*\[0:2047\]" $(RTL_DIR)/memory_interface.sv || echo "⚠️  Memory size not found in memory_interface.sv"
-	@grep -n "rom_memory.*\[ROM_SIZE-1:0\]" $(RTL_DIR)/twiddle_rom.sv || echo "⚠️  ROM size not found in twiddle_rom.sv"
+	@grep -n "fft_memory.*\[0:2047\]" $(RTL_DIR)/fft_memory_interface.sv || echo "⚠️  Memory size not found in fft_memory_interface.sv"
+	@grep -n "rom_memory.*\[ROM_SIZE-1:0\]" $(RTL_DIR)/fft_twiddle_rom.sv || echo "⚠️  ROM size not found in fft_twiddle_rom.sv"
 	@echo "✅ Memory size verification completed"
 
 # Synthesis attributes verification
 test-synthesis-attributes:
 	@echo "🔍 Verifying Synthesis Attributes..."
-	@grep -n "ram_style.*block" $(RTL_DIR)/memory_interface.sv || echo "⚠️  ram_style attribute not found in memory_interface.sv"
-	@grep -n "rom_style.*block" $(RTL_DIR)/twiddle_rom.sv || echo "⚠️  rom_style attribute not found in twiddle_rom.sv"
+	@grep -n "ram_style.*block" $(RTL_DIR)/fft_memory_interface.sv || echo "⚠️  ram_style attribute not found in fft_memory_interface.sv"
+	@grep -n "rom_style.*block" $(RTL_DIR)/fft_twiddle_rom.sv || echo "⚠️  rom_style attribute not found in fft_twiddle_rom.sv"
 	@echo "✅ Synthesis attributes verification completed"
 
 # Code quality checks
 test-code-quality:
 	@echo "🔍 Running Code Quality Checks..."
 	@echo "Checking for proper reset handling..."
-	@grep -n "reset_n_i" $(RTL_DIR)/memory_interface.sv || echo "⚠️  Reset signal not found in memory_interface.sv"
-	@grep -n "reset_n_i" $(RTL_DIR)/twiddle_rom.sv || echo "⚠️  Reset signal not found in twiddle_rom.sv"
+	@grep -n "reset_n_i" $(RTL_DIR)/fft_memory_interface.sv || echo "⚠️  Reset signal not found in fft_memory_interface.sv"
+	@grep -n "reset_n_i" $(RTL_DIR)/fft_twiddle_rom.sv || echo "⚠️  Reset signal not found in fft_twiddle_rom.sv"
 	@echo "Checking for proper clock domains..."
-	@grep -n "posedge clk_i" $(RTL_DIR)/memory_interface.sv || echo "⚠️  Clock signal not found in memory_interface.sv"
-	@grep -n "posedge clk_i" $(RTL_DIR)/twiddle_rom.sv || echo "⚠️  Clock signal not found in twiddle_rom.sv"
+	@grep -n "posedge clk_i" $(RTL_DIR)/fft_memory_interface.sv || echo "⚠️  Clock signal not found in fft_memory_interface.sv"
+	@grep -n "posedge clk_i" $(RTL_DIR)/fft_twiddle_rom.sv || echo "⚠️  Clock signal not found in fft_twiddle_rom.sv"
 	@echo "✅ Code quality checks completed"
 
 # Performance analysis
@@ -299,7 +299,7 @@ test-vcd-memory:
 	@cd $(SYNTH_DIR)/vcd && \
 	$(IVERILOG) -g2012 -o memory_interface_simple.vvp \
 		$(TB_DIR)/tb_memory_interface_simple.sv \
-		$(RTL_DIR)/memory_interface.sv && \
+		$(RTL_DIR)/fft_memory_interface.sv && \
 	$(VVP) memory_interface_simple.vvp && \
 	echo "✅ VCD file generated: memory_interface_simple.vcd"
 
@@ -309,7 +309,7 @@ test-vcd-rom:
 	@cd $(SYNTH_DIR)/vcd && \
 	$(IVERILOG) -g2012 -o twiddle_rom_simple.vvp \
 		$(TB_DIR)/tb_twiddle_rom_verilator.sv \
-		$(RTL_DIR)/twiddle_rom.sv && \
+		$(RTL_DIR)/fft_twiddle_rom.sv && \
 	$(VVP) twiddle_rom_simple.vvp && \
 	echo "✅ VCD file generated: twiddle_rom_simple.vcd"
 

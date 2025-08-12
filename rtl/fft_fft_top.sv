@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_FFT_TOP_SV
+`define FFT_FFT_TOP_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // FFT Hardware Accelerator Top-Level Module
@@ -219,4 +223,6 @@ module fft_top #(
     assign fft_done_o = fft_done_o_internal & int_enable_i[0];
     assign fft_error_o = fft_error_o_internal & int_enable_i[1];
 
-endmodule 
+endmodule
+
+`endif // FFT_FFT_TOP_SV 

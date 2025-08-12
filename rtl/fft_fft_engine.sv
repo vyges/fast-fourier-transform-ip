@@ -1,4 +1,8 @@
-`timescale 1ns/1ps
+`ifndef FFT_FFT_ENGINE_SV
+`define FFT_FFT_ENGINE_SV
+
+`include "fft_timescale.vh"
+`include "fft_defines.vh"
 
 //=============================================================================
 // FFT Engine Module
@@ -451,4 +455,6 @@ module fft_engine #(
         end
     end
 
-endmodule 
+endmodule
+
+`endif // FFT_FFT_ENGINE_SV 
