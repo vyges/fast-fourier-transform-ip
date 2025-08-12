@@ -1,35 +1,36 @@
 {
   "project_info": {
-    "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-08-11T01:00:01.978097",
+    "project_name": "",
+    "analysis_date": "2025-08-12T17:04:04.981146",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 152,
+    "total_files": 163,
     "total_directories": 50,
     "file_types": {
-      ".md": 29,
-      "no_extension": 35,
-      ".py": 11,
-      ".json": 5,
+      ".md": 32,
+      "no_extension": 34,
+      ".py": 12,
+      ".test": 1,
       ".xml": 1,
       ".f": 1,
       ".vvp": 1,
       ".pyc": 1,
-      ".sv": 14,
+      ".sv": 21,
       ".cpp": 12,
       ".h": 4,
       ".mk": 2,
       ".d": 1,
       ".dat": 1,
-      ".vcd": 2,
-      ".html": 4,
+      ".sh": 15,
+      ".html": 3,
+      ".json": 2,
       ".txt": 9,
       ".css": 1,
-      ".tcl": 4,
-      ".sh": 12,
+      ".tcl": 6,
+      ".cfg": 1,
       ".pcf": 1,
       ".ys": 1
     },
@@ -42,15 +43,13 @@
           "LICENSE_SCOPE.md",
           "README.md",
           "generate_test_harness_report.py",
-          ".vyges-ai-context.json",
-          "vyges-metadata.json",
+          "Makefile.test",
           "Makefile",
           ".copilot-chat-context.md",
           "test_harness_report.md",
           "install_tools.md",
           "LICENSE",
-          "NOTICE",
-          "vyges-metadata.template.json"
+          "NOTICE"
         ],
         "subdirectories": [
           "tb",
@@ -111,6 +110,9 @@
       },
       "tb/sv_tb": {
         "files": [
+          "tb_twiddle_rom_symmetry.sv",
+          "tb_memory_interface_verilator.sv",
+          "tb_twiddle_rom_verilator.sv",
           ".gitkeep",
           "tb_example.sv",
           "tb_fft_top.sv",
@@ -118,7 +120,9 @@
           "tb_simple.sv",
           "Makefile",
           "tb_minimal.sv",
-          "tb_rescale_unit.sv"
+          "tb_memory_interface_simple.sv",
+          "tb_rescale_unit.sv",
+          "tb_memory_interface_opt.sv"
         ],
         "subdirectories": [
           "obj_dir",
@@ -152,15 +156,11 @@
         "subdirectories": []
       },
       "tb/sv_tb/work": {
-        "files": [
-          "tb_simple"
-        ],
+        "files": [],
         "subdirectories": []
       },
       "tb/sv_tb/waveforms": {
-        "files": [
-          "tb_example.vcd"
-        ],
+        "files": [],
         "subdirectories": []
       },
       "tb/uvm_tb": {
@@ -175,6 +175,7 @@
           "api_reference.md",
           "waveforms.md",
           "design_specification.md",
+          "memory_optimization.md",
           "user_guide.md"
         ],
         "subdirectories": [
@@ -242,7 +243,9 @@
           "README.md",
           "generate_comprehensive_report.py",
           "generate_test_harness_report.py",
-          "code_kpis.py"
+          "test_synthesis_optimization.sh",
+          "code_kpis.py",
+          "test_runner.py"
         ],
         "subdirectories": []
       },
@@ -278,18 +281,19 @@
           "scale_factor_tracker.sv",
           "fft_top.sv",
           ".gitkeep",
+          "twiddle_rom_synth_opt.sv",
           "fft_control.sv",
           "twiddle_rom_synth.sv",
           "rescale_unit.sv",
           "fft_engine.sv",
           "twiddle_rom.sv",
+          "memory_interface_synth.sv",
           "memory_interface.sv"
         ],
         "subdirectories": []
       },
       "public": {
         "files": [
-          "waveforms_template.html",
           "test_harness_report.html",
           "index_template.html",
           "code_kpis.json",
@@ -303,7 +307,6 @@
       },
       "public/waveforms": {
         "files": [
-          "tb_example.vcd",
           "index.html"
         ],
         "subdirectories": []
@@ -370,10 +373,16 @@
       },
       "flow/openlane": {
         "files": [
+          "REMOTE_INTEGRATION_GUIDE.md",
+          "run_openlane_fft.sh",
           "README.md",
           "config.tcl",
-          "config.template.json",
+          "OPENLANE_INTEGRATION.md",
+          "test_fft_integration.sh",
+          "pin_order.cfg",
           "Makefile",
+          "quick_start.sh",
+          "config_gf180mcu.tcl",
           "configuration.md"
         ],
         "subdirectories": []
@@ -391,8 +400,7 @@
           "README.md",
           "FPGA_FLOW_SUMMARY.md",
           "timeout_wrapper.sh",
-          "Makefile",
-          "temp_synth.sh"
+          "Makefile"
         ],
         "subdirectories": [
           "netlists",
@@ -402,7 +410,9 @@
         ]
       },
       "flow/fpga/openfpga/netlists": {
-        "files": [],
+        "files": [
+          "fft_top_generic.json"
+        ],
         "subdirectories": []
       },
       "flow/fpga/openfpga/build": {
@@ -437,6 +447,7 @@
       },
       "flow/yosys": {
         "files": [
+          "simple_synth.tcl",
           "gate_analysis.py",
           "gate_analysis_report.md",
           "Makefile"
@@ -495,19 +506,19 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 14,
-    "rtl_lines": 2621,
-    "rtl_modules": 30,
-    "testbench_files": 10,
-    "testbench_lines": 2054,
-    "constraint_files": 5,
-    "constraint_lines": 528,
-    "script_files": 4,
-    "script_lines": 1884
+    "rtl_files": 21,
+    "rtl_lines": 4624,
+    "rtl_modules": 38,
+    "testbench_files": 16,
+    "testbench_lines": 4149,
+    "constraint_files": 7,
+    "constraint_lines": 636,
+    "script_files": 6,
+    "script_lines": 2921
   },
   "documentation_metrics": {
-    "documentation_files": 8,
-    "documentation_lines": 5759,
+    "documentation_files": 9,
+    "documentation_lines": 5980,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
@@ -515,11 +526,11 @@
     "tutorial_docs": 0
   },
   "test_metrics": {
-    "test_files": 10,
-    "test_lines": 2054,
+    "test_files": 16,
+    "test_lines": 4149,
     "test_types": {
-      "systemverilog": 6,
-      "cocotb": 4,
+      "systemverilog": 11,
+      "cocotb": 5,
       "uvm": 0,
       "formal": 0
     },
@@ -529,10 +540,10 @@
   "quality_metrics": {
     "linting_clean": false,
     "synthesis_clean": true,
-    "simulation_passing": true,
+    "simulation_passing": false,
     "coverage_goals_met": false,
     "documentation_complete": true,
-    "metadata_complete": true,
+    "metadata_complete": false,
     "synthesis_stats_available": true,
     "synthesis_modules_count": 7,
     "total_gate_count": 74217,
@@ -546,49 +557,31 @@
     }
   },
   "metadata_analysis": {
-    "metadata_exists": true,
-    "required_fields": {
-      "name": true,
-      "version": true,
-      "description": true,
-      "license": true,
-      "target": true,
-      "design_type": true,
-      "maturity": true
-    },
-    "optional_fields": {
-      "parameters": true,
-      "interfaces": true,
-      "files": false,
-      "test": true,
-      "flows": true,
-      "meta": true,
-      "created": true,
-      "updated": true
-    },
-    "validation_status": "valid",
-    "quality_score": 98.66666666666666,
-    "catalog_readiness": "ready",
-    "field_completeness": 93.33333333333333,
-    "interface_quality": 133.33333333333331,
-    "test_coverage_metadata": 100,
-    "flow_configuration": 100,
-    "documentation_metadata": 60,
-    "ai_generation_ready": true,
+    "metadata_exists": false,
+    "required_fields": {},
+    "optional_fields": {},
+    "validation_status": "unknown",
+    "quality_score": 0,
+    "catalog_readiness": "unknown",
+    "field_completeness": 0,
+    "interface_quality": 0,
+    "test_coverage_metadata": 0,
+    "flow_configuration": 0,
+    "documentation_metadata": 0,
+    "ai_generation_ready": false,
     "issues": [],
     "recommendations": []
   },
   "summary": {
-    "overall_score": 89.86666666666666,
+    "overall_score": 75,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
-      "Test coverage implemented",
-      "High-quality Vyges metadata",
-      "Catalog-ready metadata",
-      "AI generation ready"
+      "Test coverage implemented"
     ],
-    "areas_for_improvement": [],
+    "areas_for_improvement": [
+      "Missing vyges-metadata.json"
+    ],
     "recommendations": [
       "Consider advanced features like formal verification"
     ]

@@ -1,19 +1,19 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2025-08-11 01:00:02
+**Generated:** 2025-08-12 17:04:05
 **Project:** 
 
 ## 📊 Code KPIs Summary
 
-**Overall Score:** 89.9/100
+**Overall Score:** 75.0/100
 
 ### Code Metrics
-- **RTL Files:** 14
-- **RTL Lines:** 2,621
-- **RTL Modules:** 30
-- **Testbench Files:** 10
-- **Testbench Lines:** 2,054
+- **RTL Files:** 21
+- **RTL Lines:** 4,624
+- **RTL Modules:** 38
+- **Testbench Files:** 16
+- **Testbench Lines:** 4,149
 
 ### Quality Metrics
 - **Synthesis Clean:** ✅
@@ -27,12 +27,6 @@
   - scale_factor_tracker: 188 cells
   - fft_control: 55 cells
   - fft_engine: 5,706 cells
-
-### Vyges Metadata Analysis
-- **Quality Score:** 98.7/100
-- **Catalog Readiness:** READY
-- **Field Completeness:** 93.3%
-- **AI Generation Ready:** ✅
 
 ## 🔧 Gate Analysis Summary
 
