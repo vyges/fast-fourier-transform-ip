@@ -347,6 +347,57 @@ void configure_fft_rescaling(void) {
 - **FPGA Tools:** Vivado, Quartus
 - **Simulation:** Verilator, Icarus Verilog, ModelSim
 
+## Known Issues and Limitations
+
+### Yosys Memory Synthesis Limitations
+
+**Issue**: The FFT IP uses large memory arrays (e.g., 2048×32-bit memory interface) with `(* ram_style = "block" *)` synthesis attributes to optimize for BRAM inference. However, **Yosys 0.55 and earlier versions have limited support for automatic BRAM inference**.
+
+**Symptoms**:
+- Memory arrays are synthesized as individual flip-flops instead of BRAM blocks
+- High cell counts: ~136,000 cells for memory interface vs. expected ~500 cells
+- `(* ram_style = "block" *)` attributes are ignored during synthesis
+- Memory inference works but BRAM mapping fails with "No acceptable bram resources found"
+
+**Root Cause**:
+- Yosys 0.55 doesn't natively map `(* ram_style = "block" *)` to BRAM without proper technology libraries
+- The `memory_bram` pass requires vendor-specific technology mapping files
+- Generic synthesis flows skip the `memory_bram` mapping step
+
+**Workarounds**:
+1. **Use vendor-specific synthesis flows**:
+   ```bash
+   # For Xilinx devices
+   yosys -p "read_verilog rtl/*.sv; synth_xilinx -top fft_top"
+   
+   # For Intel/Altera devices  
+   yosys -p "read_verilog rtl/*.sv; synth_intel -top fft_top"
+   ```
+
+2. **Upgrade to newer Yosys versions** (0.43+ or latest master builds) which have improved memory inference
+
+3. **Use vendor tools directly** (Vivado, Quartus) which have better BRAM inference support
+
+4. **Manual memory instantiation** using vendor-specific primitives
+
+**Current Status**:
+- ✅ Memory inference works (creates `$mem_v2` cells)
+- ❌ BRAM mapping fails due to missing technology library
+- 🔧 BRAM synthesis scripts are provided for future use
+- 📊 Gate count reports show actual synthesized cell counts
+
+**Impact on Design**:
+- **Functionality**: ✅ FFT IP works correctly with flip-flop-based memory
+- **Area**: ❌ Much larger than optimal (136K vs 500 cells)
+- **Power**: ❌ Higher power consumption due to flip-flop array
+- **Performance**: ✅ No impact on FFT computation speed
+
+**Future Improvements**:
+- Upgrade Yosys to latest version with better BRAM support
+- Implement vendor-specific technology mapping
+- Add memory generator scripts for common FPGA families
+- Create synthesis constraints for optimal memory mapping
+
 ## License
 
 Apache-2.0 License - see [LICENSE](LICENSE) for details.

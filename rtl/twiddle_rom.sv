@@ -81,8 +81,8 @@ module twiddle_rom #(
     
     // ROM initialization with pre-computed sin values only
     initial begin
-        // Initialize ROM with sin values for 1024-point FFT (reduced from 2048)
-        // Only need 0 to π/2 range due to symmetry
+        // Initialize ROM with sin values for 4096-point FFT (using symmetry optimization)
+        // Only need 0 to π/2 range due to symmetry (1024 entries for 4096-point FFT)
         for (int k = 0; k < 1024; k++) begin
             int_t sin_int;
             
