@@ -16,7 +16,7 @@ read_verilog -sv ../../rtl/fft_control.sv
 read_verilog -sv ../../rtl/memory_interface.sv
 read_verilog -sv ../../rtl/rescale_unit.sv
 read_verilog -sv ../../rtl/scale_factor_tracker.sv
-read_verilog -sv ../../rtl/twiddle_rom_synth.sv
+read_verilog -sv twiddle_rom_synth.sv
 
 # Set top module
 hierarchy -top fft_top

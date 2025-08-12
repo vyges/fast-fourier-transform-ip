@@ -62,10 +62,10 @@ ice40_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	@echo "   - scale_factor_tracker: "
 	./timeout_wrapper.sh 30 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth_ice40 -top scale_factor_tracker"' && echo "PASS" || echo "FAIL"
 	@echo "   - twiddle_rom_synth: "
-	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth_ice40 -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
+	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth_ice40 -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
 	@echo ""
 	@echo "Step 2: Running full synthesis with simplified memory interface..."
-	./timeout_wrapper.sh 120 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_ice40 -top $(TOP_MODULE) -json $(NETLISTS_DIR)/$(TOP_MODULE)_ice40.json"'
+	./timeout_wrapper.sh 120 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_ice40 -top $(TOP_MODULE) -json $(NETLISTS_DIR)/$(TOP_MODULE)_ice40.json"'
 	@echo "✅ iCE40 synthesis completed"
 
 # iCE40 Place and Route
@@ -108,10 +108,10 @@ ecp5_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	@echo "   - scale_factor_tracker: "
 	./timeout_wrapper.sh 30 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth_ecp5 -top scale_factor_tracker"' && echo "PASS" || echo "FAIL"
 	@echo "   - twiddle_rom_synth: "
-	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth_ecp5 -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
+	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth_ecp5 -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
 	@echo ""
 	@echo "Step 2: Running full synthesis with simplified memory interface..."
-	./timeout_wrapper.sh 120 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_ecp5 -top $(TOP_MODULE) -json $(NETLISTS_DIR)/$(TOP_MODULE)_ecp5.json"'
+	./timeout_wrapper.sh 120 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_ecp5 -top $(TOP_MODULE) -json $(NETLISTS_DIR)/$(TOP_MODULE)_ecp5.json"'
 	@echo "✅ ECP5 synthesis completed"
 
 # ECP5 Place and Route
@@ -137,7 +137,7 @@ ecp5_all: ecp5_bitstream
 # Xilinx 7-Series Synthesis
 xilinx7_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	@echo "🔧 Running Xilinx 7-series synthesis with Yosys..."
-	$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_xilinx -top $(TOP_MODULE) -family xc7 -flatten -json $(NETLISTS_DIR)/$(TOP_MODULE)_xilinx7.json"
+	$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth_xilinx -top $(TOP_MODULE) -family xc7 -flatten -json $(NETLISTS_DIR)/$(TOP_MODULE)_xilinx7.json"
 	@echo "✅ Xilinx 7-series synthesis completed"
 
 # Xilinx 7-Series Place and Route
@@ -176,12 +176,12 @@ fpga_synth: $(BUILD_DIR) $(NETLISTS_DIR)
 	@echo "   - scale_factor_tracker: "
 	./timeout_wrapper.sh 30 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker"' && echo "PASS" || echo "FAIL"
 	@echo "   - twiddle_rom_synth: "
-	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
+	./timeout_wrapper.sh 60 '$(YOSYS_CMD) -q -p "read_verilog -sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth"' && echo "PASS" || echo "FAIL"
 	@echo ""
 	@echo "Step 2: Running full synthesis with simplified memory interface..."
 	# Create a temporary script for the full synthesis
 	@echo '#!/bin/bash' > temp_synth.sh
-	@echo '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE); write_json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"' >> temp_synth.sh
+	@echo '$(YOSYS_CMD) -q -p "read_verilog -sv $(RTL_DIR)/fft_top.sv $(RTL_DIR)/fft_control.sv $(RTL_DIR)/fft_engine.sv $(RTL_DIR)/memory_interface.sv $(RTL_DIR)/rescale_unit.sv $(RTL_DIR)/scale_factor_tracker.sv ../../synthesis/twiddle_rom_synth.sv; hierarchy -top $(TOP_MODULE); synth -top $(TOP_MODULE); write_json $(NETLISTS_DIR)/$(TOP_MODULE)_generic.json"' >> temp_synth.sh
 	@chmod +x temp_synth.sh
 	./timeout_wrapper.sh 120 './temp_synth.sh'
 	@rm -f temp_synth.sh

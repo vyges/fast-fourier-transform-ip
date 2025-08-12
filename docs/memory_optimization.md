@@ -132,11 +132,11 @@ endcase
 
 ### 1. Optimized Memory Interface
 - **File**: `rtl/memory_interface.sv` (updated)
-- **File**: `rtl/memory_interface_synth.sv` (new, synthesis-optimized)
+- **File**: `flow/synthesis/memory_interface_synth.sv` (new, synthesis-optimized)
 
 ### 2. Optimized Twiddle ROM
 - **File**: `rtl/twiddle_rom.sv` (updated)
-- **File**: `rtl/twiddle_rom_synth_opt.sv` (new, symmetry-optimized)
+- **File**: `flow/synthesis/twiddle_rom_synth_opt.sv` (new, symmetry-optimized)
 
 ### 3. Key Changes Made
 - Added synthesis attributes (`ram_style`, `rom_style`)

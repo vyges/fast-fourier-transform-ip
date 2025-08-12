@@ -153,7 +153,7 @@ check_local_prerequisites() {
         "rescale_unit.sv"
         "scale_factor_tracker.sv"
         "twiddle_rom.sv"
-        "twiddle_rom_synth.sv"
+        # Note: twiddle_rom_synth.sv moved to flow/synthesis/
     )
     
     local missing_files=()
@@ -217,6 +217,10 @@ upload_files() {
     # Upload RTL files
     print_info "Uploading RTL files..."
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=no -r "$FFT_DIR/rtl/" ubuntu@"$SERVER_IP":~/fft_project/
+    
+    # Upload synthesis files
+    print_info "Uploading synthesis files..."
+    scp -i "$SSH_KEY" -o StrictHostKeyChecking=no -r "$FFT_DIR/flow/synthesis/" ubuntu@"$SERVER_IP":~/fft_project/synthesis/
     
     # Upload OpenLane integration files
     print_info "Uploading OpenLane integration files..."

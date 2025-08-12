@@ -45,7 +45,7 @@ synth_individual: create_dirs
 	@echo "4. scale_factor_tracker:"
 	$(YOSYS_CMD) -p "read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat" | tee $(REPORTS_DIR)/scale_factor_tracker_stats.txt && echo "PASS" || echo "FAIL"
 	@echo "5. twiddle_rom_synth:"
-	$(YOSYS_CMD) -p "read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat" | tee $(REPORTS_DIR)/twiddle_rom_stats.txt && echo "PASS" || echo "FAIL"
+	$(YOSYS_CMD) -p "read_verilog -sv twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat" | tee $(REPORTS_DIR)/twiddle_rom_stats.txt && echo "PASS" || echo "FAIL"
 	@echo "6. memory_interface (simplified):"
 	./test_memory_interface_simple.sh | tee $(REPORTS_DIR)/memory_interface_stats.txt && echo "PASS" || echo "FAIL"
 	@echo ""
@@ -65,7 +65,7 @@ synth_simple: create_dirs
 	@echo "Step 4: Synthesizing scale_factor_tracker..."
 	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; hierarchy -top scale_factor_tracker; synth -top scale_factor_tracker; stat'" || (echo "scale_factor_tracker synthesis failed or timed out"; exit 1)
 	@echo "Step 5: Synthesizing twiddle_rom_synth..."
-	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat'" || (echo "twiddle_rom_synth synthesis failed or timed out"; exit 1)
+	./timeout_wrapper.sh 30 "$(YOSYS_CMD) $(YOSYS_FLAGS) -p 'read_verilog -sv twiddle_rom_synth.sv; hierarchy -top twiddle_rom_synth; synth -top twiddle_rom_synth; stat'" || (echo "twiddle_rom_synth synthesis failed or timed out"; exit 1)
 	@echo "Simplified synthesis completed!"
 
 # Full synthesis (WARNING: May hang due to memory interface)
@@ -73,7 +73,7 @@ synth_full: create_dirs
 	@echo "WARNING: Full synthesis may hang due to large memory array in memory_interface"
 	@echo "Consider using synth_individual instead"
 	@echo "Proceeding with full synthesis (use Ctrl+C if it hangs)..."
-	./timeout_wrapper.sh 300 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_top.sv; read_verilog -sv $(RTL_DIR)/fft_engine.sv; read_verilog -sv $(RTL_DIR)/fft_control.sv; read_verilog -sv $(RTL_DIR)/memory_interface.sv; read_verilog -sv $(RTL_DIR)/rescale_unit.sv; read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; read_verilog -sv $(RTL_DIR)/twiddle_rom_synth.sv; hierarchy -top fft_top; check; stat; synth -top fft_top; opt -purge; clean; stat"'
+	./timeout_wrapper.sh 300 '$(YOSYS_CMD) $(YOSYS_FLAGS) -p "read_verilog -sv $(RTL_DIR)/fft_top.sv; read_verilog -sv $(RTL_DIR)/fft_engine.sv; read_verilog -sv $(RTL_DIR)/fft_control.sv; read_verilog -sv $(RTL_DIR)/memory_interface.sv; read_verilog -sv $(RTL_DIR)/rescale_unit.sv; read_verilog -sv $(RTL_DIR)/scale_factor_tracker.sv; read_verilog -sv twiddle_rom_synth.sv; hierarchy -top fft_top; check; stat; synth -top fft_top; opt -purge; clean; stat"'
 
 # Comprehensive synthesis test
 synth_test: create_dirs

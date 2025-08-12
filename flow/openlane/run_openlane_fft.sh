@@ -172,7 +172,7 @@ memory_interface.sv
 rescale_unit.sv
 scale_factor_tracker.sv
 twiddle_rom.sv
-twiddle_rom_synth.sv
+# Note: twiddle_rom_synth.sv moved to flow/synthesis/
 EOF
     
     # Copy configuration files

@@ -78,7 +78,7 @@ The FFT design consists of the following SystemVerilog modules:
 5. **`rescale_unit.sv`** - Automatic rescaling logic
 6. **`scale_factor_tracker.sv`** - Scale factor tracking
 7. **`twiddle_rom.sv`** - Twiddle factor ROM
-8. **`twiddle_rom_synth.sv`** - Synthesizable twiddle ROM
+8. **`flow/synthesis/twiddle_rom_synth.sv`** - Synthesizable twiddle ROM (moved from rtl/)
 
 ### Interface Specifications
 

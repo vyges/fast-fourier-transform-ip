@@ -34,12 +34,14 @@ fast-fourier-transform-ip/
 │   ├── memory_interface.sv     # Memory interface
 │   ├── rescale_unit.sv         # Rescaling logic
 │   ├── scale_factor_tracker.sv # Scale factor tracking
-│   ├── twiddle_rom.sv          # Twiddle factor ROM
-│   └── twiddle_rom_synth.sv    # Synthesizable ROM
+│   └── twiddle_rom.sv          # Twiddle factor ROM
 ├── tb/                         # Testbenches
 ├── docs/                       # Documentation
 └── flow/
     └── openlane/               # OpenLane integration files
+    └── synthesis/               # Synthesis files
+        └── twiddle_rom_synth.sv               # Synthesizable ROM
+
 ```
 
 #### 1.2 Verify RTL Completeness
@@ -57,7 +59,7 @@ Expected files:
 - `rescale_unit.sv`
 - `scale_factor_tracker.sv`
 - `twiddle_rom.sv`
-- `twiddle_rom_synth.sv`
+- `flow/synthesis/twiddle_rom_synth.sv` (moved from rtl/)
 
 #### 1.3 Test Your RTL Locally
 Before sending to OpenLane, verify your RTL works:
