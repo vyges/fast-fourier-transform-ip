@@ -1,0 +1,23 @@
+# synth_bram_yosys.ys
+# Usage: yosys -s synth_bram_yosys.ys -p "read_verilog file.sv"
+# This script performs memory inference and BRAM mapping
+
+# Elaborate the design hierarchy
+hierarchy -top memory_interface
+
+# Ensure basic processing and memory inference
+proc
+opt -full
+memory -nomap      # infer memories (does not lower them)
+opt -full
+
+# Now perform memory_bram mapping (generic approach that should work)
+memory_bram
+opt -full
+
+# Final cleanups and writeout
+proc
+opt -full
+# Write outputs for inspection
+write_json memory_interface.yosys.json
+write_verilog memory_interface_mapped.v
