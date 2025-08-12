@@ -1,39 +1,30 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T18:45:10.792545",
+    "analysis_date": "2025-08-12T19:40:51.972933",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 169,
-    "total_directories": 50,
+    "total_files": 157,
+    "total_directories": 51,
     "file_types": {
-      ".md": 32,
+      ".md": 39,
       "no_extension": 34,
       ".py": 13,
       ".test": 1,
       ".sh": 17,
-      ".xml": 1,
-      ".f": 1,
-      ".vvp": 1,
-      ".pyc": 1,
+      ".txt": 15,
       ".sv": 21,
-      ".cpp": 12,
-      ".h": 4,
-      ".mk": 2,
-      ".d": 1,
-      ".dat": 1,
+      ".vh": 2,
       ".html": 3,
-      ".json": 3,
-      ".txt": 9,
+      ".json": 1,
       ".css": 1,
       ".tcl": 6,
       ".cfg": 1,
       ".pcf": 1,
-      ".ys": 2,
-      ".v": 1
+      ".ys": 2
     },
     "directory_structure": {
       "root": {
@@ -54,6 +45,7 @@
           "run_ubuntu.sh"
         ],
         "subdirectories": [
+          "logs",
           "tb",
           "docs",
           "analog",
@@ -67,8 +59,37 @@
           ".github",
           ".git",
           "packaging",
-          "flow"
+          "flow",
+          "reports"
         ]
+      },
+      "logs": {
+        "files": [],
+        "subdirectories": [
+          "log-20250812_181938"
+        ]
+      },
+      "logs/log-20250812_181938": {
+        "files": [],
+        "subdirectories": [
+          "reports"
+        ]
+      },
+      "logs/log-20250812_181938/reports": {
+        "files": [
+          "memory_interface_stats.txt",
+          "twiddle_rom_stats.txt",
+          "memory_analysis_report.md",
+          "synthesis_report.md",
+          "rescale_unit_stats.txt",
+          "summary_report.md",
+          "scale_factor_tracker_stats.txt",
+          "gate_analysis_report.md",
+          "fft_control_stats.txt",
+          "comprehensive_analysis_report.md",
+          "fft_engine_stats.txt"
+        ],
+        "subdirectories": []
       },
       "tb": {
         "files": [
@@ -89,24 +110,7 @@
           "test_fft_basic.py",
           "Makefile",
           "test_example.py",
-          "test_fft_edge_cases.py",
-          "results.xml"
-        ],
-        "subdirectories": [
-          "sim_build",
-          "__pycache__"
-        ]
-      },
-      "tb/cocotb/sim_build": {
-        "files": [
-          "cmds.f",
-          "sim.vvp"
-        ],
-        "subdirectories": []
-      },
-      "tb/cocotb/__pycache__": {
-        "files": [
-          "test_fft_basic.cpython-312-pytest-8.4.1.pyc"
+          "test_fft_edge_cases.py"
         ],
         "subdirectories": []
       },
@@ -127,35 +131,9 @@
           "tb_memory_interface_opt.sv"
         ],
         "subdirectories": [
-          "obj_dir",
           "work",
           "waveforms"
         ]
-      },
-      "tb/sv_tb/obj_dir": {
-        "files": [
-          "Vtb_simple___024root__DepSet_h8dbf6dea__1__Slow.cpp",
-          "Vtb_simple__TraceDecls__0__Slow.cpp",
-          "Vtb_simple___024root.h",
-          "Vtb_simple_classes.mk",
-          "Vtb_simple___024root__DepSet_h74eeff05__0.cpp",
-          "Vtb_simple__Trace__0__Slow.cpp",
-          "Vtb_simple.h",
-          "Vtb_simple__ver.d",
-          "Vtb_simple___024root__Slow.cpp",
-          "Vtb_simple__verFiles.dat",
-          "Vtb_simple___024root__DepSet_h8dbf6dea__0__Slow.cpp",
-          "Vtb_simple__Trace__0.cpp",
-          "Vtb_simple__Syms.cpp",
-          "Vtb_simple__Syms.h",
-          "Vtb_simple.cpp",
-          "Vtb_simple__pch.h",
-          "Vtb_simple___024root__DepSet_h8dbf6dea__1.cpp",
-          "Vtb_simple___024root__DepSet_h8dbf6dea__0.cpp",
-          "Vtb_simple___024root__DepSet_h74eeff05__0__Slow.cpp",
-          "Vtb_simple.mk"
-        ],
-        "subdirectories": []
       },
       "tb/sv_tb/work": {
         "files": [],
@@ -281,17 +259,16 @@
       },
       "rtl": {
         "files": [
-          "scale_factor_tracker.sv",
-          "fft_top.sv",
+          "fft_scale_factor_tracker.sv",
+          "fft_timescale.vh",
+          "fft_defines.vh",
+          "fft_twiddle_rom.sv",
           ".gitkeep",
-          "twiddle_rom_synth_opt.sv",
-          "fft_control.sv",
-          "twiddle_rom_synth.sv",
-          "rescale_unit.sv",
-          "fft_engine.sv",
-          "twiddle_rom.sv",
-          "memory_interface_synth.sv",
-          "memory_interface.sv"
+          "fft_fft_control.sv",
+          "fft_fft_top.sv",
+          "fft_fft_engine.sv",
+          "fft_rescale_unit.sv",
+          "fft_memory_interface.sv"
         ],
         "subdirectories": []
       },
@@ -413,9 +390,7 @@
         ]
       },
       "flow/fpga/openfpga/netlists": {
-        "files": [
-          "fft_top_generic.json"
-        ],
+        "files": [],
         "subdirectories": []
       },
       "flow/fpga/openfpga/build": {
@@ -461,7 +436,8 @@
       },
       "flow/yosys/reports": {
         "files": [
-          "comprehensive_report.md"
+          "comprehensive_report.md",
+          "comprehensive_test_report.md"
         ],
         "subdirectories": []
       },
@@ -473,21 +449,22 @@
           "test_twiddle_rom_synth.sh",
           "test_scale_factor_tracker.sh",
           "test_comprehensive_synthesis.sh",
+          "twiddle_rom_synth_opt.sv",
           "test_memory_interface_simple.sh",
           "test_fft_control.sh",
+          "twiddle_rom_synth.sv",
           "test_rescale_unit.sh",
           "test_fft_engine.sh",
           "yosys_synth.tcl",
           "timeout_wrapper.sh",
           "Makefile",
           "yosys_synth.ys",
-          "memory_interface_mapped.v",
-          "memory_interface.yosys.json",
           "test_memory_interface.sh",
           "synth_stats.txt",
           "synth_memory_interface.tcl",
           "run_yosys_bram.sh",
           "test_full_synthesis.sh",
+          "memory_interface_synth.sv",
           "synth_bram_yosys.ys"
         ],
         "subdirectories": [
@@ -509,13 +486,19 @@
           "fft_engine_stats.txt"
         ],
         "subdirectories": []
+      },
+      "reports": {
+        "files": [
+          "memory_optimization_report.md"
+        ],
+        "subdirectories": []
       }
     }
   },
   "code_metrics": {
-    "rtl_files": 22,
-    "rtl_lines": 5017,
-    "rtl_modules": 39,
+    "rtl_files": 21,
+    "rtl_lines": 4666,
+    "rtl_modules": 31,
     "testbench_files": 16,
     "testbench_lines": 4149,
     "constraint_files": 7,
@@ -525,7 +508,7 @@
   },
   "documentation_metrics": {
     "documentation_files": 9,
-    "documentation_lines": 5980,
+    "documentation_lines": 6031,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
@@ -553,13 +536,9 @@
     "metadata_complete": false,
     "synthesis_stats_available": true,
     "synthesis_modules_count": 7,
-    "total_gate_count": 6463,
+    "total_gate_count": 85,
     "module_gate_counts": {
-      "twiddle_rom": 85,
-      "rescale_unit": 429,
-      "scale_factor_tracker": 188,
-      "fft_control": 55,
-      "fft_engine": 5706
+      "twiddle_rom": 85
     }
   },
   "metadata_analysis": {
