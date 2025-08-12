@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T17:48:08.611410",
+    "analysis_date": "2025-08-12T17:53:30.702062",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -547,9 +547,9 @@
     "metadata_complete": false,
     "synthesis_stats_available": true,
     "synthesis_modules_count": 7,
-    "total_gate_count": 74217,
+    "total_gate_count": 142590,
     "module_gate_counts": {
-      "memory_interface": 67754,
+      "memory_interface": 136127,
       "twiddle_rom": 85,
       "rescale_unit": 429,
       "scale_factor_tracker": 188,

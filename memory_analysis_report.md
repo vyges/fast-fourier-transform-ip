@@ -1,7 +1,7 @@
 # FFT IP Memory Usage Analysis Report
 ========================================
 
-**Generated:** 2025-08-12 17:48:09
+**Generated:** 2025-08-12 17:53:31
 **Project:** 
 
 ## 🎯 Memory Usage Summary
@@ -9,7 +9,7 @@
 ### Memory Interface Analysis
 
 **Current Results:**
-- **Cell Count:** 67754
+- **Cell Count:** 136127
 - **Memory Bits:** 0
 
 **Current Memory Requirements:**
