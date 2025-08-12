@@ -3,27 +3,27 @@ VYGES CODE KPIs ANALYSIS REPORT
 ============================================================
 
 📁 PROJECT: 
-📅 Analysis Date: 2025-08-12T19:40:52.145203
+📅 Analysis Date: 2025-08-12T20:28:35.693266
 🔗 Git Status: dirty
 
 📊 OVERALL SCORE: 75/100
 
 💻 CODE METRICS:
-   RTL Files: 21
-   RTL Lines: 4666
-   RTL Modules: 31
-   Testbench Files: 16
-   Testbench Lines: 4149
+   RTL Files: 22
+   RTL Lines: 5246
+   RTL Modules: 32
+   Testbench Files: 17
+   Testbench Lines: 4419
 
 📚 DOCUMENTATION:
-   Documentation Files: 9
-   Documentation Lines: 6031
+   Documentation Files: 10
+   Documentation Lines: 6063
    README Exists: ✅
    Developer Guide: ✅
 
 🧪 TEST COVERAGE:
-   Test Files: 16
-   Test Lines: 4149
+   Test Files: 17
+   Test Lines: 4419
    Coverage Files: 0
 
 ✅ QUALITY METRICS:

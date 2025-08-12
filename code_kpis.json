@@ -1,22 +1,22 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T19:40:51.972933",
+    "analysis_date": "2025-08-12T20:28:35.519993",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 157,
-    "total_directories": 51,
+    "total_files": 159,
+    "total_directories": 52,
     "file_types": {
-      ".md": 39,
+      ".md": 40,
       "no_extension": 34,
       ".py": 13,
       ".test": 1,
       ".sh": 17,
       ".txt": 15,
-      ".sv": 21,
+      ".sv": 22,
       ".vh": 2,
       ".html": 3,
       ".json": 1,
@@ -127,6 +127,7 @@
           "Makefile",
           "tb_minimal.sv",
           "tb_memory_interface_simple.sv",
+          "tb_security_validation.sv",
           "tb_rescale_unit.sv",
           "tb_memory_interface_opt.sv"
         ],
@@ -159,12 +160,19 @@
           "user_guide.md"
         ],
         "subdirectories": [
-          "images"
+          "images",
+          "security"
         ]
       },
       "docs/images": {
         "files": [
           ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "docs/security": {
+        "files": [
+          "security_analysis.md"
         ],
         "subdirectories": []
       },
@@ -496,19 +504,19 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 21,
-    "rtl_lines": 4666,
-    "rtl_modules": 31,
-    "testbench_files": 16,
-    "testbench_lines": 4149,
+    "rtl_files": 22,
+    "rtl_lines": 5246,
+    "rtl_modules": 32,
+    "testbench_files": 17,
+    "testbench_lines": 4419,
     "constraint_files": 7,
     "constraint_lines": 636,
     "script_files": 7,
     "script_lines": 3196
   },
   "documentation_metrics": {
-    "documentation_files": 9,
-    "documentation_lines": 6031,
+    "documentation_files": 10,
+    "documentation_lines": 6063,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
@@ -516,10 +524,10 @@
     "tutorial_docs": 0
   },
   "test_metrics": {
-    "test_files": 16,
-    "test_lines": 4149,
+    "test_files": 17,
+    "test_lines": 4419,
     "test_types": {
-      "systemverilog": 11,
+      "systemverilog": 12,
       "cocotb": 5,
       "uvm": 0,
       "formal": 0
