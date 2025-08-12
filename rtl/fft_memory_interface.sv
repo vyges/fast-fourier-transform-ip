@@ -292,6 +292,85 @@ module memory_interface #(
     end
     assign mem_ready_o = mem_ready_reg;
 
+    //=============================================================================
+    // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
+    //=============================================================================
+    
+    // Address bounds checking - prevent illegal memory access
+    // Yosys-compatible security checks (synthesis-safe)
+    `ifdef YOSYS_SYNTHESIS
+    // Note: Yosys doesn't support $error or SystemVerilog assertions
+    // These are implemented as synthesis-safe logic that can be optimized out
+    logic security_violation_write;
+    logic security_violation_read;
+    logic security_violation_fsm;
+    logic security_violation_access;
+    
+    // Address bounds checking - synthesis-safe implementation
+    assign security_violation_write = mem_write_i && (mem_addr_i >= 2048);
+    assign security_violation_read = mem_ready_o && (mem_addr_i >= 2048);
+    
+    // FSM state validity - synthesis-safe implementation
+    assign security_violation_fsm = !(apb_state == APB_IDLE || apb_state == APB_SETUP || apb_state == APB_ACCESS);
+    
+    // Memory access validation - synthesis-safe implementation
+    assign security_violation_access = mem_write_i && mem_ready_o;
+    
+    // These signals can be used for formal verification or external monitoring
+    // In synthesis, they will be optimized out if not used
+    `endif
+    
+    // Full SystemVerilog security assertions (for simulation and formal verification)
+    `ifdef SECURITY_ASSERTIONS
+    property address_bounds_check;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (mem_write_i) |-> (mem_addr_i < 2048); // 2048 is the max address
+    endproperty
+    
+    property address_bounds_check_read;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (mem_ready_o) |-> (mem_addr_i < 2048); // 2048 is the max address
+    endproperty
+    
+    // FSM state validity - ensure stable state transitions
+    property fsm_state_validity;
+        @(posedge pclk_i) disable iff (!preset_n_i)
+        (apb_state == APB_IDLE || apb_state == APB_SETUP || apb_state == APB_ACCESS);
+    endproperty
+    
+    // Reset synchronization - ensure proper reset behavior
+    property reset_synchronization;
+        @(posedge pclk_i)
+        !preset_n_i |-> (apb_state == APB_IDLE);
+    endproperty
+    
+    // Memory access validation - prevent simultaneous read/write
+    property memory_access_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        !(mem_write_i && mem_ready_o);
+    endproperty
+    
+    // Assert the security properties
+    assert property (address_bounds_check) else
+        $error("Security violation: Illegal write address access detected");
+    
+    assert property (address_bounds_check_read) else
+        $error("Security violation: Illegal read address access detected");
+    
+    assert property (fsm_state_validity) else
+        $error("Security violation: Invalid FSM state detected");
+    
+    assert property (reset_synchronization) else
+        $error("Security violation: Improper reset behavior detected");
+    
+    assert property (memory_access_validation) else
+        $error("Security violation: Simultaneous read/write access detected");
+    `endif
+    
+    //=============================================================================
+    // End Security Assertions
+    //=============================================================================
+
 endmodule
 
 `endif // FFT_MEMORY_INTERFACE_SV 

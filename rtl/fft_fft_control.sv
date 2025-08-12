@@ -215,6 +215,87 @@ module fft_control #(
     assign buffer_active_o = buffer_active_reg[0];
     assign int_status_o = int_status_reg;
 
+    //=============================================================================
+    // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
+    //=============================================================================
+    
+    // FSM state validity - ensure stable state transitions
+    // Yosys-compatible security checks (synthesis-safe)
+    `ifdef YOSYS_SYNTHESIS
+    // Note: Yosys doesn't support $error or SystemVerilog assertions
+    // These are implemented as synthesis-safe logic that can be optimized out
+    logic security_violation_fsm;
+    logic security_violation_interrupt;
+    logic security_violation_buffer;
+    
+    // FSM state validity - synthesis-safe implementation
+    assign security_violation_fsm = !(ctrl_state == CTRL_IDLE || ctrl_state == CTRL_CONFIG || ctrl_state == CTRL_LOAD || 
+                                     ctrl_state == CTRL_COMPUTE || ctrl_state == CTRL_RESCALE || ctrl_state == CTRL_DONE || 
+                                     ctrl_state == CTRL_ERROR);
+    
+    // Interrupt enable validation - synthesis-safe implementation
+    assign security_violation_interrupt = int_enable_i > 8'hFF;
+    
+    // Buffer selection validation - synthesis-safe implementation
+    assign security_violation_buffer = !(buffer_sel_i == 2'b00 || buffer_sel_i == 2'b01 || 
+                                        buffer_sel_i == 2'b10 || buffer_sel_i == 2'b11);
+    
+    // These signals can be used for formal verification or external monitoring
+    // In synthesis, they will be optimized out if not used
+    `endif
+    
+    // Full SystemVerilog security assertions (for simulation and formal verification)
+    `ifdef SECURITY_ASSERTIONS
+    property fsm_state_validity;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (ctrl_state == CTRL_IDLE || ctrl_state == CTRL_CONFIG || ctrl_state == CTRL_LOAD || ctrl_state == CTRL_COMPUTE || ctrl_state == CTRL_RESCALE || ctrl_state == CTRL_DONE || ctrl_state == CTRL_ERROR);
+    endproperty
+    
+    // Reset synchronization - ensure proper reset behavior
+    property reset_synchronization;
+        @(posedge clk_i)
+        !reset_n_i |-> (ctrl_state == CTRL_IDLE);
+    endproperty
+    
+    // Interrupt enable validation - ensure proper interrupt configuration
+    property interrupt_enable_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (int_enable_i <= 8'hFF); // Maximum 8 interrupt sources
+    endproperty
+    
+    // Buffer selection validation - ensure valid buffer selection
+    property buffer_selection_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (buffer_sel_i == 2'b00 || buffer_sel_i == 2'b01 || buffer_sel_i == 2'b10 || buffer_sel_i == 2'b11);
+    endproperty
+    
+    // State transition validation - ensure valid state transitions
+    property state_transition_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (ctrl_state == CTRL_IDLE) |-> (ctrl_next_state == CTRL_IDLE || ctrl_next_state == CTRL_CONFIG);
+    endproperty
+    
+    // Assert the security properties
+    assert property (fsm_state_validity) else
+        $error("Security violation: Invalid FSM state detected in FFT control");
+    
+    assert property (reset_synchronization) else
+        $error("Security violation: Improper reset behavior detected in FFT control");
+    
+    assert property (interrupt_enable_validation) else
+        $error("Security violation: Invalid interrupt enable configuration");
+    
+    assert property (buffer_selection_validation) else
+        $error("Security violation: Invalid buffer selection detected");
+    
+    assert property (state_transition_validation) else
+        $error("Security violation: Invalid state transition detected");
+    `endif
+    
+    //=============================================================================
+    // End Security Assertions
+    //=============================================================================
+
 endmodule
 
 `endif // FFT_FFT_CONTROL_SV 

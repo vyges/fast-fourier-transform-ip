@@ -103,6 +103,76 @@ module twiddle_rom #(
         end
     end
 
+    //=============================================================================
+    // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
+    //=============================================================================
+    
+    // Address bounds checking - prevent illegal ROM access
+    // Yosys-compatible security checks (synthesis-safe)
+    `ifdef YOSYS_SYNTHESIS
+    // Note: Yosys doesn't support $error or SystemVerilog assertions
+    // These are implemented as synthesis-safe logic that can be optimized out
+    logic security_violation_address;
+    logic security_violation_data;
+    logic security_violation_symmetry;
+    
+    // Address bounds checking - synthesis-safe implementation
+    assign security_violation_address = addr_i >= ROM_SIZE;
+    
+    // Data integrity checking - synthesis-safe implementation
+    assign security_violation_data = addr_valid_i && (data_o < -32768 || data_o > 32767);
+    
+    // Symmetry validation - synthesis-safe implementation
+    assign security_violation_symmetry = addr_valid_i && addr_i < ROM_SIZE/2 && 
+                                       (data_o != -rom_memory[ROM_SIZE-1-addr_i]);
+    
+    // These signals can be used for formal verification or external monitoring
+    // In synthesis, they will be optimized out if not used
+    `endif
+    
+    // Full SystemVerilog security assertions (for simulation and formal verification)
+    `ifdef SECURITY_ASSERTIONS
+    property address_bounds_check;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (addr_i < ROM_SIZE);
+    endproperty
+    
+    // ROM access validation - ensure valid read operations
+    property rom_access_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (read_en_i) |-> (addr_i < ROM_SIZE);
+    endproperty
+    
+    // Data integrity - ensure ROM data is within expected range
+    property data_integrity_check;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (read_en_i && read_en_i) |-> (data_o >= -32768 && data_o <= 32767); // 16-bit signed range
+    endproperty
+    
+    // Symmetry validation - ensure symmetry property is maintained
+    property symmetry_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (read_en_i && addr_i < ROM_SIZE/2) |-> (data_o == -rom_memory[ROM_SIZE-1-addr_i]);
+    endproperty
+    
+    // Assert the security properties
+    assert property (address_bounds_check) else
+        $error("Security violation: Illegal ROM address access detected");
+    
+    assert property (rom_access_validation) else
+        $error("Security violation: Invalid ROM access detected");
+    
+    assert property (data_integrity_check) else
+        $error("Security violation: ROM data integrity violation detected");
+    
+    assert property (symmetry_validation) else
+        $error("Security violation: ROM symmetry property violation detected");
+    `endif
+    
+    //=============================================================================
+    // End Security Assertions
+    //=============================================================================
+
 endmodule
 
 `endif // FFT_TWIDDLE_ROM_SV 

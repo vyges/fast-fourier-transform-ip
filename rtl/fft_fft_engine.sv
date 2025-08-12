@@ -455,6 +455,86 @@ module fft_engine #(
         end
     end
 
+    //=============================================================================
+    // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
+    //=============================================================================
+    
+     // FSM state validity - ensure stable state transitions
+     // Yosys-compatible security checks (synthesis-safe)
+    `ifdef YOSYS_SYNTHESIS
+    // Note: Yosys doesn't support $error or SystemVerilog assertions
+    // These are implemented as synthesis-safe logic that can be optimized out
+    logic security_violation_fsm;
+    logic security_violation_stage_count;
+    logic security_violation_buffer_access;
+    
+    // FSM state validity - synthesis-safe implementation
+    assign security_violation_fsm = !(fft_state == FFT_IDLE || fft_state == FFT_LOAD || fft_state == FFT_COMPUTE || 
+                                     fft_state == FFT_RESCALE || fft_state == FFT_DONE || fft_state == FFT_ERROR);
+    
+    // Stage count validation - synthesis-safe implementation
+    assign security_violation_stage_count = stage_counter > fft_length_log2_reg;
+    
+    // Buffer access validation - synthesis-safe implementation
+    assign security_violation_buffer_access = mem_addr_i >= 16'h1000;
+    
+    // These signals can be used for formal verification or external monitoring
+    // In synthesis, they will be optimized out if not used
+    `endif
+    
+    // Full SystemVerilog security assertions (for simulation and formal verification)
+    `ifdef SECURITY_ASSERTIONS
+    property fsm_state_validity;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (fft_state == FFT_IDLE || fft_state == FFT_LOAD || fft_state == FFT_COMPUTE || 
+         fft_state == FFT_RESCALE || fft_state == FFT_DONE || fft_state == FFT_ERROR);
+    endproperty
+    
+    // Reset synchronization - ensure proper reset behavior
+    property reset_synchronization;
+        @(posedge clk_i)
+        !reset_n_i |-> (fft_state == FFT_IDLE && stage_counter == 0);
+    endproperty
+    
+    // Overflow protection - ensure scale factor tracking prevents overflow
+    property overflow_protection;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (overflow_detected_o) |-> (scale_factor_reg < 8'hFF); // Assuming MAX_SCALE_FACTOR is 8'hFF
+    endproperty
+    
+    // Stage count validation - ensure stage count stays within bounds
+    property stage_count_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (stage_counter <= fft_length_log2_reg);
+    endproperty
+    
+    // Buffer access validation - prevent illegal buffer access
+    property buffer_access_validation;
+        @(posedge clk_i) disable iff (!reset_n_i)
+        (mem_addr_i < 16'h1000); // Only 4KB (1024 points * 4 bytes) for twiddle factors
+    endproperty
+    
+    // Assert the security properties
+    assert property (fsm_state_validity) else
+        $error("Security violation: Invalid FSM state detected in FFT engine");
+    
+    assert property (reset_synchronization) else
+        $error("Security violation: Improper reset behavior detected in FFT engine");
+    
+    assert property (overflow_protection) else
+        $error("Security violation: Overflow detected without proper scale factor tracking");
+    
+    assert property (stage_count_validation) else
+        $error("Security violation: Stage count exceeds maximum allowed value");
+    
+    assert property (buffer_access_validation) else
+        $error("Security violation: Illegal buffer selection detected");
+    `endif
+    
+    //=============================================================================
+    // End Security Assertions
+    //=============================================================================
+
 endmodule
 
 `endif // FFT_FFT_ENGINE_SV 
