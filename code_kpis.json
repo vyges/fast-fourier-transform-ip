@@ -1,22 +1,22 @@
 {
   "project_info": {
     "project_name": "",
-    "analysis_date": "2025-08-12T20:28:35.519993",
+    "analysis_date": "2025-08-13T01:16:22.353203",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 159,
-    "total_directories": 52,
+    "total_files": 173,
+    "total_directories": 57,
     "file_types": {
-      ".md": 40,
-      "no_extension": 34,
+      ".md": 43,
+      "no_extension": 39,
       ".py": 13,
       ".test": 1,
-      ".sh": 17,
+      ".sh": 18,
       ".txt": 15,
-      ".sv": 22,
+      ".sv": 27,
       ".vh": 2,
       ".html": 3,
       ".json": 1,
@@ -53,6 +53,7 @@
           "integration",
           "simulation",
           "rtl",
+          "yosys_test",
           "public",
           "test",
           "layout",
@@ -280,6 +281,50 @@
         ],
         "subdirectories": []
       },
+      "yosys_test": {
+        "files": [
+          "README.md",
+          "UBUNTU_TESTING_SUMMARY.md",
+          "Makefile",
+          "setup_ubuntu.sh",
+          "CROSS_PLATFORM_TESTING.md"
+        ],
+        "subdirectories": [
+          "issue3_security_assertions",
+          "issue1_memory_hang",
+          "issue4_systemverilog_support",
+          "issue2_frontend_detection"
+        ]
+      },
+      "yosys_test/issue3_security_assertions": {
+        "files": [
+          "Makefile",
+          "test_security.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue1_memory_hang": {
+        "files": [
+          "test_small_memory.sv",
+          "Makefile",
+          "test_large_memory.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue4_systemverilog_support": {
+        "files": [
+          "Makefile",
+          "test_sv_features.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue2_frontend_detection": {
+        "files": [
+          "test_frontend.sv",
+          "Makefile"
+        ],
+        "subdirectories": []
+      },
       "public": {
         "files": [
           "test_harness_report.html",
@@ -504,9 +549,9 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 22,
-    "rtl_lines": 5246,
-    "rtl_modules": 32,
+    "rtl_files": 27,
+    "rtl_lines": 5448,
+    "rtl_modules": 37,
     "testbench_files": 17,
     "testbench_lines": 4419,
     "constraint_files": 7,
