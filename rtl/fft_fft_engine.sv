@@ -17,8 +17,8 @@
 
 module fft_engine #(
     parameter int FFT_MAX_LENGTH_LOG2 = 12,    // Maximum FFT length (log2)
-    parameter int DATA_WIDTH = 16,             // Input/output data width
-    parameter int TWIDDLE_WIDTH = 16           // Twiddle factor width
+    parameter int FFT_DATA_WIDTH = 16,         // Input/output data width
+    parameter int FFT_TWIDDLE_WIDTH = 16       // Twiddle factor width
 ) (
     // Clock and Reset
     input  logic        clk_i,

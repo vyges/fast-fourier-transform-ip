@@ -16,9 +16,9 @@
 //=============================================================================
 
 module scale_factor_tracker #(
-    parameter int SCALE_FACTOR_WIDTH = 8,      // Scale factor width
-    parameter int STAGE_COUNT_WIDTH = 8,       // Stage count width
-    parameter int OVERFLOW_COUNT_WIDTH = 8     // Overflow count width
+    parameter int FFT_SCALE_FACTOR_WIDTH = 8,  // Scale factor width
+    parameter int FFT_STAGE_COUNT_WIDTH = 8,   // Stage count width
+    parameter int FFT_OVERFLOW_COUNT_WIDTH = 8 // Overflow count width
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -34,9 +34,9 @@ module scale_factor_tracker #(
     input  logic [7:0]  overflow_stage_i,
     
     // Scale Factor Outputs
-    output logic [SCALE_FACTOR_WIDTH-1:0] total_scale_factor_o,
-    output logic [STAGE_COUNT_WIDTH-1:0]  stage_count_o,
-    output logic [OVERFLOW_COUNT_WIDTH-1:0] overflow_count_o,
+    output logic [FFT_SCALE_FACTOR_WIDTH-1:0] total_scale_factor_o,
+    output logic [FFT_STAGE_COUNT_WIDTH-1:0]  stage_count_o,
+    output logic [FFT_OVERFLOW_COUNT_WIDTH-1:0] overflow_count_o,
     output logic [7:0]  last_overflow_stage_o,
     output logic [7:0]  max_overflow_magnitude_o,
     
@@ -46,9 +46,9 @@ module scale_factor_tracker #(
 );
 
     // Internal registers
-    logic [SCALE_FACTOR_WIDTH-1:0] scale_factor_reg;
-    logic [STAGE_COUNT_WIDTH-1:0]  stage_count_reg;
-    logic [OVERFLOW_COUNT_WIDTH-1:0] overflow_count_reg;
+    logic [FFT_SCALE_FACTOR_WIDTH-1:0] scale_factor_reg;
+    logic [FFT_STAGE_COUNT_WIDTH-1:0]  stage_count_reg;
+    logic [FFT_OVERFLOW_COUNT_WIDTH-1:0] overflow_count_reg;
     logic [7:0]  last_overflow_stage_reg;
     logic [7:0]  max_overflow_magnitude_reg;
     logic        scale_factor_overflow_reg;

@@ -17,11 +17,11 @@
 
 module fft_top #(
     parameter int FFT_MAX_LENGTH_LOG2 = 12,    // Maximum FFT length (log2)
-    parameter int DATA_WIDTH = 16,             // Input/output data width
-    parameter int TWIDDLE_WIDTH = 16,          // Twiddle factor width
-    parameter int APB_ADDR_WIDTH = 16,         // APB address width
-    parameter int AXI_ADDR_WIDTH = 32,         // AXI address width
-    parameter int AXI_DATA_WIDTH = 64          // AXI data width
+    parameter int FFT_DATA_WIDTH = 16,         // Input/output data width
+    parameter int FFT_TWIDDLE_WIDTH = 16,      // Twiddle factor width
+    parameter int FFT_APB_ADDR_WIDTH = 16,     // APB address width
+    parameter int FFT_AXI_ADDR_WIDTH = 32,     // AXI address width
+    parameter int FFT_AXI_DATA_WIDTH = 64      // AXI data width
 ) (
     // Clock and Reset
     input  logic        clk_i,                 // System clock
@@ -33,7 +33,7 @@ module fft_top #(
     input  logic        psel_i,                // APB select
     input  logic        penable_i,             // APB enable
     input  logic        pwrite_i,              // APB write enable
-    input  logic [APB_ADDR_WIDTH-1:0] paddr_i, // APB address
+    input  logic [FFT_APB_ADDR_WIDTH-1:0] paddr_i, // APB address
     input  logic [31:0] pwdata_i,              // APB write data
     output logic [31:0] prdata_o,              // APB read data
     output logic        pready_o,              // APB ready
@@ -41,16 +41,16 @@ module fft_top #(
     // AXI Interface
     input  logic        axi_aclk_i,            // AXI clock
     input  logic        axi_areset_n_i,        // AXI reset
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_awaddr_i,   // AXI write address
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_awaddr_i,   // AXI write address
     input  logic        axi_awvalid_i,         // AXI write address valid
     output logic        axi_awready_o,         // AXI write address ready
-    input  logic [AXI_DATA_WIDTH-1:0] axi_wdata_i,    // AXI write data
+    input  logic [FFT_AXI_DATA_WIDTH-1:0] axi_wdata_i,    // AXI write data
     input  logic        axi_wvalid_i,          // AXI write data valid
     output logic        axi_wready_o,          // AXI write data ready
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_araddr_i,   // AXI read address
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_araddr_i,   // AXI read address
     input  logic        axi_arvalid_i,         // AXI read address valid
     output logic        axi_arready_o,         // AXI read address ready
-    output logic [AXI_DATA_WIDTH-1:0] axi_rdata_o,    // AXI read data
+    output logic [FFT_AXI_DATA_WIDTH-1:0] axi_rdata_o,    // AXI read data
     output logic        axi_rvalid_o,          // AXI read data valid
     input  logic        axi_rready_i,          // AXI read data ready
     
@@ -126,8 +126,8 @@ module fft_top #(
     // Instantiate FFT engine
     fft_engine #(
         .FFT_MAX_LENGTH_LOG2(FFT_MAX_LENGTH_LOG2),
-        .DATA_WIDTH(DATA_WIDTH),
-        .TWIDDLE_WIDTH(TWIDDLE_WIDTH)
+        .FFT_DATA_WIDTH(FFT_DATA_WIDTH),
+        .FFT_TWIDDLE_WIDTH(FFT_TWIDDLE_WIDTH)
     ) fft_engine_inst (
         .clk_i(clk_i),
         .reset_n_i(reset_n_i),
@@ -159,9 +159,9 @@ module fft_top #(
 
     // Instantiate memory interface
     memory_interface #(
-        .APB_ADDR_WIDTH(APB_ADDR_WIDTH),
-        .AXI_ADDR_WIDTH(AXI_ADDR_WIDTH),
-        .AXI_DATA_WIDTH(AXI_DATA_WIDTH)
+        .FFT_APB_ADDR_WIDTH(FFT_APB_ADDR_WIDTH),
+        .FFT_AXI_ADDR_WIDTH(FFT_AXI_ADDR_WIDTH),
+        .FFT_AXI_DATA_WIDTH(FFT_AXI_DATA_WIDTH)
     ) memory_interface_inst (
         .clk_i(clk_i),
         .reset_n_i(reset_n_i),

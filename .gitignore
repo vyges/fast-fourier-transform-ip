@@ -123,6 +123,15 @@ flow/synthesis/*.rpt
 flow/synthesis/*.json
 flow/synthesis/*.v
 flow/synthesis/*.blif
+# Yosys synthesis artifacts
+flow/yosys/reports/
+flow/yosys/netlists/
+flow/yosys/build/
+flow/yosys/*.log
+flow/yosys/*.rpt
+flow/yosys/*.json
+flow/yosys/*.v
+flow/yosys/*.blif
 flow/synthesis/*.dot
 flow/synthesis/*.svg
 

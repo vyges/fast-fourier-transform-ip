@@ -16,8 +16,8 @@
 //=============================================================================
 
 module twiddle_rom #(
-    parameter int TWIDDLE_WIDTH = 16,         // Twiddle factor width
-    parameter int MAX_FFT_LENGTH_LOG2 = 12    // Maximum FFT length (log2)
+    parameter int FFT_TWIDDLE_WIDTH = 16,     // Twiddle factor width
+    parameter int FFT_MAX_FFT_LENGTH_LOG2 = 12 // Maximum FFT length (log2)
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -36,7 +36,7 @@ module twiddle_rom #(
     // ROM size calculation with symmetry optimization
     // Using cos(w) = sin(w + π/2) and sin(w + π/2) = sin(w - π/2)
     // This reduces ROM from 16K bits to 4K bits + extra logic
-    localparam int ROM_SIZE = 1 << (MAX_FFT_LENGTH_LOG2 - 2);  // Reduced by factor of 4
+    localparam int ROM_SIZE = 1 << (FFT_MAX_FFT_LENGTH_LOG2 - 2);  // Reduced by factor of 4
     localparam int ADDR_WIDTH = $clog2(ROM_SIZE);
     
     // ROM memory array with synthesis attributes

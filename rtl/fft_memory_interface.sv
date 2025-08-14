@@ -16,9 +16,9 @@
 //=============================================================================
 
 module memory_interface #(
-    parameter int APB_ADDR_WIDTH = 16,         // APB address width
-    parameter int AXI_ADDR_WIDTH = 32,         // AXI address width
-    parameter int AXI_DATA_WIDTH = 64          // AXI data width
+    parameter int FFT_APB_ADDR_WIDTH = 16,     // APB address width
+    parameter int FFT_AXI_ADDR_WIDTH = 32,     // AXI address width
+    parameter int FFT_AXI_DATA_WIDTH = 64      // AXI data width
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -30,7 +30,7 @@ module memory_interface #(
     input  logic        psel_i,
     input  logic        penable_i,
     input  logic        pwrite_i,
-    input  logic [APB_ADDR_WIDTH-1:0] paddr_i,
+    input  logic [FFT_APB_ADDR_WIDTH-1:0] paddr_i,
     input  logic [31:0] pwdata_i,
     output logic [31:0] prdata_o,
     output logic        pready_o,
@@ -38,16 +38,16 @@ module memory_interface #(
     // AXI Interface
     input  logic        axi_aclk_i,
     input  logic        axi_areset_n_i,
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_awaddr_i,
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_awaddr_i,
     input  logic        axi_awvalid_i,
     output logic        axi_awready_o,
-    input  logic [AXI_DATA_WIDTH-1:0] axi_wdata_i,
+    input  logic [FFT_AXI_DATA_WIDTH-1:0] axi_wdata_i,
     input  logic        axi_wvalid_i,
     output logic        axi_wready_o,
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_araddr_i,
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_araddr_i,
     input  logic        axi_arvalid_i,
     output logic        axi_arready_o,
-    output logic [AXI_DATA_WIDTH-1:0] axi_rdata_o,
+    output logic [FFT_AXI_DATA_WIDTH-1:0] axi_rdata_o,
     output logic        axi_rvalid_o,
     input  logic        axi_rready_i,
     

@@ -16,8 +16,8 @@
 //=============================================================================
 
 module rescale_unit #(
-    parameter int DATA_WIDTH = 16,             // Data width
-    parameter int SCALE_FACTOR_WIDTH = 8       // Scale factor width
+    parameter int FFT_DATA_WIDTH = 16,         // Data width
+    parameter int FFT_SCALE_FACTOR_WIDTH = 8   // Scale factor width
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -33,11 +33,11 @@ module rescale_unit #(
     input  logic [7:0]  rescale_threshold_i,   // Rescaling threshold
     
     // Data Interface
-    input  logic [DATA_WIDTH-1:0] data_real_i,
-    input  logic [DATA_WIDTH-1:0] data_imag_i,
+    input  logic [FFT_DATA_WIDTH-1:0] data_real_i,
+    input  logic [FFT_DATA_WIDTH-1:0] data_imag_i,
     input  logic                   data_valid_i,
-    output logic [DATA_WIDTH-1:0] data_real_o,
-    output logic [DATA_WIDTH-1:0] data_imag_o,
+    output logic [FFT_DATA_WIDTH-1:0] data_real_o,
+    output logic [FFT_DATA_WIDTH-1:0] data_imag_o,
     output logic                   data_valid_o,
     
     // Overflow Detection
@@ -45,7 +45,7 @@ module rescale_unit #(
     output logic [7:0]            overflow_magnitude_o,
     
     // Scale Factor Interface
-    output logic [SCALE_FACTOR_WIDTH-1:0] scale_factor_o,
+    output logic [FFT_SCALE_FACTOR_WIDTH-1:0] scale_factor_o,
     output logic                   scale_factor_increment_o,
     
     // Status Interface
@@ -54,8 +54,8 @@ module rescale_unit #(
 );
 
     // Internal signals
-    logic [DATA_WIDTH-1:0] data_real_reg, data_imag_reg;
-    logic [DATA_WIDTH-1:0] rescaled_real, rescaled_imag;
+    logic [FFT_DATA_WIDTH-1:0] data_real_reg, data_imag_reg;
+    logic [FFT_DATA_WIDTH-1:0] rescaled_real, rescaled_imag;
     logic [7:0]            scale_factor_reg;
     logic [7:0]            rescale_count_reg;
     logic                  rescaling_active_reg;
@@ -130,19 +130,19 @@ module rescale_unit #(
     always_comb begin
         if (saturation_en_i) begin
             // Apply saturation to prevent overflow
-            if (rescaled_real > {1'b0, {(DATA_WIDTH-1){1'b1}}}) begin
-                data_real_o = {1'b0, {(DATA_WIDTH-1){1'b1}}};
-            end else if (rescaled_real < {1'b1, {(DATA_WIDTH-1){1'b0}}}) begin
-                data_real_o = {1'b1, {(DATA_WIDTH-1){1'b0}}};
-            end else begin
+                    if (rescaled_real > {1'b0, {(FFT_DATA_WIDTH-1){1'b1}}}) begin
+            data_real_o = {1'b0, {(FFT_DATA_WIDTH-1){1'b1}}};
+        end else if (rescaled_real < {1'b1, {(FFT_DATA_WIDTH-1){1'b0}}}) begin
+            data_real_o = {1'b1, {(FFT_DATA_WIDTH-1){1'b0}}};
+        end else begin
                 data_real_o = rescaled_real;
             end
             
-            if (rescaled_imag > {1'b0, {(DATA_WIDTH-1){1'b1}}}) begin
-                data_imag_o = {1'b0, {(DATA_WIDTH-1){1'b1}}};
-            end else if (rescaled_imag < {1'b1, {(DATA_WIDTH-1){1'b0}}}) begin
-                data_imag_o = {1'b1, {(DATA_WIDTH-1){1'b0}}};
-            end else begin
+                    if (rescaled_imag > {1'b0, {(FFT_DATA_WIDTH-1){1'b1}}}) begin
+            data_imag_o = {1'b0, {(FFT_DATA_WIDTH-1){1'b1}}};
+        end else if (rescaled_imag < {1'b1, {(FFT_DATA_WIDTH-1){1'b0}}}) begin
+            data_imag_o = {1'b1, {(FFT_DATA_WIDTH-1){1'b0}}};
+        end else begin
                 data_imag_o = rescaled_imag;
             end
         end else begin
