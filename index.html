@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware IP - Vyges</title>
+    <title>vyges/fast-fourier-transform-ip - Vyges</title>
     <style>
         :root {
             --primary-color: #16213e; /* #0366d6; */
@@ -293,8 +293,8 @@
                 <img src="https://github.com/vyges.png" alt="Vyges Logo" style="width: 80px; height: 80px; border-radius: 50%; margin-right: 20px; vertical-align: middle; box-shadow: 0 6px 20px rgba(0,0,0,0.3); border: 3px solid rgba(255,255,255,0.2);">
                 <span style="vertical-align: middle; font-size: 24px; font-weight: bold;">vyges</span>
             </div>
-            <h1>Hardware IP</h1>
-           <!-- <p>High-performance hardware accelerator</p> -->
+            <h1>vyges/fast-fourier-transform-ip</h1>
+           <!-- <p>A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p> -->
         </div>
         
         <div class="stats-grid">
@@ -326,7 +326,7 @@
         
         <div class="section">
             <h2>📊 Project Overview</h2>
-            <p>A high-performance hardware accelerator designed for efficient computation with comprehensive test coverage.</p>
+            <p>A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.</p>
             
             <h3>Key Features:</h3>
             <ul class="feature-list">
@@ -445,7 +445,7 @@
                     <tr>
                         <td><strong>Simulation</strong></td>
                         <td><span class="status-badge status-success">Passing</span></td>
-                        <td>23/23 passed (100.0% success rate)<br><small>Simulators: Icarus Verilog, Verilator, Cocotb</small></td>
+                        <td>23/23 passed (100.0% success rate)<br><small>Simulators: verilator, iverilog, modelsim</small></td>
                     </tr>
                     <tr>
                         <td><strong>Waveforms</strong></td>
@@ -455,12 +455,12 @@
                     <tr>
                         <td><strong>Synthesis</strong></td>
                         <td><span class="status-badge status-success">Clean</span></td>
-                        <td>Tools: Yosys, OpenLane<br><small>Technology: Generic, sky130B</small></td>
+                        <td>Tools: yosys, design_compiler, vivado<br><small>Technology: Generic, sky130B</small></td>
                     </tr>
                     <tr>
                         <td><strong>FPGA Flow</strong></td>
                         <td><span class="status-badge status-success">Implemented</span></td>
-                        <td>Families: iCE40, ECP5, Xilinx 7-series<br><small>Tools: Yosys, NextPNR, IceStorm</small></td>
+                        <td>Families: xilinx-7, xilinx-ultrascale, intel-cyclone, intel-arria, lattice-ice40, lattice-ecp5<br><small>Tools: Yosys, NextPNR, IceStorm</small></td>
                     </tr>
                     <tr>
                         <td><strong>Quality Metrics</strong></td>
@@ -488,7 +488,7 @@
         </div>
         <div class="footer">
             <p><strong>Vyges Platform</strong> - Build Silicon Like Software</p>
-            <p>Generated on: 2025-08-13 01:16:23 UTC | Run ID: 16924855009</p>
+            <p>Generated on: 2025-08-14 01:31:22 UTC | Run ID: 16953496461</p>
         </div>
     </div>
 </body>

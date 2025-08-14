@@ -1,25 +1,25 @@
 {
   "project_info": {
-    "project_name": "",
-    "analysis_date": "2025-08-13T01:16:22.353203",
+    "project_name": "fast-fourier-transform-ip",
+    "analysis_date": "2025-08-14T01:31:21.786758",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 173,
-    "total_directories": 57,
+    "total_files": 163,
+    "total_directories": 54,
     "file_types": {
-      ".md": 43,
+      ".md": 38,
       "no_extension": 39,
       ".py": 13,
       ".test": 1,
+      ".json": 2,
       ".sh": 18,
-      ".txt": 15,
       ".sv": 27,
       ".vh": 2,
       ".html": 3,
-      ".json": 1,
+      ".txt": 9,
       ".css": 1,
       ".tcl": 6,
       ".cfg": 1,
@@ -36,6 +36,7 @@
           "README.md",
           "generate_test_harness_report.py",
           "Makefile.test",
+          "vyges-metadata.json",
           "Makefile",
           ".copilot-chat-context.md",
           "test_harness_report.md",
@@ -45,7 +46,6 @@
           "run_ubuntu.sh"
         ],
         "subdirectories": [
-          "logs",
           "tb",
           "docs",
           "analog",
@@ -63,34 +63,6 @@
           "flow",
           "reports"
         ]
-      },
-      "logs": {
-        "files": [],
-        "subdirectories": [
-          "log-20250812_181938"
-        ]
-      },
-      "logs/log-20250812_181938": {
-        "files": [],
-        "subdirectories": [
-          "reports"
-        ]
-      },
-      "logs/log-20250812_181938/reports": {
-        "files": [
-          "memory_interface_stats.txt",
-          "twiddle_rom_stats.txt",
-          "memory_analysis_report.md",
-          "synthesis_report.md",
-          "rescale_unit_stats.txt",
-          "summary_report.md",
-          "scale_factor_tracker_stats.txt",
-          "gate_analysis_report.md",
-          "fft_control_stats.txt",
-          "comprehensive_analysis_report.md",
-          "fft_engine_stats.txt"
-        ],
-        "subdirectories": []
       },
       "tb": {
         "files": [
@@ -586,7 +558,7 @@
     "simulation_passing": false,
     "coverage_goals_met": false,
     "documentation_complete": true,
-    "metadata_complete": false,
+    "metadata_complete": true,
     "synthesis_stats_available": true,
     "synthesis_modules_count": 7,
     "total_gate_count": 85,
@@ -595,31 +567,49 @@
     }
   },
   "metadata_analysis": {
-    "metadata_exists": false,
-    "required_fields": {},
-    "optional_fields": {},
-    "validation_status": "unknown",
-    "quality_score": 0,
-    "catalog_readiness": "unknown",
-    "field_completeness": 0,
-    "interface_quality": 0,
-    "test_coverage_metadata": 0,
-    "flow_configuration": 0,
-    "documentation_metadata": 0,
-    "ai_generation_ready": false,
+    "metadata_exists": true,
+    "required_fields": {
+      "name": true,
+      "version": true,
+      "description": true,
+      "license": true,
+      "target": true,
+      "design_type": true,
+      "maturity": true
+    },
+    "optional_fields": {
+      "parameters": true,
+      "interfaces": true,
+      "files": false,
+      "test": true,
+      "flows": true,
+      "meta": true,
+      "created": true,
+      "updated": true
+    },
+    "validation_status": "valid",
+    "quality_score": 98.66666666666666,
+    "catalog_readiness": "ready",
+    "field_completeness": 93.33333333333333,
+    "interface_quality": 133.33333333333331,
+    "test_coverage_metadata": 100,
+    "flow_configuration": 100,
+    "documentation_metadata": 60,
+    "ai_generation_ready": true,
     "issues": [],
     "recommendations": []
   },
   "summary": {
-    "overall_score": 75,
+    "overall_score": 89.86666666666666,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
-      "Test coverage implemented"
+      "Test coverage implemented",
+      "High-quality Vyges metadata",
+      "Catalog-ready metadata",
+      "AI generation ready"
     ],
-    "areas_for_improvement": [
-      "Missing vyges-metadata.json"
-    ],
+    "areas_for_improvement": [],
     "recommendations": [
       "Consider advanced features like formal verification"
     ]
