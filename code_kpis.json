@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-08-14T01:31:21.786758",
+    "analysis_date": "2025-08-14T03:26:58.686717",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -10,11 +10,11 @@
     "total_files": 163,
     "total_directories": 54,
     "file_types": {
-      ".md": 38,
+      ".md": 37,
       "no_extension": 39,
       ".py": 13,
       ".test": 1,
-      ".json": 2,
+      ".json": 3,
       ".sh": 18,
       ".sv": 27,
       ".vh": 2,
@@ -36,6 +36,7 @@
           "README.md",
           "generate_test_harness_report.py",
           "Makefile.test",
+          ".vyges-ai-context.json",
           "vyges-metadata.json",
           "Makefile",
           ".copilot-chat-context.md",
@@ -461,8 +462,7 @@
       },
       "flow/yosys/reports": {
         "files": [
-          "comprehensive_report.md",
-          "comprehensive_test_report.md"
+          "comprehensive_report.md"
         ],
         "subdirectories": []
       },
