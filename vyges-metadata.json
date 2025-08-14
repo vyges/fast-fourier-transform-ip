@@ -1,0 +1,453 @@
+{
+  "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
+  "x-version": "1.0.0",
+  "name": "vyges/fast-fourier-transform-ip",
+  "version": "1.0.0",
+  "description": "A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.",
+  "license": "Apache-2.0",
+  "template": "vyges-ip-template@1.0.0",
+  "target": ["asic", "fpga"],
+  "design_type": ["digital"],
+  "maturity": "prototype",
+  "created": "2025-07-21T05:38:04Z",
+  "updated": "2025-08-01T23:02:48Z",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/vyges/fast-fourier-transform-ip",
+    "commit": "main",
+    "private": false,
+    "containsEncryptedPayload": false,
+    "indexing": true,
+    "rtl_files": [
+      "rtl/fft_fft_top.sv",
+      "rtl/fft_fft_engine.sv",
+      "rtl/fft_fft_control.sv",
+      "rtl/fft_memory_interface.sv",
+      "rtl/fft_rescale_unit.sv",
+      "rtl/fft_scale_factor_tracker.sv",
+      "rtl/fft_twiddle_rom.sv",
+      "rtl/fft_timescale.vh",
+      "rtl/fft_defines.vh"
+    ],
+    "testbench_files": [
+      "tb/tb_fft_top.sv",
+      "tb/tb_memory_interface_simple.sv",
+      "tb/tb_twiddle_rom.sv",
+      "tb/tb_memory_interface_verilator.sv",
+      "tb/tb_twiddle_rom_verilator.sv"
+    ],
+    "constraint_files": [
+      "constraints/fft_top.xdc",
+      "constraints/fft_top.sdc"
+    ]
+  },
+  "maintainers": [
+    {
+      "name": "Vyges IP Development Team",
+      "email": "team@vyges.com",
+      "github": "vyges"
+    }
+  ],
+  "branding": {
+    "provider": "Vyges",
+    "logo": "https://vyges.com/assets/logo.svg",
+    "website": "https://vyges.com/ip/fast-fourier-transform-ip",
+    "usage": "Use of the logo is permitted for attribution or compatibility references only."
+  },
+  "interfaces": [
+    {
+      "type": "bus",
+      "direction": "input",
+      "protocol": "APB",
+      "width": 32,
+      "signals": [
+        { "name": "pclk_i", "direction": "input", "type": "clock", "description": "APB clock signal" },
+        { "name": "preset_n_i", "direction": "input", "type": "reset", "active_level": "low", "description": "APB reset signal" },
+        { "name": "psel_i", "direction": "input", "type": "control", "description": "APB select signal" },
+        { "name": "penable_i", "direction": "input", "type": "control", "description": "APB enable signal" },
+        { "name": "pwrite_i", "direction": "input", "type": "control", "description": "APB write enable" },
+        { "name": "paddr_i", "direction": "input", "width": 16, "type": "data", "description": "APB address bus" },
+        { "name": "pwdata_i", "direction": "input", "width": 32, "type": "data", "description": "APB write data" },
+        { "name": "prdata_o", "direction": "output", "width": 32, "type": "data", "description": "APB read data" },
+        { "name": "pready_o", "direction": "output", "type": "control", "description": "APB ready signal" }
+      ]
+    },
+    {
+      "type": "bus",
+      "direction": "input",
+      "protocol": "AXI4",
+      "width": 64,
+      "signals": [
+        { "name": "axi_aclk_i", "direction": "input", "type": "clock", "description": "AXI clock signal" },
+        { "name": "axi_areset_n_i", "direction": "input", "type": "reset", "active_level": "low", "description": "AXI reset signal" },
+        { "name": "axi_awaddr_i", "direction": "input", "width": 32, "type": "data", "description": "AXI write address" },
+        { "name": "axi_awvalid_i", "direction": "input", "type": "control", "description": "AXI write address valid" },
+        { "name": "axi_awready_o", "direction": "output", "type": "control", "description": "AXI write address ready" },
+        { "name": "axi_wdata_i", "direction": "input", "width": 64, "type": "data", "description": "AXI write data" },
+        { "name": "axi_wvalid_i", "direction": "input", "type": "control", "description": "AXI write data valid" },
+        { "name": "axi_wready_o", "direction": "output", "type": "control", "description": "AXI write data ready" },
+        { "name": "axi_araddr_i", "direction": "input", "width": 32, "type": "data", "description": "AXI read address" },
+        { "name": "axi_arvalid_i", "direction": "input", "type": "control", "description": "AXI read address valid" },
+        { "name": "axi_arready_o", "direction": "output", "type": "control", "description": "AXI read address ready" },
+        { "name": "axi_rdata_o", "direction": "output", "width": 64, "type": "data", "description": "AXI read data" },
+        { "name": "axi_rvalid_o", "direction": "output", "type": "control", "description": "AXI read data valid" },
+        { "name": "axi_rready_i", "direction": "input", "type": "control", "description": "AXI read data ready" }
+      ]
+    },
+    {
+      "type": "interrupt",
+      "direction": "output",
+      "signals": [
+        { "name": "fft_done_o", "direction": "output", "type": "interrupt", "description": "FFT computation complete interrupt" },
+        { "name": "fft_error_o", "direction": "output", "type": "interrupt", "description": "FFT computation error interrupt" }
+      ]
+    }
+  ],
+  "parameters": [
+    {
+      "name": "FFT_MAX_LENGTH_LOG2",
+      "type": "int",
+      "default": 12,
+      "description": "Maximum FFT length as log2 (supports up to 4096 points)",
+      "range": { "min": 8, "max": 12 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "DATA_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "Width of input/output data samples",
+      "range": { "min": 8, "max": 32 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "TWIDDLE_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "Width of twiddle factor coefficients",
+      "range": { "min": 8, "max": 32 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "APB_ADDR_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "Width of APB address bus",
+      "range": { "min": 8, "max": 32 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "AXI_ADDR_WIDTH",
+      "type": "int",
+      "default": 32,
+      "description": "Width of AXI address bus",
+      "range": { "min": 16, "max": 64 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "AXI_DATA_WIDTH",
+      "type": "int",
+      "default": 64,
+      "description": "Width of AXI data bus",
+      "range": { "min": 32, "max": 512 },
+      "units": "bits",
+      "required": false
+    }
+  ],
+  "test": {
+    "coverage": true,
+    "testbenches": ["cocotb", "systemverilog"],
+    "simulators": ["verilator", "iverilog"],
+    "status": "passing",
+    "cocotb_integration": {
+      "status": "verified",
+      "version": "v1.9.2",
+      "simulators": ["icarus", "verilator"],
+      "makefile_approach": "standard",
+      "fallback_support": true
+    }
+  },
+  "flows": {
+    "verilator": {
+      "status": "verified",
+      "cocotb_integration": "working"
+    },
+    "icarus": {
+      "status": "verified",
+      "cocotb_integration": "working"
+    },
+    "openlane": {
+      "pdks": ["gf180mcu", "sky130B"],
+      "status": "tested"
+    },
+    "vivado": {
+      "status": "partial"
+    },
+    "openfpga": {
+      "tools": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow"],
+      "families": ["lattice-ice40", "lattice-ecp5", "xilinx-7"],
+      "status": "implemented"
+    }
+  },
+  "asic": {
+    "flavor": "digital",
+    "technology": "gf180mcu",
+    "std_cell_library": "gf180mcu_fd_sc_mcu7t5v0",
+    "io_library": "gf180mcu_fd_io",
+    "area": {
+      "estimate": "50000",
+      "units": "gates",
+      "description": "Estimated gate count for 1024-point FFT"
+    },
+    "power": {
+      "estimate": "50",
+      "units": "mW",
+      "description": "Estimated power consumption at 1GHz"
+    },
+    "performance": {
+      "max_frequency": "1000",
+      "units": "MHz",
+      "description": "Maximum operating frequency"
+    }
+  },
+  "fpga": {
+    "families": ["xilinx-7", "xilinx-ultrascale", "intel-cyclone", "intel-arria", "lattice-ice40", "lattice-ecp5"],
+    "resources": {
+      "dsp": 4,
+      "bram": 8,
+      "lut": 15000,
+      "ff": 5000
+    },
+    "open_source": {
+      "supported": true,
+      "tools": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow"],
+      "families": ["lattice-ice40", "lattice-ecp5", "xilinx-7"],
+      "status": "implemented"
+    }
+  },
+  "tags": [
+    "fft",
+    "dsp",
+    "signal-processing",
+    "fourier-transform",
+    "hardware-accelerator",
+    "apb",
+    "axi",
+    "memory-mapped",
+    "double-buffered",
+    "pipelined",
+    "radix-2",
+    "16-bit",
+    "configurable",
+    "rescaling",
+    "overflow-protection",
+    "scale-factor-tracking",
+    "open-source-fpga",
+    "yosys",
+    "nextpnr",
+    "icestorm",
+    "prjtrellis",
+    "symbiflow"
+  ],
+  "categories": [
+    "Signal Processing",
+    "Arithmetic Units"
+  ],
+  "keywords": [
+    "FFT",
+    "Fast Fourier Transform",
+    "DSP",
+    "Signal Processing",
+    "Hardware Accelerator",
+    "Memory Mapped",
+    "Double Buffered",
+    "APB Interface",
+    "AXI Interface",
+    "Configurable Length",
+    "16-bit Precision",
+    "Pipelined Architecture",
+    "Automatic Rescaling",
+    "Overflow Protection",
+    "Scale Factor Tracking"
+  ],
+  "documentation": {
+    "overview": "docs/design_specification.md",
+    "architecture": "docs/architecture.md",
+    "user_guide": "docs/user_guide.md",
+    "api_reference": "docs/api_reference.md"
+  },
+  "examples": [
+    {
+      "name": "Basic FFT Usage",
+      "description": "Simple example of configuring and running a 1024-point FFT",
+      "file": "examples/basic_fft_usage.sv"
+    },
+    {
+      "name": "Double Buffered Operation",
+      "description": "Example demonstrating double-buffered data transfer",
+      "file": "examples/double_buffer_example.sv"
+    },
+    {
+      "name": "APB Interface Example",
+      "description": "Example of APB interface usage for FFT configuration",
+      "file": "examples/apb_interface_example.sv"
+    }
+  ],
+  "dependencies": [],
+  "compatibility": {
+    "tools": {
+      "synthesis": ["yosys", "design_compiler", "vivado"],
+      "simulation": ["verilator", "iverilog", "modelsim"],
+      "formal": ["yosys-smtbmc", "sby"],
+      "fpga": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow", "vivado", "quartus"]
+    },
+    "standards": ["IEEE 1364-2005", "IEEE 1800-2017"]
+  },
+  "security": {
+    "enabled": true,
+    "tool_availability": "open_source",
+    "target_flow": "fpga",
+    "security_level": "medium",
+    "risk_areas": [
+      "memory_access",
+      "fsm_state_control", 
+      "bus_protocol",
+      "reset_glitch",
+      "clock_domain_crossing",
+      "side_channel",
+      "input_overdrive",
+      "address_decoding",
+      "fifo_boundary",
+      "signal_validation",
+      "data_integrity",
+      "timing_attacks"
+    ],
+    "protection_features": [
+      "address_range_check",
+      "fsm_default_state",
+      "reset_assertion",
+      "cdc_synchronization",
+      "overflow_protection",
+      "scale_factor_tracking",
+      "double_buffering",
+      "memory_mapped_interface"
+    ],
+    "recommended_tests": [
+      "assert_illegal_address_access",
+      "assert_fsm_stable_transitions",
+      "reset_glitch_simulation",
+      "assert_protocol_timing",
+      "assert_cdc_synchronization",
+      "assert_memory_bounds",
+      "assert_overflow_protection",
+      "assert_scale_factor_validity"
+    ],
+    "requires_secure_testbench": true,
+    "assertion_coverage": {
+      "required_assertions": [
+        "address_bounds_check",
+        "fsm_state_validity",
+        "reset_synchronization",
+        "protocol_timing",
+        "cdc_synchronization",
+        "memory_access_validation",
+        "overflow_detection",
+        "scale_factor_bounds"
+      ],
+      "coverage_goals": {
+        "security_assertions": 100,
+        "vulnerability_coverage": 95,
+        "attack_vector_coverage": 90
+      }
+    },
+    "critical_paths": [
+      "memory_interface_address_decoding",
+      "fft_engine_state_machine",
+      "control_unit_fsm",
+      "reset_synchronization_paths",
+      "clock_domain_crossings",
+      "bus_protocol_handlers"
+    ],
+    "fuzzing_config": {
+      "enabled": true,
+      "target_modules": [
+        "fft_memory_interface",
+        "fft_fft_engine",
+        "fft_fft_control"
+      ],
+      "attack_vectors": [
+        "invalid_addresses",
+        "illegal_fsm_states",
+        "protocol_violations",
+        "reset_glitches",
+        "timing_violations"
+      ]
+    },
+    "formal_verification": {
+      "enabled": true,
+      "security_properties": [
+        "no_illegal_memory_access",
+        "fsm_reachability",
+        "reset_behavior",
+        "protocol_compliance",
+        "cdc_synchronization"
+      ],
+      "tools": ["yosys-smtbmc", "sby"]
+    },
+    "side_channel_analysis": {
+      "enabled": true,
+      "analysis_types": [
+        "timing_analysis",
+        "power_analysis",
+        "fault_injection"
+      ],
+      "tools": ["custom_python", "verilator"]
+    },
+    "compliance_standards": [
+      "iso_26262",
+      "nist_sp_800"
+    ],
+    "security_documentation": {
+      "threat_model": "docs/security_threat_model.md",
+      "security_analysis": "docs/security_analysis.md",
+      "vulnerability_assessment": "docs/vulnerability_assessment.md"
+    }
+  },
+  "quality": {
+    "code_coverage": 95,
+    "functional_coverage": 100,
+    "lint_score": 100,
+    "review_status": "approved"
+  },
+  "automation": {
+    "automation_level": "enhanced",
+    "minimal_required": ["name", "version", "license", "interfaces", "template", "target", "design_type", "maturity", "description", "source", "asic", "fpga", "test", "flows"],
+    "recommended_for_automation": ["parameters", "dependencies", "toolRequirements", "performance", "reliability", "packaging", "community"],
+    "blocking_issues": []
+  },
+  "support": {
+    "contact": "team@vyges.com",
+    "documentation": "https://vyges.com/docs/fast-fourier-transform-ip",
+    "issues": "https://github.com/vyges/fast-fourier-transform-ip/issues",
+    "forum": "https://forum.vyges.com/c/ip-support"
+  },
+  "meta": {
+    "template": {
+      "generator": "vyges-cli",
+      "init_tool": "vyges-cli", 
+      "template_version": "1.0.0",
+      "generated_at": "2025-08-12T19:59:18Z"
+    },
+    "generated_by": "vyges-cli",
+    "schema": {
+      "version": "1.0.0",
+      "compatible_versions": ["1.0.0", "1.1.0"],
+      "generated_with": "vyges-cli"
+    }
+  }
+} 
