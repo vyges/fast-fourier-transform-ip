@@ -1,12 +1,12 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2025-08-14 03:26:59
+**Generated:** 2025-08-16 05:27:42
 **Project:** 
 
 ## 📊 Code KPIs Summary
 
-**Overall Score:** 89.9/100
+**Overall Score:** 90.2/100
 
 ### Code Metrics
 - **RTL Files:** 27
@@ -24,7 +24,7 @@
   - twiddle_rom: 85 cells
 
 ### Vyges Metadata Analysis
-- **Quality Score:** 98.7/100
+- **Quality Score:** 102.0/100
 - **Catalog Readiness:** READY
 - **Field Completeness:** 93.3%
 - **AI Generation Ready:** ✅
