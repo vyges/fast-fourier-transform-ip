@@ -216,26 +216,7 @@
       "status": "implemented"
     }
   },
-  "performance": {
-    "clock_frequency": {
-      "value": 1000,
-      "unit": "MHz",
-      "description": "Maximum operating frequency",
-      "measurement_type": "estimate"
-    },
-    "area": {
-      "value": 50000,
-      "unit": "gates",
-      "description": "Estimated gate count for 1024-point FFT",
-      "measurement_type": "estimate"
-    },
-    "power": {
-      "value": 50,
-      "unit": "mW",
-      "description": "Estimated power consumption at 1GHz",
-      "measurement_type": "estimate"
-    }
-  },
+
   "tags": [
     "fft",
     "dsp",
