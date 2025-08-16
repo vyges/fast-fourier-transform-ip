@@ -61,15 +61,15 @@
       "protocol": "APB",
       "width": 32,
       "signals": [
-        { "name": "pclk_i", "direction": "input", "type": "clock", "description": "APB clock signal" },
-        { "name": "preset_n_i", "direction": "input", "type": "reset", "active_level": "low", "description": "APB reset signal" },
-        { "name": "psel_i", "direction": "input", "type": "control", "description": "APB select signal" },
-        { "name": "penable_i", "direction": "input", "type": "control", "description": "APB enable signal" },
-        { "name": "pwrite_i", "direction": "input", "type": "control", "description": "APB write enable" },
+        { "name": "pclk_i", "direction": "input", "type": "clock", "width": 1, "description": "APB clock signal" },
+        { "name": "preset_n_i", "direction": "input", "type": "reset", "active_level": "low", "width": 1, "description": "APB reset signal" },
+        { "name": "psel_i", "direction": "input", "type": "control", "width": 1, "description": "APB select signal" },
+        { "name": "penable_i", "direction": "input", "type": "control", "width": 1, "description": "APB enable signal" },
+        { "name": "pwrite_i", "direction": "input", "type": "control", "width": 1, "description": "APB write enable" },
         { "name": "paddr_i", "direction": "input", "width": 16, "type": "data", "description": "APB address bus" },
         { "name": "pwdata_i", "direction": "input", "width": 32, "type": "data", "description": "APB write data" },
         { "name": "prdata_o", "direction": "output", "width": 32, "type": "data", "description": "APB read data" },
-        { "name": "pready_o", "direction": "output", "type": "control", "description": "APB ready signal" }
+        { "name": "pready_o", "direction": "output", "type": "control", "width": 1, "description": "APB ready signal" }
       ]
     },
     {
@@ -78,28 +78,29 @@
       "protocol": "AXI4",
       "width": 64,
       "signals": [
-        { "name": "axi_aclk_i", "direction": "input", "type": "clock", "description": "AXI clock signal" },
-        { "name": "axi_areset_n_i", "direction": "input", "type": "reset", "active_level": "low", "description": "AXI reset signal" },
+        { "name": "axi_aclk_i", "direction": "input", "type": "clock", "width": 1, "description": "AXI clock signal" },
+        { "name": "axi_areset_n_i", "direction": "input", "type": "reset", "active_level": "low", "width": 1, "description": "AXI reset signal" },
         { "name": "axi_awaddr_i", "direction": "input", "width": 32, "type": "data", "description": "AXI write address" },
-        { "name": "axi_awvalid_i", "direction": "input", "type": "control", "description": "AXI write address valid" },
-        { "name": "axi_awready_o", "direction": "output", "type": "control", "description": "AXI write address ready" },
+        { "name": "axi_awvalid_i", "direction": "input", "type": "control", "width": 1, "description": "AXI write address valid" },
+        { "name": "axi_awready_o", "direction": "output", "type": "control", "width": 1, "description": "AXI write address ready" },
         { "name": "axi_wdata_i", "direction": "input", "width": 64, "type": "data", "description": "AXI write data" },
-        { "name": "axi_wvalid_i", "direction": "input", "type": "control", "description": "AXI write data valid" },
-        { "name": "axi_wready_o", "direction": "output", "type": "control", "description": "AXI write data ready" },
+        { "name": "axi_wvalid_i", "direction": "input", "type": "control", "width": 1, "description": "AXI write data valid" },
+        { "name": "axi_wready_o", "direction": "output", "type": "control", "width": 1, "description": "AXI write data ready" },
         { "name": "axi_araddr_i", "direction": "input", "width": 32, "type": "data", "description": "AXI read address" },
-        { "name": "axi_arvalid_i", "direction": "input", "type": "control", "description": "AXI read address valid" },
-        { "name": "axi_arready_o", "direction": "output", "type": "control", "description": "AXI read address ready" },
+        { "name": "axi_arvalid_i", "direction": "input", "type": "control", "width": 1, "description": "AXI read address valid" },
+        { "name": "axi_arready_o", "direction": "output", "type": "control", "width": 1, "description": "AXI read address ready" },
         { "name": "axi_rdata_o", "direction": "output", "width": 64, "type": "data", "description": "AXI read data" },
-        { "name": "axi_rvalid_o", "direction": "output", "type": "control", "description": "AXI read data valid" },
-        { "name": "axi_rready_i", "direction": "input", "type": "control", "description": "AXI read data ready" }
+        { "name": "axi_rvalid_o", "direction": "output", "type": "control", "width": 1, "description": "AXI read data valid" },
+        { "name": "axi_rready_i", "direction": "input", "type": "control", "width": 1, "description": "AXI read data ready" }
       ]
     },
     {
       "type": "interrupt",
       "direction": "output",
+      "protocol": "Standard",
       "signals": [
-        { "name": "fft_done_o", "direction": "output", "type": "interrupt", "description": "FFT computation complete interrupt" },
-        { "name": "fft_error_o", "direction": "output", "type": "interrupt", "description": "FFT computation error interrupt" }
+        { "name": "fft_done_o", "direction": "output", "type": "interrupt", "width": 1, "description": "FFT computation complete interrupt" },
+        { "name": "fft_error_o", "direction": "output", "type": "interrupt", "width": 1, "description": "FFT computation error interrupt" }
       ]
     }
   ],
@@ -198,22 +199,7 @@
     "flavor": "digital",
     "technology": "gf180mcu",
     "std_cell_library": "gf180mcu_fd_sc_mcu7t5v0",
-    "io_library": "gf180mcu_fd_io",
-    "area": {
-      "estimate": "50000",
-      "units": "gates",
-      "description": "Estimated gate count for 1024-point FFT"
-    },
-    "power": {
-      "estimate": "50",
-      "units": "mW",
-      "description": "Estimated power consumption at 1GHz"
-    },
-    "performance": {
-      "max_frequency": "1000",
-      "units": "MHz",
-      "description": "Maximum operating frequency"
-    }
+    "io_library": "gf180mcu_fd_io"
   },
   "fpga": {
     "families": ["xilinx-7", "xilinx-ultrascale", "intel-cyclone", "intel-arria", "lattice-ice40", "lattice-ecp5"],
@@ -228,6 +214,26 @@
       "tools": ["yosys", "nextpnr", "icestorm", "prjtrellis", "symbiflow"],
       "families": ["lattice-ice40", "lattice-ecp5", "xilinx-7"],
       "status": "implemented"
+    }
+  },
+  "performance": {
+    "clock_frequency": {
+      "value": 1000,
+      "unit": "MHz",
+      "description": "Maximum operating frequency",
+      "measurement_type": "estimate"
+    },
+    "area": {
+      "value": 50000,
+      "unit": "gates",
+      "description": "Estimated gate count for 1024-point FFT",
+      "measurement_type": "estimate"
+    },
+    "power": {
+      "value": 50,
+      "unit": "mW",
+      "description": "Estimated power consumption at 1GHz",
+      "measurement_type": "estimate"
     }
   },
   "tags": [
@@ -254,10 +260,11 @@
     "prjtrellis",
     "symbiflow"
   ],
-  "categories": [
-    "Signal Processing",
-    "Arithmetic Units"
-  ],
+  "categories": {
+    "primary": "Signal Processing",
+    "secondary": ["Arithmetic Units", "DSP"],
+    "tags": ["fft", "dsp", "signal-processing", "fourier-transform", "hardware-accelerator"]
+  },
   "keywords": [
     "FFT",
     "Fast Fourier Transform",
