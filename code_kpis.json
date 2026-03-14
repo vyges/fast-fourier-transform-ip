@@ -1,72 +1,129 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2025-10-08T03:27:06.614896",
+    "analysis_date": "2026-03-14T22:14:06.231853",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 162,
+    "total_files": 163,
     "total_directories": 54,
     "file_types": {
-      ".test": 1,
+      ".md": 38,
       "no_extension": 39,
-      ".md": 37,
       ".json": 2,
       ".sh": 18,
+      ".test": 1,
       ".py": 13,
-      ".tcl": 6,
-      ".cfg": 1,
-      ".txt": 9,
-      ".pcf": 1,
-      ".ys": 2,
-      ".sv": 27,
-      ".vh": 2,
+      ".css": 1,
       ".html": 3,
-      ".css": 1
+      ".txt": 9,
+      ".sv": 27,
+      ".tcl": 6,
+      ".ys": 2,
+      ".pcf": 1,
+      ".cfg": 1,
+      ".vh": 2
     },
     "directory_structure": {
       "root": {
         "files": [
-          "Makefile.test",
-          "NOTICE",
-          "install_tools.md",
-          "LICENSE",
-          "vyges-metadata.json",
-          ".gitignore",
-          "README.md",
-          ".cursorrules",
-          "run_ubuntu.sh",
           ".copilot-chat-context.md",
-          "generate_test_harness_report.py",
-          "LICENSE_SCOPE.md",
-          "Developer_Guide.md",
           "Makefile",
-          "test_harness_report.md"
+          "README.md",
+          "vyges-metadata.json",
+          "run_ubuntu.sh",
+          "test_harness_report.md",
+          "Developer_Guide.md",
+          "LICENSE",
+          "install_tools.md",
+          "Makefile.test",
+          "generate_test_harness_report.py",
+          ".gitignore",
+          "LICENSE_SCOPE.md",
+          ".cursorrules",
+          "NOTICE"
         ],
         "subdirectories": [
-          "integration",
+          "public",
+          "yosys_test",
           "flow",
-          "tb",
-          ".git",
-          "scripts",
+          "packaging",
+          "docs",
+          "reports",
           ".github",
           "analog",
-          "rtl",
-          "packaging",
-          "reports",
-          "yosys_test",
-          "docs",
-          "public",
           "simulation",
           "test",
-          "layout"
+          "integration",
+          "rtl",
+          "layout",
+          ".git",
+          "scripts",
+          "tb"
         ]
       },
-      "integration": {
+      "public": {
         "files": [
-          ".gitkeep"
+          "report-style.css",
+          "test_harness_report.html",
+          "coverage_summary.txt",
+          "test_harness_report.md",
+          "code_kpis.json",
+          "index_template.html"
+        ],
+        "subdirectories": [
+          "waveforms"
+        ]
+      },
+      "public/waveforms": {
+        "files": [
+          "index.html"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test": {
+        "files": [
+          "Makefile",
+          "README.md",
+          "setup_ubuntu.sh",
+          "CROSS_PLATFORM_TESTING.md",
+          "UBUNTU_TESTING_SUMMARY.md"
+        ],
+        "subdirectories": [
+          "issue1_memory_hang",
+          "issue3_security_assertions",
+          "issue4_systemverilog_support",
+          "issue2_frontend_detection"
+        ]
+      },
+      "yosys_test/issue1_memory_hang": {
+        "files": [
+          "test_large_memory.sv",
+          "Makefile",
+          "test_small_memory.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue3_security_assertions": {
+        "files": [
+          "Makefile",
+          "test_security.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue4_systemverilog_support": {
+        "files": [
+          "Makefile",
+          "test_sv_features.sv"
+        ],
+        "subdirectories": []
+      },
+      "yosys_test/issue2_frontend_detection": {
+        "files": [
+          "Makefile",
+          "test_frontend.sv"
         ],
         "subdirectories": []
       },
@@ -75,51 +132,58 @@
           "synth_report.md"
         ],
         "subdirectories": [
-          "yosys",
-          "openlane",
-          "openlane2",
-          "fpga",
           "synthesis",
+          "fpga",
+          "yosys",
           "verilator",
-          "vivado"
+          "openlane",
+          "vivado",
+          "openlane2"
         ]
       },
-      "flow/yosys": {
+      "flow/synthesis": {
         "files": [
-          "simple_synth.tcl",
-          "gate_analysis_report.md",
-          "gate_analysis.py",
-          "Makefile"
+          "test_fft_control.sh",
+          "Makefile",
+          "twiddle_rom_synth_opt.sv",
+          "test_full_synthesis.sh",
+          "synth_memory_interface.tcl",
+          "test_fft_engine.sh",
+          "test_memory_interface.sh",
+          "synthesis_report.md",
+          "synthesis_analysis_report.md",
+          "synth_bram_yosys.ys",
+          "yosys_synth.tcl",
+          "memory_interface_synth.sv",
+          "test_scale_factor_tracker.sh",
+          "run_yosys_bram.sh",
+          "yosys_synth.ys",
+          "synth_stats.txt",
+          "test_comprehensive_synthesis.sh",
+          "yosys_synth_generic.tcl",
+          "test_twiddle_rom_synth.sh",
+          "timeout_wrapper.sh",
+          "twiddle_rom_synth.sv",
+          "test_memory_interface_simple.sh",
+          "test_rescale_unit.sh"
         ],
         "subdirectories": [
+          "netlists",
           "reports"
         ]
       },
-      "flow/yosys/reports": {
-        "files": [
-          "comprehensive_report.md"
-        ],
+      "flow/synthesis/netlists": {
+        "files": [],
         "subdirectories": []
       },
-      "flow/openlane": {
+      "flow/synthesis/reports": {
         "files": [
-          "test_fft_integration.sh",
-          "OPENLANE_INTEGRATION.md",
-          "configuration.md",
-          "config.tcl",
-          "README.md",
-          "pin_order.cfg",
-          "config_gf180mcu.tcl",
-          "quick_start.sh",
-          "run_openlane_fft.sh",
-          "REMOTE_INTEGRATION_GUIDE.md",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "flow/openlane2": {
-        "files": [
-          ".gitkeep"
+          "rescale_unit_stats.txt",
+          "fft_control_stats.txt",
+          "memory_interface_stats.txt",
+          "twiddle_rom_stats.txt",
+          "fft_engine_stats.txt",
+          "scale_factor_tracker_stats.txt"
         ],
         "subdirectories": []
       },
@@ -133,17 +197,27 @@
       },
       "flow/fpga/openfpga": {
         "files": [
+          "Makefile",
           "README.md",
           "FPGA_FLOW_SUMMARY.md",
-          "timeout_wrapper.sh",
-          "Makefile"
+          "timeout_wrapper.sh"
         ],
         "subdirectories": [
-          "reports",
-          "build",
+          "constraints",
           "netlists",
-          "constraints"
+          "reports",
+          "build"
         ]
+      },
+      "flow/fpga/openfpga/constraints": {
+        "files": [
+          "hx8k-ct256.pcf"
+        ],
+        "subdirectories": []
+      },
+      "flow/fpga/openfpga/netlists": {
+        "files": [],
+        "subdirectories": []
       },
       "flow/fpga/openfpga/reports": {
         "files": [
@@ -156,65 +230,42 @@
         "files": [],
         "subdirectories": []
       },
-      "flow/fpga/openfpga/netlists": {
-        "files": [],
-        "subdirectories": []
-      },
-      "flow/fpga/openfpga/constraints": {
+      "flow/yosys": {
         "files": [
-          "hx8k-ct256.pcf"
-        ],
-        "subdirectories": []
-      },
-      "flow/synthesis": {
-        "files": [
-          "test_twiddle_rom_synth.sh",
-          "yosys_synth.ys",
-          "test_memory_interface_simple.sh",
-          "test_scale_factor_tracker.sh",
-          "synth_stats.txt",
-          "yosys_synth_generic.tcl",
-          "test_memory_interface.sh",
-          "synth_bram_yosys.ys",
-          "test_rescale_unit.sh",
-          "test_fft_engine.sh",
-          "synthesis_analysis_report.md",
-          "yosys_synth.tcl",
-          "test_full_synthesis.sh",
-          "memory_interface_synth.sv",
-          "test_fft_control.sh",
-          "twiddle_rom_synth.sv",
-          "twiddle_rom_synth_opt.sv",
-          "timeout_wrapper.sh",
-          "synth_memory_interface.tcl",
-          "run_yosys_bram.sh",
           "Makefile",
-          "test_comprehensive_synthesis.sh",
-          "synthesis_report.md"
+          "gate_analysis.py",
+          "simple_synth.tcl",
+          "gate_analysis_report.md"
         ],
         "subdirectories": [
-          "reports",
-          "netlists"
+          "reports"
         ]
       },
-      "flow/synthesis/reports": {
+      "flow/yosys/reports": {
         "files": [
-          "twiddle_rom_stats.txt",
-          "fft_engine_stats.txt",
-          "fft_control_stats.txt",
-          "rescale_unit_stats.txt",
-          "memory_interface_stats.txt",
-          "scale_factor_tracker_stats.txt"
+          "comprehensive_report.md"
         ],
-        "subdirectories": []
-      },
-      "flow/synthesis/netlists": {
-        "files": [],
         "subdirectories": []
       },
       "flow/verilator": {
         "files": [
           ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "flow/openlane": {
+        "files": [
+          "Makefile",
+          "README.md",
+          "config_gf180mcu.tcl",
+          "OPENLANE_INTEGRATION.md",
+          "test_fft_integration.sh",
+          "run_openlane_fft.sh",
+          "pin_order.cfg",
+          "config.tcl",
+          "REMOTE_INTEGRATION_GUIDE.md",
+          "quick_start.sh",
+          "configuration.md"
         ],
         "subdirectories": []
       },
@@ -225,75 +276,48 @@
         ],
         "subdirectories": []
       },
-      "tb": {
-        "files": [
-          "README.md",
-          "Makefile"
-        ],
-        "subdirectories": [
-          "cocotb",
-          "uvm_tb",
-          "sv_tb"
-        ]
-      },
-      "tb/cocotb": {
-        "files": [
-          ".gitkeep",
-          "test_fft_rescaling.py",
-          "test_fft_edge_cases.py",
-          "test_example.py",
-          "test_fft_basic.py",
-          "generate_coverage_report.py",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "tb/uvm_tb": {
+      "flow/openlane2": {
         "files": [
           ".gitkeep"
         ],
         "subdirectories": []
       },
-      "tb/sv_tb": {
+      "packaging": {
         "files": [
-          "tb_memory_interface_opt.sv",
-          "tb_security_validation.sv",
-          ".gitkeep",
-          "tb_twiddle_rom_verilator.sv",
-          "tb_memory_interface_simple.sv",
-          "tb_example.sv",
-          "tb_twiddle_rom_symmetry.sv",
-          "tb_minimal.sv",
-          "tb_simple.sv",
-          "tb_memory_interface_verilator.sv",
-          "tb_twiddle_rom.sv",
-          "Makefile",
-          "tb_fft_top.sv",
-          "tb_rescale_unit.sv"
+          "README.md"
+        ],
+        "subdirectories": []
+      },
+      "docs": {
+        "files": [
+          "waveforms.md",
+          "synthesis_characterization.md",
+          "architecture.md",
+          "user_guide.md",
+          "design_specification.md",
+          "memory_optimization.md",
+          "api_reference.md"
         ],
         "subdirectories": [
-          "work",
-          "waveforms"
+          "security",
+          "images"
         ]
       },
-      "tb/sv_tb/work": {
-        "files": [],
-        "subdirectories": []
-      },
-      "tb/sv_tb/waveforms": {
-        "files": [],
-        "subdirectories": []
-      },
-      "scripts": {
+      "docs/security": {
         "files": [
-          "README.md",
-          "generate_test_harness_report.py",
-          "test_runner.py",
-          "generate_github_pages.py",
-          "code_kpis.py",
-          "generate_memory_analysis_report.py",
-          "test_synthesis_optimization.sh",
-          "generate_comprehensive_report.py"
+          "security_analysis.md"
+        ],
+        "subdirectories": []
+      },
+      "docs/images": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "reports": {
+        "files": [
+          "memory_optimization_report.md"
         ],
         "subdirectories": []
       },
@@ -306,8 +330,8 @@
           "magic",
           "macros",
           "lef",
-          "netlist",
-          "xschem"
+          "xschem",
+          "netlist"
         ]
       },
       "analog/gds": {
@@ -334,131 +358,15 @@
         ],
         "subdirectories": []
       },
-      "analog/netlist": {
-        "files": [
-          ".gitkeep"
-        ],
-        "subdirectories": []
-      },
       "analog/xschem": {
         "files": [
           ".gitkeep"
         ],
         "subdirectories": []
       },
-      "rtl": {
-        "files": [
-          "fft_fft_control.sv",
-          ".gitkeep",
-          "fft_fft_engine.sv",
-          "fft_rescale_unit.sv",
-          "fft_defines.vh",
-          "fft_timescale.vh",
-          "fft_twiddle_rom.sv",
-          "fft_fft_top.sv",
-          "fft_memory_interface.sv",
-          "fft_scale_factor_tracker.sv"
-        ],
-        "subdirectories": []
-      },
-      "packaging": {
-        "files": [
-          "README.md"
-        ],
-        "subdirectories": []
-      },
-      "reports": {
-        "files": [
-          "memory_optimization_report.md"
-        ],
-        "subdirectories": []
-      },
-      "yosys_test": {
-        "files": [
-          "CROSS_PLATFORM_TESTING.md",
-          "README.md",
-          "UBUNTU_TESTING_SUMMARY.md",
-          "Makefile",
-          "setup_ubuntu.sh"
-        ],
-        "subdirectories": [
-          "issue1_memory_hang",
-          "issue4_systemverilog_support",
-          "issue3_security_assertions",
-          "issue2_frontend_detection"
-        ]
-      },
-      "yosys_test/issue1_memory_hang": {
-        "files": [
-          "test_large_memory.sv",
-          "test_small_memory.sv",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "yosys_test/issue4_systemverilog_support": {
-        "files": [
-          "test_sv_features.sv",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "yosys_test/issue3_security_assertions": {
-        "files": [
-          "test_security.sv",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "yosys_test/issue2_frontend_detection": {
-        "files": [
-          "test_frontend.sv",
-          "Makefile"
-        ],
-        "subdirectories": []
-      },
-      "docs": {
-        "files": [
-          "api_reference.md",
-          "architecture.md",
-          "design_specification.md",
-          "waveforms.md",
-          "user_guide.md",
-          "memory_optimization.md"
-        ],
-        "subdirectories": [
-          "images",
-          "security"
-        ]
-      },
-      "docs/images": {
+      "analog/netlist": {
         "files": [
           ".gitkeep"
-        ],
-        "subdirectories": []
-      },
-      "docs/security": {
-        "files": [
-          "security_analysis.md"
-        ],
-        "subdirectories": []
-      },
-      "public": {
-        "files": [
-          "index_template.html",
-          "test_harness_report.html",
-          "report-style.css",
-          "coverage_summary.txt",
-          "code_kpis.json",
-          "test_harness_report.md"
-        ],
-        "subdirectories": [
-          "waveforms"
-        ]
-      },
-      "public/waveforms": {
-        "files": [
-          "index.html"
         ],
         "subdirectories": []
       },
@@ -467,17 +375,17 @@
           "README.md"
         ],
         "subdirectories": [
-          "waveforms",
-          "configs"
+          "configs",
+          "waveforms"
         ]
       },
-      "simulation/waveforms": {
+      "simulation/configs": {
         "files": [
           ".gitkeep"
         ],
         "subdirectories": []
       },
-      "simulation/configs": {
+      "simulation/waveforms": {
         "files": [
           ".gitkeep"
         ],
@@ -489,17 +397,38 @@
         ],
         "subdirectories": []
       },
+      "integration": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "rtl": {
+        "files": [
+          "fft_scale_factor_tracker.sv",
+          ".gitkeep",
+          "fft_fft_control.sv",
+          "fft_memory_interface.sv",
+          "fft_fft_engine.sv",
+          "fft_fft_top.sv",
+          "fft_twiddle_rom.sv",
+          "fft_rescale_unit.sv",
+          "fft_defines.vh",
+          "fft_timescale.vh"
+        ],
+        "subdirectories": []
+      },
       "layout": {
         "files": [
           "README.md"
         ],
         "subdirectories": [
-          "drc",
+          "constraints",
           "lvs",
-          "constraints"
+          "drc"
         ]
       },
-      "layout/drc": {
+      "layout/constraints": {
         "files": [
           ".gitkeep"
         ],
@@ -511,7 +440,79 @@
         ],
         "subdirectories": []
       },
-      "layout/constraints": {
+      "layout/drc": {
+        "files": [
+          ".gitkeep"
+        ],
+        "subdirectories": []
+      },
+      "scripts": {
+        "files": [
+          "README.md",
+          "generate_github_pages.py",
+          "test_runner.py",
+          "code_kpis.py",
+          "test_synthesis_optimization.sh",
+          "generate_comprehensive_report.py",
+          "generate_test_harness_report.py",
+          "generate_memory_analysis_report.py"
+        ],
+        "subdirectories": []
+      },
+      "tb": {
+        "files": [
+          "Makefile",
+          "README.md"
+        ],
+        "subdirectories": [
+          "sv_tb",
+          "cocotb",
+          "uvm_tb"
+        ]
+      },
+      "tb/sv_tb": {
+        "files": [
+          ".gitkeep",
+          "Makefile",
+          "tb_security_validation.sv",
+          "tb_twiddle_rom_symmetry.sv",
+          "tb_twiddle_rom.sv",
+          "tb_memory_interface_opt.sv",
+          "tb_rescale_unit.sv",
+          "tb_twiddle_rom_verilator.sv",
+          "tb_example.sv",
+          "tb_fft_top.sv",
+          "tb_minimal.sv",
+          "tb_memory_interface_simple.sv",
+          "tb_simple.sv",
+          "tb_memory_interface_verilator.sv"
+        ],
+        "subdirectories": [
+          "work",
+          "waveforms"
+        ]
+      },
+      "tb/sv_tb/work": {
+        "files": [],
+        "subdirectories": []
+      },
+      "tb/sv_tb/waveforms": {
+        "files": [],
+        "subdirectories": []
+      },
+      "tb/cocotb": {
+        "files": [
+          ".gitkeep",
+          "test_fft_basic.py",
+          "Makefile",
+          "generate_coverage_report.py",
+          "test_fft_rescaling.py",
+          "test_fft_edge_cases.py",
+          "test_example.py"
+        ],
+        "subdirectories": []
+      },
+      "tb/uvm_tb": {
         "files": [
           ".gitkeep"
         ],
@@ -531,8 +532,8 @@
     "script_lines": 3196
   },
   "documentation_metrics": {
-    "documentation_files": 10,
-    "documentation_lines": 6063,
+    "documentation_files": 11,
+    "documentation_lines": 6221,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
