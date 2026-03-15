@@ -257,29 +257,44 @@ module memory_interface #(
     assign axi_rvalid_o = 1'b0;
 
     // Memory interface logic
-    // Optimized memory model for FFT data storage with synthesis attributes
-    
-    // FFT Memory: 1024 complex words × 2 buffers × 32 bits = 64K bits
-    // Using synthesis attributes to force memory macro generation
-    (* ram_style = "block" *)  // Force BRAM/block RAM synthesis
-    (* ram_init_file = "" *)    // No initialization file needed
-    logic [31:0] fft_memory [0:2047];  // 2048 x 32-bit = 64K bits (correct size)
-    
-    // Memory read operation (registered for better timing)
+    //
+    // Default (generic): FF-based array with BRAM inference attributes.
+    //   - Simulation: FF array (functional)
+    //   - FPGA (Xilinx/Intel): inferred as BRAM via ram_style attribute
+    //   - ASIC (any PDK): define FFT_USE_SRAM_MACRO at compile time to instantiate
+    //     fft_data_sram, a technology-specific wrapper you provide in your SoC repo.
+    //     The wrapper maps the 2048x32-bit interface to the PDK's hard SRAM macros.
+    //
+    `ifndef FFT_USE_SRAM_MACRO
+    // ── Generic: FF-based / BRAM-inferred ────────────────────────────────────
+    // FFT Memory: 2048 x 32-bit = 64K bits
+    (* ram_style = "block" *)  // Xilinx/Intel: infer as BRAM
+    (* ram_init_file = "" *)
+    logic [31:0] fft_memory [0:2047];
+
     always_ff @(posedge clk_i) begin
-        if (!reset_n_i) begin
-            mem_data_o <= 32'h00000000;
-        end else begin
-            mem_data_o <= fft_memory[mem_addr_i[10:0]];  // 11-bit address for 2048 locations
-        end
+        if (!reset_n_i)          mem_data_o <= 32'h00000000;
+        else                     mem_data_o <= fft_memory[mem_addr_i[10:0]];
     end
-    
-    // Memory write operation
+
     always_ff @(posedge clk_i) begin
-        if (mem_write_i) begin
-            fft_memory[mem_addr_i[10:0]] <= mem_data_i;
-        end
+        if (mem_write_i)         fft_memory[mem_addr_i[10:0]] <= mem_data_i;
     end
+
+    `else
+    // ── PDK-specific: hard SRAM macro (fft_data_sram wrapper) ───────────────
+    // fft_data_sram maps the 2048x32-bit interface to the PDK's hard SRAM macros.
+    // Provide this wrapper in your SoC repository for the target PDK.
+    // Same read latency (1 cycle) as the FF-based implementation above.
+    fft_data_sram u_fft_mem (
+        .clk_i      (clk_i),
+        .reset_n_i  (reset_n_i),
+        .addr_i     (mem_addr_i[10:0]),
+        .wdata_i    (mem_data_i),
+        .write_en_i (mem_write_i),
+        .rdata_o    (mem_data_o)
+    );
+    `endif
     
     // Memory ready signal (pipelined for better performance)
     logic mem_ready_reg;

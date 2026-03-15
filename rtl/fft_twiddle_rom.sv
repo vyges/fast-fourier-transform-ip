@@ -39,69 +39,96 @@ module twiddle_rom #(
     localparam int ROM_SIZE = 1 << (FFT_MAX_FFT_LENGTH_LOG2 - 2);  // Reduced by factor of 4
     localparam int ADDR_WIDTH = $clog2(ROM_SIZE);
     
-    // ROM memory array with synthesis attributes
-    (* rom_style = "block" *)  // Force ROM synthesis
-    (* rom_init_file = "" *)    // No initialization file needed
-    logic [15:0] rom_memory [ROM_SIZE-1:0];  // Only store sin values (16-bit each)
-    logic [ADDR_WIDTH-1:0] rom_addr;
-    logic [31:0] rom_data;
-    
-    // Address validation and symmetry logic
-    logic [1:0] quadrant;
+    // Address decode (quadrant symmetry optimization)
+    logic [1:0]            quadrant;
     logic [ADDR_WIDTH-1:0] base_addr;
+    assign quadrant  = addr_i[1:0];
+    assign base_addr = addr_i[15:2];
+
+    //
+    // Default (generic): FF-based ROM with BRAM inference attributes.
+    //   - Simulation: $sin() initial block populates the array at time-0
+    //   - FPGA (Xilinx/Intel): inferred as BRAM via rom_style attribute
+    //   - ASIC (any PDK): define FFT_USE_SRAM_MACRO at compile time to instantiate
+    //     fft_twiddle_sram, a technology-specific wrapper you provide in your SoC
+    //     repo. Maps 1024x16-bit to the PDK's hard SRAM. ROM loaded by firmware.
+    //
+    `ifndef FFT_USE_SRAM_MACRO
+    // ── Generic: FF-based / BRAM-inferred ────────────────────────────────────
+    (* rom_style = "block" *)
+    (* rom_init_file = "" *)
+    logic [15:0] rom_memory [ROM_SIZE-1:0];
     logic [15:0] sin_value, cos_value;
-    
-    // Determine quadrant and base address
-    assign quadrant = addr_i[1:0];  // 2 bits for quadrant
-    assign base_addr = addr_i[15:2];  // Remaining bits for base address
-    
-    // ROM read with symmetry optimization
+
+    // Registered read + quadrant transform (1-cycle latency)
     always_ff @(posedge clk_i) begin
         if (addr_valid_i) begin
-            // Read base sin value from ROM
             sin_value <= rom_memory[base_addr];
-            
-            // Apply symmetry transformations
             case (quadrant)
-                2'b00: begin  // 0 to π/2: cos = cos, sin = sin
-                    cos_value <= rom_memory[base_addr];
-                end
-                2'b01: begin  // π/2 to π: cos = -sin, sin = cos
-                    cos_value <= -rom_memory[base_addr];
-                end
-                2'b10: begin  // π to 3π/2: cos = -cos, sin = -sin
-                    cos_value <= -rom_memory[base_addr];
-                end
-                2'b11: begin  // 3π/2 to 2π: cos = sin, sin = -cos
-                    cos_value <= rom_memory[base_addr];
-                end
+                2'b00: cos_value <=  rom_memory[base_addr];
+                2'b01: cos_value <= -rom_memory[base_addr];
+                2'b10: cos_value <= -rom_memory[base_addr];
+                2'b11: cos_value <=  rom_memory[base_addr];
             endcase
         end
         data_valid_o <= addr_valid_i;
     end
-    
-    // Pack into 32-bit output (real:imag)
+
     assign data_o = {cos_value, sin_value};
-    
-    // ROM initialization with pre-computed sin values only
+
+    // Simulation initialization via $sin() (not synthesizable — ignored by Yosys)
     initial begin
-        // Initialize ROM with sin values for 4096-point FFT (using symmetry optimization)
-        // Only need 0 to π/2 range due to symmetry (1024 entries for 4096-point FFT)
         for (int k = 0; k < 1024; k++) begin
             int_t sin_int;
-            
-            // Calculate sin values for 0 to π/2 range (using more compatible syntax)
             sin_int = $rtoi($sin(2.0 * 3.14159265359 * k / 4096.0) * 32767.0);
-            
-            // Store only sin values (16-bit each)
             rom_memory[k] = sin_int[15:0];
         end
-        
-        // Initialize remaining ROM locations to zero
-        for (int k = 1024; k < ROM_SIZE; k++) begin
+        for (int k = 1024; k < ROM_SIZE; k++)
             rom_memory[k] = 16'h0000;
-        end
     end
+
+    `else
+    // ── PDK-specific: hard SRAM macro (fft_twiddle_sram wrapper) ─────────────
+    // fft_twiddle_sram maps 1024x16-bit to a PDK SRAM macro via 2-entries-per-word
+    // packing (512-word x 32-bit SRAM). Provide this wrapper in your SoC repo.
+    // Quadrant transform applied combinationally; same 1-cycle external latency.
+    // ROM content initialized by firmware at boot.
+    logic [15:0] raw_sin;
+    logic        sram_valid;
+    logic [1:0]  quadrant_q;
+    logic [15:0] sin_value, cos_value;
+
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) quadrant_q <= 2'b00;
+        else            quadrant_q <= quadrant;
+    end
+
+    fft_twiddle_sram u_twiddle_sram (
+        .clk_i      (clk_i),
+        .reset_n_i  (reset_n_i),
+        .rd_addr_i  (base_addr[9:0]),
+        .rd_en_i    (addr_valid_i),
+        .rd_data_o  (raw_sin),
+        .rd_valid_o (sram_valid),
+        .wr_addr_i  (10'b0),
+        .wr_data_i  (16'b0),
+        .wr_en_i    (1'b0)
+    );
+
+    always_comb begin
+        sin_value = raw_sin;
+        case (quadrant_q)
+            2'b00: cos_value =  raw_sin;
+            2'b01: cos_value = -raw_sin;
+            2'b10: cos_value = -raw_sin;
+            2'b11: cos_value =  raw_sin;
+            default: cos_value = raw_sin;
+        endcase
+    end
+
+    assign data_o       = {cos_value, sin_value};
+    assign data_valid_o = sram_valid;
+    `endif
 
     //=============================================================================
     // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
