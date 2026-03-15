@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-03-14T22:14:06.231853",
+    "analysis_date": "2026-03-15T21:04:12.708015",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -522,7 +522,7 @@
   },
   "code_metrics": {
     "rtl_files": 27,
-    "rtl_lines": 5448,
+    "rtl_lines": 5490,
     "rtl_modules": 37,
     "testbench_files": 17,
     "testbench_lines": 4419,
