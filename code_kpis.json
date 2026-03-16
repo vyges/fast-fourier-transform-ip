@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-03-16T01:30:42.740392",
+    "analysis_date": "2026-03-16T18:40:34.580146",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -581,35 +581,39 @@
       "parameters": true,
       "interfaces": true,
       "files": false,
-      "test": true,
-      "flows": true,
-      "meta": true,
-      "created": true,
-      "updated": true
+      "test": false,
+      "flows": false,
+      "meta": false,
+      "created": false,
+      "updated": false
     },
     "validation_status": "valid",
-    "quality_score": 102.0,
-    "catalog_readiness": "ready",
-    "field_completeness": 93.33333333333333,
-    "interface_quality": 150.0,
-    "test_coverage_metadata": 100,
+    "quality_score": 33.0,
+    "catalog_readiness": "not_ready",
+    "field_completeness": 60.0,
+    "interface_quality": 0,
+    "test_coverage_metadata": 0,
     "flow_configuration": 100,
-    "documentation_metadata": 60,
-    "ai_generation_ready": true,
+    "documentation_metadata": 0,
+    "ai_generation_ready": false,
     "issues": [],
-    "recommendations": []
+    "recommendations": [
+      "Improve interface definitions with proper type and signal specifications",
+      "Add comprehensive test metadata including coverage, testbenches, and simulators",
+      "Add AI generation metadata for automated development support"
+    ]
   },
   "summary": {
-    "overall_score": 90.2,
+    "overall_score": 83.3,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
-      "Test coverage implemented",
-      "High-quality Vyges metadata",
-      "Catalog-ready metadata",
-      "AI generation ready"
+      "Test coverage implemented"
     ],
-    "areas_for_improvement": [],
+    "areas_for_improvement": [
+      "Low-quality Vyges metadata",
+      "Metadata not ready for catalog publication"
+    ],
     "recommendations": [
       "Consider advanced features like formal verification"
     ]
