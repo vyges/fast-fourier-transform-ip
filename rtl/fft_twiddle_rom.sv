@@ -5,13 +5,29 @@
 `include "fft_defines.vh"
 
 //=============================================================================
-// Twiddle Factor ROM Module
+// Twiddle Factor ROM Module  [DEPRECATED — DEAD CODE — DO NOT INSTANTIATE]
 //=============================================================================
 // Description: Pre-computed twiddle factor ROM for FFT computation.
 //              Stores complex coefficients W_N^k = cos(2πk/N) - j*sin(2πk/N)
 //              for all supported FFT lengths.
+//
+// DEPRECATION NOTICE (2026-03-16):
+//   This module is dead code.  It is never instantiated anywhere in the FFT IP.
+//   The FFT engine (fft_fft_engine.sv) reads twiddle factors from the unified
+//   memory array managed by memory_interface (fft_memory_interface.sv) at
+//   engine addresses 0x1000–0x11FF, which map to fft_memory[1024:1535].
+//
+//   Twiddle factors are loaded at boot by firmware via APB writes to the twiddle
+//   window (paddr[11]=1, 0x0800–0x0BFC in the APB peripheral address space).
+//   See fft_memory_interface.sv for the complete address map and
+//   fft_integration_guide.md (tlul-apb-adapter repo) for firmware boot sequence.
+//
+//   This file is retained for historical reference only.  It will be removed
+//   in a future cleanup pass.  Do not instantiate or reference twiddle_rom
+//   in new designs.
+//
 // Author:      Vyges IP Development Team
-// Date:        2025-07-21
+// Date:        2025-07-21 (deprecated 2026-03-16)
 // License:     Apache-2.0
 //=============================================================================
 

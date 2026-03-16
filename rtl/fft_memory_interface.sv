@@ -10,8 +10,24 @@
 // Description: Memory interface module providing APB and AXI bus interfaces
 //              for the FFT accelerator. Handles register access and data
 //              transfer between host processor and FFT engine.
+//
+//              Twiddle factor initialization:
+//              Firmware loads twiddle factors at boot via APB writes to the
+//              twiddle window (paddr[11]=1, 0x0800–0x0FFC). This covers 512
+//              packed {cos16,sin16} words needed for a 1024-point FFT.
+//              The FFT engine must not be started until twiddle loading is
+//              complete (firmware writes FFT_CTRL[0]=1 only after the load
+//              loop finishes).
+//
+//              Address translation:
+//              Engine addresses are translated to unified fft_memory indices:
+//                data   0x0000–0x03FF → fft_memory[    0 – 1023]
+//                twiddle 0x1000–0x11FF → fft_memory[ 1024 – 1535]
+//              APB twiddle writes (paddr 0x0800–0x0BFC) go to the same
+//              fft_memory[1024 – 1535] region.
+//
 // Author:      Vyges IP Development Team
-// Date:        2025-07-21
+// Date:        2026-03-16
 // License:     Apache-2.0
 //=============================================================================
 
@@ -256,6 +272,34 @@ module memory_interface #(
     assign axi_rdata_o = 64'h0000000000000000;
     assign axi_rvalid_o = 1'b0;
 
+    // -------------------------------------------------------------------------
+    // Address translation
+    //
+    // Engine uses a split address space:
+    //   data   : 0x0000–0x03FF  → fft_memory[    0 – 1023]
+    //   twiddle: 0x1000–0x11FF  → fft_memory[ 1024 – 1535]
+    //
+    // APB twiddle write window (paddr[11]=1):
+    //   0x0800–0x0BFC  word offset paddr[10:2] ∈ [0..511]
+    //                  → fft_memory[1024 + paddr[10:2]]
+    //
+    // Assumes pclk_i == clk_i (same 50 MHz domain in edge-sensor-soc).
+    // If clocks differ, add CDC synchronisation on apb_twiddle_wr.
+    // -------------------------------------------------------------------------
+    logic        is_twiddle_access;
+    logic [10:0] mem_idx;
+    logic        apb_twiddle_wr;
+    logic [10:0] apb_twiddle_addr;
+
+    assign is_twiddle_access = (mem_addr_i >= 16'h1000);
+    assign mem_idx           = is_twiddle_access
+                               ? (11'd1024 + {2'b00, mem_addr_i[8:0]})
+                               : mem_addr_i[10:0];
+
+    // APB twiddle write: active only during APB_ACCESS phase on twiddle window
+    assign apb_twiddle_wr   = (apb_state == APB_ACCESS) && pwrite_i && paddr_i[11];
+    assign apb_twiddle_addr = 11'd1024 + {2'b00, paddr_i[10:2]};
+
     // Memory interface logic
     //
     // Default (generic): FF-based array with BRAM inference attributes.
@@ -268,17 +312,20 @@ module memory_interface #(
     `ifndef FFT_USE_SRAM_MACRO
     // ── Generic: FF-based / BRAM-inferred ────────────────────────────────────
     // FFT Memory: 2048 x 32-bit = 64K bits
+    // Layout: [0:1023] data, [1024:1535] twiddle, [1536:2047] reserved
     (* ram_style = "block" *)  // Xilinx/Intel: infer as BRAM
     (* ram_init_file = "" *)
     logic [31:0] fft_memory [0:2047];
 
     always_ff @(posedge clk_i) begin
-        if (!reset_n_i)          mem_data_o <= 32'h00000000;
-        else                     mem_data_o <= fft_memory[mem_addr_i[10:0]];
+        if (!reset_n_i)      mem_data_o <= 32'h00000000;
+        else                 mem_data_o <= fft_memory[mem_idx];
     end
 
     always_ff @(posedge clk_i) begin
-        if (mem_write_i)         fft_memory[mem_addr_i[10:0]] <= mem_data_i;
+        if (mem_write_i)     fft_memory[mem_idx] <= mem_data_i;
+        // APB twiddle write path (pclk_i == clk_i)
+        if (apb_twiddle_wr)  fft_memory[apb_twiddle_addr] <= pwdata_i;
     end
 
     `else
@@ -286,12 +333,16 @@ module memory_interface #(
     // fft_data_sram maps the 2048x32-bit interface to the PDK's hard SRAM macros.
     // Provide this wrapper in your SoC repository for the target PDK.
     // Same read latency (1 cycle) as the FF-based implementation above.
+    //
+    // Write port priority: APB twiddle write takes precedence over engine write.
+    // The two are mutually exclusive by protocol (firmware completes twiddle
+    // loading before asserting FFT_CTRL[0]=1 to start the engine).
     fft_data_sram u_fft_mem (
         .clk_i      (clk_i),
         .reset_n_i  (reset_n_i),
-        .addr_i     (mem_addr_i[10:0]),
-        .wdata_i    (mem_data_i),
-        .write_en_i (mem_write_i),
+        .addr_i     (apb_twiddle_wr ? apb_twiddle_addr : mem_idx),
+        .wdata_i    (apb_twiddle_wr ? pwdata_i         : mem_data_i),
+        .write_en_i (apb_twiddle_wr | mem_write_i),
         .rdata_o    (mem_data_o)
     );
     `endif

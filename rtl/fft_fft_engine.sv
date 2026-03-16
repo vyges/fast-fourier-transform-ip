@@ -476,7 +476,13 @@ module fft_engine #(
     assign security_violation_stage_count = stage_counter > fft_length_log2_reg;
     
     // Buffer access validation - synthesis-safe implementation
-    assign security_violation_buffer_access = mem_addr_i >= 16'h1000;
+    // Valid engine addresses: data 0x0000–0x03FF, twiddle 0x1000–0x11FF.
+    // Addresses >= 0x2000 are unconditionally out of range for all supported
+    // FFT lengths (max 1024-point). The gap 0x0400–0x0FFF is unused by the
+    // engine but is not flagged here to avoid false positives from pipeline
+    // intermediate addresses. Security checking of the gap is deferred to
+    // the memory_interface address-bounds assertions.
+    assign security_violation_buffer_access = mem_addr_i >= 16'h2000;
     
     // These signals can be used for formal verification or external monitoring
     // In synthesis, they will be optimized out if not used
@@ -509,9 +515,11 @@ module fft_engine #(
     endproperty
     
     // Buffer access validation - prevent illegal buffer access
+    // Valid engine addresses: data 0x0000–0x03FF, twiddle 0x1000–0x11FF.
+    // Address 0x2000+ is always out of range for supported FFT lengths.
     property buffer_access_validation;
         @(posedge clk_i) disable iff (!reset_n_i)
-        (mem_addr_i < 16'h1000); // Only 4KB (1024 points * 4 bytes) for twiddle factors
+        (mem_addr_i < 16'h2000);
     endproperty
     
     // Assert the security properties
