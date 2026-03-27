@@ -317,15 +317,30 @@ module memory_interface #(
     (* ram_init_file = "" *)
     logic [31:0] fft_memory [0:2047];
 
-    always_ff @(posedge clk_i) begin
-        if (!reset_n_i)      mem_data_o <= 32'h00000000;
-        else                 mem_data_o <= fft_memory[mem_idx];
+    // Muxed single write port — required for BRAM inference (one write port only).
+    // APB twiddle write and engine write are mutually exclusive by protocol:
+    // firmware loads twiddles before asserting FFT_CTRL[0]=start.
+    // APB twiddle write has priority (safety — should never collide in practice).
+    logic                 wr_en;
+    logic [10:0]          wr_addr;
+    logic [31:0]          wr_data;
+
+    always_comb begin
+        if (apb_twiddle_wr) begin
+            wr_en   = 1'b1;
+            wr_addr = apb_twiddle_addr;
+            wr_data = pwdata_i;
+        end else begin
+            wr_en   = mem_write_i;
+            wr_addr = mem_idx;
+            wr_data = mem_data_i;
+        end
     end
 
     always_ff @(posedge clk_i) begin
-        if (mem_write_i)     fft_memory[mem_idx] <= mem_data_i;
-        // APB twiddle write path (pclk_i == clk_i)
-        if (apb_twiddle_wr)  fft_memory[apb_twiddle_addr] <= pwdata_i;
+        if (wr_en)
+            fft_memory[wr_addr] <= wr_data;
+        mem_data_o <= fft_memory[mem_idx];  // synchronous read, 1-cycle latency
     end
 
     `else
