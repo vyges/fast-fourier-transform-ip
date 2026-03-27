@@ -1,7 +1,7 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-03-27T04:36:45.368983",
+    "analysis_date": "2026-03-27T19:47:34.673560",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
@@ -581,39 +581,36 @@
       "parameters": true,
       "interfaces": true,
       "files": false,
-      "test": false,
+      "test": true,
       "flows": false,
-      "meta": false,
-      "created": false,
-      "updated": false
+      "meta": true,
+      "created": true,
+      "updated": true
     },
     "validation_status": "valid",
-    "quality_score": 33.0,
-    "catalog_readiness": "not_ready",
-    "field_completeness": 60.0,
-    "interface_quality": 0,
-    "test_coverage_metadata": 0,
+    "quality_score": 87.0,
+    "catalog_readiness": "ready",
+    "field_completeness": 86.66666666666667,
+    "interface_quality": 150.0,
+    "test_coverage_metadata": 50,
     "flow_configuration": 100,
-    "documentation_metadata": 0,
+    "documentation_metadata": 40,
     "ai_generation_ready": false,
     "issues": [],
     "recommendations": [
-      "Improve interface definitions with proper type and signal specifications",
-      "Add comprehensive test metadata including coverage, testbenches, and simulators",
       "Add AI generation metadata for automated development support"
     ]
   },
   "summary": {
-    "overall_score": 83.3,
+    "overall_score": 88.7,
     "strengths": [
       "RTL implementation present",
       "README documentation exists",
-      "Test coverage implemented"
+      "Test coverage implemented",
+      "High-quality Vyges metadata",
+      "Catalog-ready metadata"
     ],
-    "areas_for_improvement": [
-      "Low-quality Vyges metadata",
-      "Metadata not ready for catalog publication"
-    ],
+    "areas_for_improvement": [],
     "recommendations": [
       "Consider advanced features like formal verification"
     ]
