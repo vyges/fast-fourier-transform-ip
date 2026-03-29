@@ -6,43 +6,154 @@
   "description": "Configurable 1024-point radix-2 decimation-in-frequency FFT accelerator with APB slave control interface, AXI data port (Phase 2), 2048x32-bit internal memory (data + twiddle), pipelined butterfly engine, auto-rescaling, and done/error interrupts. 16-bit fixed-point I/Q. Vyges-original IP.",
   "license": "Apache-2.0",
   "maturity": "production",
-  "target": ["asic", "fpga"],
-  "design_type": ["digital"],
+  "target": [
+    "asic",
+    "fpga"
+  ],
+  "design_type": [
+    "digital"
+  ],
   "created": "2025-11-01T00:00:00Z",
   "updated": "2026-03-27T19:40:00Z",
-  "source": {"type": "git", "url": "https://github.com/vyges/fast-fourier-transform-ip", "private": false, "rtl_path": "rtl"},
-  "maintainers": [{"name": "Vyges", "email": "team@vyges.com", "github": "vyges"}],
+  "source": {
+    "type": "git",
+    "url": "https://github.com/vyges/fast-fourier-transform-ip",
+    "private": false,
+    "rtl_path": "rtl"
+  },
+  "maintainers": [
+    {
+      "name": "Vyges",
+      "email": "team@vyges.com",
+      "github": "vyges"
+    }
+  ],
   "interfaces": [
     {
-      "type": "bus", "direction": "slave", "protocol": "APB", "port": "apb",
+      "type": "bus",
+      "direction": "slave",
+      "protocol": "APB",
+      "port": "apb",
       "description": "APB slave control interface. Registers: FFT_CTRL (start/reset), FFT_STATUS (busy/done/error), FFT_LENGTH, twiddle write window at offset 0x800.",
       "signals": [
-        {"name": "pclk_i", "direction": "input", "type": "clock", "width": 1},
-        {"name": "preset_n_i", "direction": "input", "type": "reset", "width": 1, "active_level": "low"},
-        {"name": "psel_i", "direction": "input", "type": "control", "width": 1},
-        {"name": "penable_i", "direction": "input", "type": "control", "width": 1},
-        {"name": "pwrite_i", "direction": "input", "type": "control", "width": 1},
-        {"name": "paddr_i", "direction": "input", "type": "address", "width": 16},
-        {"name": "pwdata_i", "direction": "input", "type": "data", "width": 32},
-        {"name": "prdata_o", "direction": "output", "type": "data", "width": 32},
-        {"name": "pready_o", "direction": "output", "type": "control", "width": 1}
+        {
+          "name": "pclk_i",
+          "direction": "input",
+          "type": "clock",
+          "width": 1
+        },
+        {
+          "name": "preset_n_i",
+          "direction": "input",
+          "type": "reset",
+          "width": 1,
+          "active_level": "low"
+        },
+        {
+          "name": "psel_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "penable_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "pwrite_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "paddr_i",
+          "direction": "input",
+          "type": "address",
+          "width": 16
+        },
+        {
+          "name": "pwdata_i",
+          "direction": "input",
+          "type": "data",
+          "width": 32
+        },
+        {
+          "name": "prdata_o",
+          "direction": "output",
+          "type": "data",
+          "width": 32
+        },
+        {
+          "name": "pready_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1
+        }
       ]
     },
     {
-      "type": "interrupt", "direction": "output", "protocol": "level", "port": "intr", "width": 2,
+      "type": "interrupt",
+      "direction": "output",
+      "protocol": "level",
+      "port": "intr",
+      "width": 2,
       "signals": [
-        {"name": "fft_done_o", "direction": "output", "type": "interrupt", "width": 1, "description": "FFT computation complete"},
-        {"name": "fft_error_o", "direction": "output", "type": "interrupt", "width": 1, "description": "FFT error (overflow or configuration)"}
+        {
+          "name": "fft_done_o",
+          "direction": "output",
+          "type": "interrupt",
+          "width": 1,
+          "description": "FFT computation complete"
+        },
+        {
+          "name": "fft_error_o",
+          "direction": "output",
+          "type": "interrupt",
+          "width": 1,
+          "description": "FFT error (overflow or configuration)"
+        }
       ]
     }
   ],
   "parameters": [
-    {"name": "FFT_MAX_LENGTH_LOG2", "type": "int", "default": 10, "description": "Log2 of max FFT length (10 = 1024-point)"},
-    {"name": "FFT_DATA_WIDTH", "type": "int", "default": 16, "description": "I/Q data width in bits"},
-    {"name": "FFT_TWIDDLE_WIDTH", "type": "int", "default": 16, "description": "Twiddle factor width in bits"},
-    {"name": "FFT_APB_ADDR_WIDTH", "type": "int", "default": 16, "description": "APB address width"},
-    {"name": "FFT_AXI_ADDR_WIDTH", "type": "int", "default": 32, "description": "AXI data port address width (Phase 2)"},
-    {"name": "FFT_AXI_DATA_WIDTH", "type": "int", "default": 64, "description": "AXI data port width (Phase 2)"}
+    {
+      "name": "FFT_MAX_LENGTH_LOG2",
+      "type": "int",
+      "default": 10,
+      "description": "Log2 of max FFT length (10 = 1024-point)"
+    },
+    {
+      "name": "FFT_DATA_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "I/Q data width in bits"
+    },
+    {
+      "name": "FFT_TWIDDLE_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "Twiddle factor width in bits"
+    },
+    {
+      "name": "FFT_APB_ADDR_WIDTH",
+      "type": "int",
+      "default": 16,
+      "description": "APB address width"
+    },
+    {
+      "name": "FFT_AXI_ADDR_WIDTH",
+      "type": "int",
+      "default": 32,
+      "description": "AXI data port address width (Phase 2)"
+    },
+    {
+      "name": "FFT_AXI_DATA_WIDTH",
+      "type": "int",
+      "default": 64,
+      "description": "AXI data port width (Phase 2)"
+    }
   ],
   "performance": {
     "frequency": {
@@ -57,7 +168,15 @@
   },
   "architecture": {
     "type": "accelerator",
-    "submodules": ["fft_top (fft_fft_top)", "fft_fft_engine", "fft_fft_control", "fft_memory_interface", "fft_rescale_unit", "fft_scale_factor_tracker", "fft_twiddle_rom"],
+    "submodules": [
+      "fft_top (fft_fft_top)",
+      "fft_fft_engine",
+      "fft_fft_control",
+      "fft_memory_interface",
+      "fft_rescale_unit",
+      "fft_scale_factor_tracker",
+      "fft_twiddle_rom"
+    ],
     "features": [
       "Radix-2 decimation-in-frequency (DIF) FFT",
       "Configurable FFT length up to 2^FFT_MAX_LENGTH_LOG2 points",
@@ -74,16 +193,88 @@
     ]
   },
   "dependencies": [],
-  "test": {"status": "passing", "simulators": ["verilator"], "notes": "Verified in edge-sensor-soc (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT."},
+  "test": {
+    "status": "passing",
+    "simulators": [
+      "verilator"
+    ],
+    "notes": "Verified in edge-sensor-soc (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT."
+  },
   "documentation": {},
   "artifacts": {
-    "rtl": ["rtl/fft_fft_top.sv", "rtl/fft_fft_engine.sv", "rtl/fft_fft_control.sv", "rtl/fft_memory_interface.sv", "rtl/fft_rescale_unit.sv", "rtl/fft_scale_factor_tracker.sv", "rtl/fft_twiddle_rom.sv"],
+    "rtl": [
+      "rtl/fft_fft_top.sv",
+      "rtl/fft_fft_engine.sv",
+      "rtl/fft_fft_control.sv",
+      "rtl/fft_memory_interface.sv",
+      "rtl/fft_rescale_unit.sv",
+      "rtl/fft_scale_factor_tracker.sv",
+      "rtl/fft_twiddle_rom.sv"
+    ],
     "total_rtl_lines": 2046
   },
-  "categories": {"primary": "accelerator", "secondary": ["dsp", "signal-processing"], "tags": ["fft", "dsp", "radix-2", "dif", "butterfly", "apb", "fixed-point", "1024-point", "accelerator"]},
-  "trust": {"verification_level": "fpga_validated", "tapeout_count": 0, "fpga_validated": true, "maintained": true, "last_activity": "2026-03-27", "notes": "FPGA-validated on Arty A7-100T. Yosys synthesis: 5,391 cells (sky130). Vivado: ~2K LUTs + 2 BRAM. Used in edge-sensor-soc and edge-sensor-dsp."},
-  "asic": {"flavor": "digital", "technology": ["sky130A"], "estimated_area": "49,958 um2 (sky130_fd_sc_hd)", "estimated_gate_count": "~13,322 GE"},
-  "fpga": {"toolchain": ["Vivado", "Yosys"], "devices": ["Artix-7 (xc7a100t)"]},
-  "keywords": ["fft", "dsp", "signal-processing", "radix-2", "butterfly", "apb", "accelerator", "fixed-point"],
-  "meta": {"template": {"generator": "manual (gold-standard pass 2026-03-27)"}, "schema": {"version": "1.0.0"}}
+  "categories": {
+    "primary": "accelerator",
+    "secondary": [
+      "dsp",
+      "signal-processing"
+    ],
+    "tags": [
+      "fft",
+      "dsp",
+      "radix-2",
+      "dif",
+      "butterfly",
+      "apb",
+      "fixed-point",
+      "1024-point",
+      "accelerator"
+    ]
+  },
+  "trust": {
+    "verification_level": "fpga_validated",
+    "tapeout_count": 0,
+    "fpga_validated": true,
+    "maintained": true,
+    "last_activity": "2026-03-27",
+    "notes": "FPGA-validated on Arty A7-100T. Yosys synthesis: 5,391 cells (sky130). Vivado: ~2K LUTs + 2 BRAM. Used in edge-sensor-soc and edge-sensor-dsp."
+  },
+  "asic": {
+    "flavor": "digital",
+    "technology": [
+      "sky130A"
+    ],
+    "estimated_area": "49,958 um2 (sky130_fd_sc_hd)",
+    "estimated_gate_count": "~13,322 GE"
+  },
+  "fpga": {
+    "toolchain": [
+      "Vivado",
+      "Yosys"
+    ],
+    "devices": [
+      "Artix-7 (xc7a100t)"
+    ]
+  },
+  "keywords": [
+    "fft",
+    "dsp",
+    "signal-processing",
+    "radix-2",
+    "butterfly",
+    "apb",
+    "accelerator",
+    "fixed-point"
+  ],
+  "meta": {
+    "template": {
+      "generator": "manual (gold-standard pass 2026-03-27)"
+    },
+    "schema": {
+      "version": "1.0.0"
+    }
+  },
+  "branding": {
+    "display_name": "FFT Engine"
+  }
 }
