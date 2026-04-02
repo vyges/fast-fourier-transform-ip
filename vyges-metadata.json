@@ -14,7 +14,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-03-27T19:40:00Z",
+  "updated": "2026-04-02T03:11:53Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -213,8 +213,44 @@
     ],
     "total_rtl_lines": 2046
   },
+  "rtl_files": [
+    "rtl/fft_defines.vh",
+    "rtl/fft_timescale.vh",
+    "rtl/fft_fft_top.sv",
+    "rtl/fft_fft_engine.sv",
+    "rtl/fft_fft_control.sv",
+    "rtl/fft_memory_interface.sv",
+    "rtl/fft_rescale_unit.sv",
+    "rtl/fft_scale_factor_tracker.sv",
+    "rtl/fft_twiddle_rom.sv"
+  ],
+  "rtl_quality": {
+    "module_prefixed": false,
+    "defines_prefixed": true,
+    "header_guards": true,
+    "one_module_per_file": true,
+    "self_contained_includes": true,
+    "no_translate_pragmas": true,
+    "lint_clean": false,
+    "no_casex": true,
+    "width_clean": false,
+    "no_sv_keyword_conflicts": true
+  },
+  "defines": [
+    {"name": "FFT_MAX_LENGTH_LOG2", "value": "12", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_MIN_LENGTH_LOG2", "value": "8", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_DATA_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_TWIDDLE_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_APB_ADDR_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_MEM_ADDR_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_MEM_DATA_WIDTH", "value": "32", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_STATUS_IDLE", "value": "2'b00", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_STATUS_CONFIG", "value": "2'b01", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_STATUS_LOAD", "value": "2'b10", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
+    {"name": "FFT_STATUS_COMPUTE", "value": "2'b11", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"}
+  ],
   "categories": {
-    "primary": "accelerator",
+    "primary": "Signal Processing",
     "secondary": [
       "dsp",
       "signal-processing"
