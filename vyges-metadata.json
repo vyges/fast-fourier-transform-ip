@@ -237,17 +237,83 @@
     "no_sv_keyword_conflicts": true
   },
   "defines": [
-    {"name": "FFT_MAX_LENGTH_LOG2", "value": "12", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_MIN_LENGTH_LOG2", "value": "8", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_DATA_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_TWIDDLE_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_APB_ADDR_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_MEM_ADDR_WIDTH", "value": "16", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_MEM_DATA_WIDTH", "value": "32", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_STATUS_IDLE", "value": "2'b00", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_STATUS_CONFIG", "value": "2'b01", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_STATUS_LOAD", "value": "2'b10", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"},
-    {"name": "FFT_STATUS_COMPUTE", "value": "2'b11", "defined_in": "rtl/fft_defines.vh", "scope": "global", "guard": "FFT_DEFINES_VH"}
+    {
+      "name": "FFT_MAX_LENGTH_LOG2",
+      "value": "12",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_MIN_LENGTH_LOG2",
+      "value": "8",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_DATA_WIDTH",
+      "value": "16",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_TWIDDLE_WIDTH",
+      "value": "16",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_APB_ADDR_WIDTH",
+      "value": "16",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_MEM_ADDR_WIDTH",
+      "value": "16",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_MEM_DATA_WIDTH",
+      "value": "32",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_STATUS_IDLE",
+      "value": "2'b00",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_STATUS_CONFIG",
+      "value": "2'b01",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_STATUS_LOAD",
+      "value": "2'b10",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    },
+    {
+      "name": "FFT_STATUS_COMPUTE",
+      "value": "2'b11",
+      "defined_in": "rtl/fft_defines.vh",
+      "scope": "global",
+      "guard": "FFT_DEFINES_VH"
+    }
   ],
   "categories": {
     "primary": "Signal Processing",
@@ -312,5 +378,149 @@
   },
   "branding": {
     "display_name": "FFT Engine"
+  },
+  "integration": {
+    "examples": [],
+    "soc_generator_hints": {
+      "top_module": "fft_top",
+      "clock": {
+        "port": "clk_i",
+        "additional_ports": [
+          "pclk_i",
+          "axi_aclk_i"
+        ]
+      },
+      "reset": {
+        "port": "reset_n_i",
+        "polarity": "active_low",
+        "additional_ports": [
+          "preset_n_i",
+          "axi_areset_n_i"
+        ]
+      },
+      "bus_slave": {
+        "protocol": "APB",
+        "addr_width": 16,
+        "ports": {
+          "psel": "psel_i",
+          "penable": "penable_i",
+          "pwrite": "pwrite_i",
+          "paddr": "paddr_i",
+          "pwdata": "pwdata_i",
+          "prdata": "prdata_o",
+          "pready": "pready_o"
+        }
+      },
+      "interrupts": [
+        {
+          "port": "fft_done_o",
+          "type": "level"
+        },
+        {
+          "port": "fft_error_o",
+          "type": "level"
+        }
+      ],
+      "parameters": [
+        {
+          "name": "FFT_MAX_LENGTH_LOG2",
+          "maps_to": "config.FFT_MAX_LENGTH_LOG2"
+        },
+        {
+          "name": "FFT_DATA_WIDTH",
+          "maps_to": "config.FFT_DATA_WIDTH"
+        },
+        {
+          "name": "FFT_TWIDDLE_WIDTH",
+          "maps_to": "config.FFT_TWIDDLE_WIDTH"
+        },
+        {
+          "name": "FFT_APB_ADDR_WIDTH",
+          "default": 16,
+          "fixed": true
+        },
+        {
+          "name": "FFT_AXI_ADDR_WIDTH",
+          "default": 32,
+          "fixed": true
+        },
+        {
+          "name": "FFT_AXI_DATA_WIDTH",
+          "default": 64,
+          "fixed": true
+        }
+      ],
+      "unused_interfaces": [
+        {
+          "name": "axi_data",
+          "protocol": "AXI",
+          "reason": "Phase 1: APB-only sample loading via Ibex firmware",
+          "tieoff_ports": [
+            {
+              "name": "axi_awaddr_i",
+              "value": "32'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_awvalid_i",
+              "value": "1'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_awready_o",
+              "direction": "output"
+            },
+            {
+              "name": "axi_wdata_i",
+              "value": "64'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_wvalid_i",
+              "value": "1'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_wready_o",
+              "direction": "output"
+            },
+            {
+              "name": "axi_araddr_i",
+              "value": "32'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_arvalid_i",
+              "value": "1'b0",
+              "direction": "input"
+            },
+            {
+              "name": "axi_arready_o",
+              "direction": "output"
+            },
+            {
+              "name": "axi_rdata_o",
+              "direction": "output"
+            },
+            {
+              "name": "axi_rvalid_o",
+              "direction": "output"
+            },
+            {
+              "name": "axi_rready_i",
+              "value": "1'b0",
+              "direction": "input"
+            }
+          ]
+        }
+      ],
+      "sram": {
+        "macro": "sky130_sram_2kbyte_1rw1r_32x512_8",
+        "depth_from": "2 * (1 << config.FFT_MAX_LENGTH_LOG2)",
+        "bank_depth": 512,
+        "data_width": 32,
+        "wrapper_module": "fft_data_sram"
+      }
+    }
   }
 }
