@@ -30,6 +30,31 @@
   ],
   "interfaces": [
     {
+      "type": "clock",
+      "name": "clock",
+      "signals": [
+        {
+          "name": "clk_i",
+          "direction": "input",
+          "type": "clock",
+          "width": 1
+        }
+      ]
+    },
+    {
+      "type": "reset",
+      "name": "reset",
+      "signals": [
+        {
+          "name": "rst_ni",
+          "direction": "input",
+          "type": "reset",
+          "width": 1,
+          "active_level": "low"
+        }
+      ]
+    },
+    {
       "type": "bus",
       "direction": "slave",
       "protocol": "APB",
@@ -198,7 +223,19 @@
     "simulators": [
       "verilator"
     ],
-    "notes": "Verified in edge-sensor-soc (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT."
+    "notes": "Verified in edge-sensor-soc (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT.",
+    "testbenches": [
+      {
+        "name": "soc_integration",
+        "path": "tb/cocotb/",
+        "framework": "cocotb",
+        "simulators": [
+          "verilator"
+        ],
+        "description": "SoC-level integration verified in edge-sensor-soc"
+      }
+    ],
+    "coverage": "functional"
   },
   "documentation": {},
   "artifacts": {
