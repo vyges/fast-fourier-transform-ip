@@ -14,7 +14,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-04-02T03:11:53Z",
+  "updated": "2026-04-24T18:23:41Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -178,6 +178,68 @@
       "type": "int",
       "default": 64,
       "description": "AXI data port width (Phase 2)"
+    }
+  ],
+  "registers": [
+    {
+      "name": "FFT_CTRL",
+      "offset": "0x0000",
+      "access": "RW",
+      "description": "FFT Control (start[0], done[1], ...)"
+    },
+    {
+      "name": "FFT_STATUS",
+      "offset": "0x0004",
+      "access": "RO",
+      "description": "FFT Status (busy[0], done[1], ...)"
+    },
+    {
+      "name": "FFT_CONFIG",
+      "offset": "0x0008",
+      "access": "RW",
+      "description": "FFT Configuration"
+    },
+    {
+      "name": "FFT_LENGTH",
+      "offset": "0x000C",
+      "access": "RW",
+      "description": "FFT Length (256/512/1024/2048/4096)"
+    },
+    {
+      "name": "BUFFER_SEL",
+      "offset": "0x0010",
+      "access": "RW",
+      "description": "Double-buffer select"
+    },
+    {
+      "name": "INT_ENABLE",
+      "offset": "0x0014",
+      "access": "RW",
+      "description": "Interrupt enable"
+    },
+    {
+      "name": "INT_STATUS",
+      "offset": "0x0018",
+      "access": "RO",
+      "description": "Interrupt status"
+    },
+    {
+      "name": "SCALE_FACTOR",
+      "offset": "0x001C",
+      "access": "RO",
+      "description": "Output scale factor"
+    },
+    {
+      "name": "RESCALE_CTRL",
+      "offset": "0x0020",
+      "access": "RW",
+      "description": "Rescaling control"
+    },
+    {
+      "name": "OVERFLOW_STATUS",
+      "offset": "0x0024",
+      "access": "RO",
+      "description": "Overflow status"
     }
   ],
   "performance": {
