@@ -285,7 +285,7 @@
     "simulators": [
       "verilator"
     ],
-    "notes": "Verified in edge-sensor-soc (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT.",
+    "notes": "Verified end-to-end (Verilator + Vivado FPGA + Yosys ASIC synthesis). Boot firmware loads twiddles and runs 1024-pt FFT.",
     "testbenches": [
       {
         "name": "soc_integration",
@@ -294,7 +294,7 @@
         "simulators": [
           "verilator"
         ],
-        "description": "SoC-level integration verified in edge-sensor-soc"
+        "description": "SoC-level integration verified in production silicon"
       }
     ],
     "coverage": "functional"
@@ -438,7 +438,7 @@
     "fpga_validated": true,
     "maintained": true,
     "last_activity": "2026-03-27",
-    "notes": "FPGA-validated on Arty A7-100T. Yosys synthesis: 5,391 cells (sky130). Vivado: ~2K LUTs + 2 BRAM. Used in edge-sensor-soc and edge-sensor-dsp."
+    "notes": "FPGA-validated on Arty A7-100T. Yosys synthesis: 5,391 cells (sky130). Vivado: ~2K LUTs + 2 BRAM. Used in multiple production SoCs."
   },
   "asic": {
     "flavor": "digital",

@@ -139,31 +139,22 @@ make coverage
 
 ## ASIC Flow
 
-### OpenLane Configuration
+### LibreLane Configuration
 
-The ASIC flow uses OpenLane with sky130B PDK:
+The ASIC flow targets sky130A via LibreLane:
 
 ```bash
-# Navigate to ASIC flow directory
-cd flow/openlane
-
-# Run complete flow
-make
-
-# Run specific stages
-make synthesis
-make placement
-make routing
-make lvs
-make drc
+librelane flow/openlane/config.json
 ```
+
+The configuration hardens `fft_top` with `+define+FFT_USE_SRAM_MACRO`. `flow/openlane/pin_order.cfg` clusters the SRAM bus on the NORTH edge so the SoC integrator can place SRAM banks adjacent to the FFT macro.
 
 ### Key Configuration
 
-- **Technology:** sky130B
-- **Target Frequency:** 1 GHz
-- **Target Area:** < 50K gates
-- **Power Target:** < 50 mW
+- **Technology:** sky130A (extends to other PDKs by supplying a matching SRAM macro)
+- **Target Frequency:** 40 MHz (25 ns clock period)
+- **Die area:** 1500 × 1500 μm
+- **Routing:** met1–met5
 
 ### Memory Topology
 
@@ -365,7 +356,7 @@ void configure_fft_rescaling(void) {
 ## Dependencies
 
 - **SystemVerilog:** IEEE 1800-2017
-- **ASIC Tools:** OpenLane, sky130B PDK
+- **ASIC Tools:** LibreLane, sky130A PDK
 - **FPGA Tools:** Vivado, Quartus
 - **Simulation:** Verilator, Icarus Verilog, ModelSim
 

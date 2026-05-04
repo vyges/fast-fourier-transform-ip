@@ -20,7 +20,7 @@ The `fft_engine` module implements a **radix-2 DIF FFT using an iterative / memo
 - Twiddle factors are fetched from an external twiddle ROM on each butterfly
 
 For a 1024-point FFT: N/2 × log₂(N) = 512 × 10 = **5,120 butterflies × 6 cycles = 30,720 cycles per transform**.
-At 50 MHz (edge-sensor-soc target): **~614 μs per transform**.
+At 50 MHz: **~614 μs per transform**.
 
 > **This is very different from a pipelined streaming FFT**, which has log₂(N) concurrent butterfly stages
 > all active simultaneously. A pipelined 1024-pt FFT produces one output per clock cycle after an initial
@@ -108,7 +108,7 @@ The data-array and twiddle-ROM contents share the same 2048×32 store and are bo
 
 ## Throughput vs. area tradeoff
 
-For the **edge-sensor-soc** use case (vibration monitoring, 10 kHz ADC, 1024-point FFT):
+For a representative low-rate sensor use case (vibration monitoring, 10 kHz ADC, 1024-point FFT):
 
 - **Required transform rate:** 1 per 102.4 ms (collect 1024 samples at 10 kHz)
 - **Iterative FFT latency:** ~614 μs at 50 MHz

@@ -293,7 +293,7 @@ module memory_interface #(
     //   0x0800–0x0BFC  word offset paddr[10:2] ∈ [0..511]
     //                  → fft_memory[1024 + paddr[10:2]]
     //
-    // Assumes pclk_i == clk_i (same 50 MHz domain in edge-sensor-soc).
+    // Assumes pclk_i == clk_i (single clock domain in current integrations).
     // If clocks differ, add CDC synchronisation on apb_twiddle_wr.
     // -------------------------------------------------------------------------
     logic        is_twiddle_access;
