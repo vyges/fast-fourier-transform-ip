@@ -100,7 +100,17 @@ module memory_interface #(
     input  logic [7:0]  overflow_count_i,
     input  logic [7:0]  last_overflow_stage_i,
     input  logic [7:0]  max_overflow_magnitude_i,
-    input  logic [7:0]  int_status_i
+    input  logic [7:0]  int_status_i,
+
+    // External SRAM bus (FFT_USE_SRAM_MACRO only) — wired by user_project_wrapper
+    output logic        sram_clk_o,
+    output logic [9:0]  sram_addr_o,
+    output logic [31:0] sram_wdata_o,
+    output logic [31:0] sram_ben_o,
+    output logic        sram_rwb_o,
+    output logic [1:0]  sram_en_o,
+    input  logic [31:0] sram_rdata0_i,
+    input  logic [31:0] sram_rdata1_i
 );
 
     // Internal registers
@@ -311,6 +321,14 @@ module memory_interface #(
     //
     `ifndef FFT_USE_SRAM_MACRO
     // ── Generic: FF-based / BRAM-inferred ────────────────────────────────────
+    // External SRAM bus is unused in FF-based mode — tie off outputs.
+    assign sram_clk_o   = 1'b0;
+    assign sram_addr_o  = 10'h0;
+    assign sram_wdata_o = 32'h0;
+    assign sram_ben_o   = 32'h0;
+    assign sram_rwb_o   = 1'b1;
+    assign sram_en_o    = 2'h0;
+
     // FFT Memory: 2048 x 32-bit = 64K bits
     // Layout: [0:1023] data, [1024:1535] twiddle, [1536:2047] reserved
     (* ram_style = "block" *)  // Xilinx/Intel: infer as BRAM
@@ -353,12 +371,20 @@ module memory_interface #(
     // The two are mutually exclusive by protocol (firmware completes twiddle
     // loading before asserting FFT_CTRL[0]=1 to start the engine).
     fft_data_sram u_fft_mem (
-        .clk_i      (clk_i),
-        .reset_n_i  (reset_n_i),
-        .addr_i     (apb_twiddle_wr ? apb_twiddle_addr : mem_idx),
-        .wdata_i    (apb_twiddle_wr ? pwdata_i         : mem_data_i),
-        .write_en_i (apb_twiddle_wr | mem_write_i),
-        .rdata_o    (mem_data_o)
+        .clk_i         (clk_i),
+        .reset_n_i     (reset_n_i),
+        .addr_i        (apb_twiddle_wr ? apb_twiddle_addr : mem_idx),
+        .wdata_i       (apb_twiddle_wr ? pwdata_i         : mem_data_i),
+        .write_en_i    (apb_twiddle_wr | mem_write_i),
+        .rdata_o       (mem_data_o),
+        .sram_clk_o    (sram_clk_o),
+        .sram_addr_o   (sram_addr_o),
+        .sram_wdata_o  (sram_wdata_o),
+        .sram_ben_o    (sram_ben_o),
+        .sram_rwb_o    (sram_rwb_o),
+        .sram_en_o     (sram_en_o),
+        .sram_rdata0_i (sram_rdata0_i),
+        .sram_rdata1_i (sram_rdata1_i)
     );
     `endif
     

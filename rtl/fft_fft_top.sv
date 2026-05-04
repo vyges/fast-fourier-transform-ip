@@ -56,7 +56,17 @@ module fft_top #(
     
     // Interrupt Interface
     output logic        fft_done_o,            // FFT completion interrupt
-    output logic        fft_error_o            // FFT error interrupt
+    output logic        fft_error_o,           // FFT error interrupt
+
+    // External SRAM bus (FFT_USE_SRAM_MACRO only) — passthrough to wrapper
+    output logic        sram_clk_o,
+    output logic [9:0]  sram_addr_o,
+    output logic [31:0] sram_wdata_o,
+    output logic [31:0] sram_ben_o,
+    output logic        sram_rwb_o,
+    output logic [1:0]  sram_en_o,
+    input  logic [31:0] sram_rdata0_i,
+    input  logic [31:0] sram_rdata1_i
 );
 
     // Internal signals
@@ -216,7 +226,15 @@ module fft_top #(
         .overflow_count_i(overflow_count_o),
         .last_overflow_stage_i(last_overflow_stage_o),
         .max_overflow_magnitude_i(max_overflow_magnitude_o),
-        .int_status_i(int_status_o)
+        .int_status_i(int_status_o),
+        .sram_clk_o(sram_clk_o),
+        .sram_addr_o(sram_addr_o),
+        .sram_wdata_o(sram_wdata_o),
+        .sram_ben_o(sram_ben_o),
+        .sram_rwb_o(sram_rwb_o),
+        .sram_en_o(sram_en_o),
+        .sram_rdata0_i(sram_rdata0_i),
+        .sram_rdata1_i(sram_rdata1_i)
     );
 
     // Generate interrupt outputs

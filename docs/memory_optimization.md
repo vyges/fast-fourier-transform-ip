@@ -161,6 +161,19 @@ endcase
 - **OpenROAD**: Compatible with synthesis attributes
 - **Memory Compilers**: Can generate optimized memory macros
 
+## ASIC Memory Implementation: Wrapper-Bus Pattern
+
+For ASIC targets, the IP's preferred memory implementation is the **wrapper-bus pattern**, activated by `+define+FFT_USE_SRAM_MACRO`. Synthesis attributes such as `(* ram_style = "block" *)` are honoured by FPGA flows but ignored by Yosys + ASIC tooling — relying on inference for ASIC produces a flop-array result. The wrapper-bus pattern resolves this by replacing the inferred array with a thin `fft_data_sram` wrapper that exposes eight bus signals at the IP top level. The SoC integrator instantiates two 1024×32 SRAM banks at the user-project-wrapper level and connects them to the bus.
+
+Properties of the wrapper-bus pattern:
+
+- **PDK-agnostic IP:** the IP repository contains no PDK-specific macro instances. The same RTL hardens against sky130, gf180mcu, or any commercial PDK by supplying a matching `fft_data_sram` model and SRAM macro at the SoC level.
+- **Floorplan locality:** SRAM bus pins cluster on the NORTH edge (`flow/openlane/pin_order.cfg`), so the SoC integrator can place SRAM banks directly above the FFT macro for short horizontal routes.
+- **Standalone hardenable:** the IP hardens by itself with a black-box `fft_data_sram` model, allowing DRC/LVS sign-off without committing to a specific SRAM macro.
+- **Default mode preserved:** when the define is omitted, `fft_memory_interface.sv` falls back to the BRAM-inferred behavioural array (FPGA / simulation path), and the SRAM bus outputs are tied off internally.
+
+The bus port list is documented in the project `README.md` ("Memory Topology") and `vyges-metadata.json`.
+
 ## Testing and Validation
 
 ### 1. Synthesis Testing

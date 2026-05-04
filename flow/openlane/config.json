@@ -1,0 +1,56 @@
+{
+    "DESIGN_NAME": "fft_top",
+    "VERILOG_FILES": [
+        "dir::../../rtl/fft_fft_top.sv",
+        "dir::../../rtl/fft_fft_engine.sv",
+        "dir::../../rtl/fft_fft_control.sv",
+        "dir::../../rtl/fft_memory_interface.sv",
+        "dir::../../rtl/fft_rescale_unit.sv",
+        "dir::../../rtl/fft_scale_factor_tracker.sv",
+        "dir::../../rtl/fft_twiddle_rom.sv"
+    ],
+    "VERILOG_DEFINES": [
+        "FFT_USE_SRAM_MACRO"
+    ],
+    "VERILOG_INCLUDE_DIRS": [
+        "dir::../../rtl"
+    ],
+    "SYNTH_FLAT_TOP": false,
+    "CLOCK_PORT": "clk_i",
+    "CLOCK_PERIOD": 25.0,
+    "RUN_LINTER": false,
+    "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
+    "pdk::sky130A": {
+        "FP_SIZING": "absolute",
+        "DIE_AREA": "0 0 1500 1500",
+        "FP_CORE_UTIL": 30,
+        "PL_TARGET_DENSITY_PCT": 35,
+        "MAX_FANOUT_CONSTRAINT": 6,
+        "MAX_TRANSITION_CONSTRAINT": 1.0,
+        "RT_MAX_LAYER": "met5",
+        "GRT_ALLOW_CONGESTION": true,
+        "SYNTH_STRATEGY": "DELAY 0",
+        "PL_RESIZER_SETUP_SLACK_MARGIN": 0.4,
+        "PL_RESIZER_HOLD_SLACK_MARGIN": 2.0,
+        "PL_RESIZER_HOLD_MAX_BUFFER_PCT": 80,
+        "GRT_RESIZER_SETUP_SLACK_MARGIN": 0.2,
+        "GRT_RESIZER_HOLD_SLACK_MARGIN": 2.0,
+        "GRT_RESIZER_HOLD_MAX_BUFFER_PCT": 80,
+        "GRT_RESIZER_FIX_HOLD_FIRST": true,
+        "CTS_CLK_MAX_WIRE_LENGTH": 800,
+        "CTS_MAX_SLEW": 0.5,
+        "DPL_CELL_PADDING": 2,
+        "GPL_CELL_PADDING": 2,
+        "RUN_HEURISTIC_DIODE_INSERTION": true,
+        "HEURISTIC_ANTENNA_THRESHOLD": 110,
+        "RUN_ANTENNA_REPAIR": true,
+        "RUN_POST_GRT_DESIGN_REPAIR": true,
+        "RUN_POST_GRT_RESIZER_TIMING": true,
+        "MAGIC_DRC_USE_GDS": false,
+        "FP_PDN_MULTILAYER": true,
+        "RUN_IRDROP_REPORT": false,
+        "ERROR_ON_MAGIC_DRC": false,
+        "ERROR_ON_LVS_ERROR": false,
+        "MAGIC_CAPTURE_ERRORS": false
+    }
+}

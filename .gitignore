@@ -380,6 +380,7 @@ gh-pages/
 !*/config.json
 !*/config.yaml
 !*/config.yml
+!flow/openlane/config.json
 
 README_run_ubuntu.md
 run_ubuntu.sh

@@ -344,6 +344,37 @@ Rescale & Write:                              ┌────┐
                                               │    │
 ```
 
+### 4.4 Physical Memory Implementation
+
+The 2048×32-bit data + twiddle store has two physical implementations, selected by a compile-time `define`. The logical memory architecture (Sections 4.1–4.3) is identical in both modes — only the underlying storage element changes.
+
+#### Default mode (FPGA / simulation)
+
+A behavioural array tagged with `(* ram_style = "block" *)` for synthesis-tool BRAM inference. Verilator and commercial FPGA tool-chains both consume this directly — no external memory connections are required, and the FFT macro is fully self-contained.
+
+#### Wrapper-bus mode (`+define+FFT_USE_SRAM_MACRO`)
+
+The behavioural array is replaced by a thin `fft_data_sram` wrapper that translates the internal 2048×32 access protocol into eight top-level SRAM bus signals. The IP itself instantiates no PDK-specific macros; instead, the SoC integrator places two 1024×32 SRAM banks at the user-project-wrapper level, adjacent to the FFT macro, and connects them to the bus.
+
+```
+                    ┌──────────────────┐    ┌──────────────────┐
+                    │  SRAM Bank 0     │    │  SRAM Bank 1     │
+                    │  1024 × 32       │    │  1024 × 32       │
+                    └────────┬─────────┘    └────────┬─────────┘
+                       rdata │                  rdata│
+              ┌──────────────┴──────────────────────┴────────┐
+              │  shared addr / wdata / ben / rwb / clk       │
+              │  per-bank en[1:0]                            │
+              └──────────────────────┬───────────────────────┘
+                                     │ NORTH-edge SRAM bus
+                              ┌──────┴───────┐
+                              │   FFT Macro  │
+                              │   (fft_top)  │
+                              └──────────────┘
+```
+
+This pattern keeps PDK-specific timing and area characteristics out of the IP, allows SoC-level floorplanning to position the macros for short routes, and enables the IP to harden standalone with a black-box `fft_data_sram` model. The bus port list and pin-clustering convention are documented in `README.md` ("Memory Topology") and `vyges-metadata.json`.
+
 ## 5. Twiddle Factor Generation
 
 ### 5.1 ROM Organization

@@ -69,36 +69,40 @@ This number is **not meaningful** as an area estimate. See below.
 
 ---
 
-## Twiddle ROM and Yosys SRAM inference
+## Memory inference and the wrapper-bus pattern
 
-`twiddle_rom.sv` has `(* rom_style = "block" *)` synthesis attributes, which are **Xilinx Vivado
-attributes** — they are ignored by Yosys. Without an explicit sky130 SRAM macro instantiation,
-Yosys synthesizes the 1024-entry × 16-bit ROM as constant combinational logic, producing
-~190K cells.
+Yosys does not honour `(* ram_style = "block" *)` or `(* rom_style = "block" *)` synthesis
+attributes — those are **Xilinx Vivado** directives. With Yosys alone, the 2048×32-bit data
+store and the 1024×16-bit twiddle ROM both synthesize as flop arrays or constant combinational
+logic, producing tens to hundreds of thousands of cells.
 
-**In production (OpenLane sky130 flow):**
-- The twiddle ROM (1024 × 16-bit = 2 KB) maps to a **sky130 OpenRAM SRAM macro**
-- SRAM macros are not counted in gate equivalents
-- Production logic area is `fft_engine` alone (~10K GE) plus SRAM macro footprint (~0.05 mm²)
+**FPGA flows handle the inferred storage natively:**
+- Xilinx Vivado: infers BRAM from `ram_style`/`rom_style` → ~2 BRAMs for the data array, ~4 BRAMs for the ROM
+- Intel Quartus: infers M20K blocks → ~2 blocks for each
+- Yosys generic: does **not** infer SRAM — only useful for gate-count sanity, not silicon
 
-**Synthesis flows that correctly handle the ROM:**
-- Xilinx Vivado: infers BRAM from `(* rom_style = "block" *)` → ~4 BRAMs
-- Intel Quartus: infers M20K blocks → ~2 blocks
-- OpenLane sky130: use an explicit `sky130_sram_1kbyte_1rw1r_32x256_8` or equivalent macro
-- Yosys generic: does NOT infer SRAM → must use `memory_bram` pass with sky130 tech map
+**ASIC flows use the wrapper-bus pattern.** When `FFT_USE_SRAM_MACRO` is defined,
+`fft_memory_interface.sv` swaps the inferred array for a thin `fft_data_sram` wrapper that
+exposes the SRAM bus on the IP's top-level boundary. The SoC integrator places two 1024×32
+SRAM banks (any macro matching `bank_depth × data_width`) at the user-project-wrapper level and
+connects them to the bus. Pin clustering on the NORTH edge (`flow/openlane/pin_order.cfg`)
+keeps the routes short. The IP itself contains no PDK-specific macro instances and hardens
+against any PDK with a matching macro.
 
 ---
 
-## Correct area breakdown for SoC integration
+## Area breakdown for SoC integration
 
-When integrating into a sky130 SoC:
+When integrating into an ASIC SoC with the wrapper-bus pattern:
 
 | Component | Area | Source |
 |---|---|---|
 | `fft_engine` logic | ~36,724 μm² (~10K GE) | Yosys measured |
-| Twiddle ROM (2KB SRAM macro) | ~TBD (sky130 SRAM characterization) | OpenRAM macro |
-| `fft_control`, `memory_interface` | ~est. 2,000 μm² | Estimate |
-| Total (logic only, excl. SRAM) | **~38,700 μm²** | |
+| `fft_control`, `fft_memory_interface` (sans macros) | ~est. 2,000 μm² | Estimate |
+| Total (logic only, excludes SRAM) | **~38,700 μm²** | |
+| 2× SRAM bank (instantiated by SoC at wrapper level) | per-PDK macro datasheet | external |
+
+The data-array and twiddle-ROM contents share the same 2048×32 store and are both backed by the SoC-supplied SRAM banks; firmware loads twiddle factors into the upper half of the address range via the APB twiddle-write window before asserting `FFT_CTRL[0]=start`.
 
 ---
 

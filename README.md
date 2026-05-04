@@ -165,6 +165,28 @@ make drc
 - **Target Area:** < 50K gates
 - **Power Target:** < 50 mW
 
+### Memory Topology
+
+The IP supports two memory implementations, selected at compile time:
+
+- **Default (FPGA / simulation):** an inferred 2048×32 RAM array (`ram_style = "block"` for Xilinx/Intel BRAM inference). No external connections required.
+- **ASIC with hard SRAM (`+define+FFT_USE_SRAM_MACRO`):** the IP exposes an SRAM port bus on its top-level boundary and the SoC integrator instantiates two 1024×32 SRAM banks as siblings of the FFT macro at the wrapper level. The IP itself contains no PDK-specific macro instances.
+
+In wrapper-bus mode the following ports are exposed on `fft_top` (and on the `fft_ctrl_tlul` TL-UL wrapper, if used):
+
+| Port            | Dir | Width | Notes                          |
+|-----------------|-----|-------|--------------------------------|
+| `sram_clk_o`    | out | 1     | Bank clock                     |
+| `sram_rwb_o`    | out | 1     | 1 = read, 0 = write            |
+| `sram_en_o`     | out | 2     | Per-bank enable (bit 0 = bank 0) |
+| `sram_addr_o`   | out | 10    | Word address (1024 deep)       |
+| `sram_wdata_o`  | out | 32    | Write data                     |
+| `sram_ben_o`    | out | 32    | Bit-enable mask                |
+| `sram_rdata0_i` | in  | 32    | Read data from bank 0          |
+| `sram_rdata1_i` | in  | 32    | Read data from bank 1          |
+
+The `flow/openlane/pin_order.cfg` clusters these pins on the NORTH edge so SRAM banks placed above the FFT macro route cleanly into the bus.
+
 ## FPGA Flow
 
 ### Supported Families

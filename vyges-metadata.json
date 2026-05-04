@@ -14,7 +14,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-04-24T18:23:41Z",
+  "updated": "2026-05-04T15:24:44Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -619,6 +619,24 @@
         "bank_depth": 512,
         "data_width": 32,
         "wrapper_module": "fft_data_sram"
+      },
+      "sram_bus": {
+        "bank_count": 2,
+        "bank_depth": 1024,
+        "data_width": 32,
+        "macro_hint": "CF_SRAM_1024x32",
+        "define": "FFT_USE_SRAM_MACRO",
+        "pin_cluster_edge": "N",
+        "bus_ports": [
+          {"name": "sram_clk_o",    "direction": "output", "width": 1,  "role": "clk"},
+          {"name": "sram_rwb_o",    "direction": "output", "width": 1,  "role": "rwb"},
+          {"name": "sram_en_o",     "direction": "output", "width": 2,  "role": "en"},
+          {"name": "sram_addr_o",   "direction": "output", "width": 10, "role": "addr"},
+          {"name": "sram_wdata_o",  "direction": "output", "width": 32, "role": "wdata"},
+          {"name": "sram_ben_o",    "direction": "output", "width": 32, "role": "ben"},
+          {"name": "sram_rdata0_i", "direction": "input",  "width": 32, "role": "rdata", "bank": 0},
+          {"name": "sram_rdata1_i", "direction": "input",  "width": 32, "role": "rdata", "bank": 1}
+        ]
       }
     }
   }

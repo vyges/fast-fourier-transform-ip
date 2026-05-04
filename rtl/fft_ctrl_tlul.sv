@@ -38,7 +38,18 @@ module fft_ctrl_tlul
 
   // FFT interrupt outputs (to top-level / PLIC)
   output logic fft_done_o,
-  output logic fft_error_o
+  output logic fft_error_o,
+
+  // External SRAM bus (FFT_USE_SRAM_MACRO only) — wired by user_project_wrapper
+  // to two CF_SRAM_1024x32 banks instantiated as sibling macros.
+  output logic        sram_clk_o,
+  output logic [9:0]  sram_addr_o,
+  output logic [31:0] sram_wdata_o,
+  output logic [31:0] sram_ben_o,
+  output logic        sram_rwb_o,
+  output logic [1:0]  sram_en_o,
+  input  logic [31:0] sram_rdata0_i,
+  input  logic [31:0] sram_rdata1_i
 );
 
   // -------------------------------------------------------------------------
@@ -196,7 +207,17 @@ module fft_ctrl_tlul
 
     // Interrupts
     .fft_done_o   (fft_done_o),
-    .fft_error_o  (fft_error_o)
+    .fft_error_o  (fft_error_o),
+
+    // External SRAM bus passthrough
+    .sram_clk_o    (sram_clk_o),
+    .sram_addr_o   (sram_addr_o),
+    .sram_wdata_o  (sram_wdata_o),
+    .sram_ben_o    (sram_ben_o),
+    .sram_rwb_o    (sram_rwb_o),
+    .sram_en_o     (sram_en_o),
+    .sram_rdata0_i (sram_rdata0_i),
+    .sram_rdata1_i (sram_rdata1_i)
   );
 
 endmodule
