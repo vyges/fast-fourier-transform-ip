@@ -1,19 +1,19 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-04-24T18:32:03.759168",
+    "analysis_date": "2026-05-04T15:47:37.200306",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 164,
+    "total_files": 156,
     "total_directories": 54,
     "file_types": {
-      ".md": 38,
-      "no_extension": 39,
-      ".sh": 18,
-      ".json": 2,
+      ".md": 35,
+      "no_extension": 38,
+      ".sh": 15,
+      ".json": 3,
       ".test": 1,
       ".py": 13,
       ".sv": 28,
@@ -22,8 +22,8 @@
       ".txt": 9,
       ".vh": 2,
       ".pcf": 1,
-      ".tcl": 6,
       ".cfg": 1,
+      ".tcl": 4,
       ".ys": 2
     },
     "directory_structure": {
@@ -387,17 +387,9 @@
       },
       "flow/openlane": {
         "files": [
-          "quick_start.sh",
           "README.md",
-          "run_openlane_fft.sh",
-          "test_fft_integration.sh",
-          "config.tcl",
-          "config_gf180mcu.tcl",
-          "Makefile",
-          "pin_order.cfg",
-          "REMOTE_INTEGRATION_GUIDE.md",
-          "OPENLANE_INTEGRATION.md",
-          "configuration.md"
+          "config.json",
+          "pin_order.cfg"
         ],
         "subdirectories": []
       },
@@ -523,18 +515,18 @@
   },
   "code_metrics": {
     "rtl_files": 28,
-    "rtl_lines": 5784,
+    "rtl_lines": 5849,
     "rtl_modules": 39,
     "testbench_files": 17,
     "testbench_lines": 4419,
-    "constraint_files": 7,
-    "constraint_lines": 636,
+    "constraint_files": 5,
+    "constraint_lines": 450,
     "script_files": 7,
     "script_lines": 3196
   },
   "documentation_metrics": {
     "documentation_files": 11,
-    "documentation_lines": 6221,
+    "documentation_lines": 6313,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
