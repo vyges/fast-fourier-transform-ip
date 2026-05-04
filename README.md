@@ -422,6 +422,6 @@ For detailed licensing information, see [LICENSE_SCOPE.md](LICENSE_SCOPE.md).
 ## Support
 
 For support and questions:
-- **Email:** team@vyges.com
+- **Contact:** [vyges.com/contact](https://vyges.com/contact)
 - **GitHub:** [vyges](https://github.com/vyges)
 - **Documentation:** [docs/](docs/)
