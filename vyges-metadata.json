@@ -14,7 +14,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-05-04T15:24:44Z",
+  "updated": "2026-05-08T20:11:57Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -611,6 +611,51 @@
               "direction": "input"
             }
           ]
+        },
+        {
+          "name": "sram_external",
+          "protocol": "simple_mem",
+          "reason": "FFT_USE_SRAM_MACRO is undefined on FPGA target; the FFT memory_interface ties sram_* outputs internally. Tie at instance to satisfy synth_warning_gate Synth 8-7071 (unconnected outputs).",
+          "targets": [
+            "fpga",
+            "sim"
+          ],
+          "tieoff_ports": [
+            {
+              "name": "sram_clk_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_addr_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_wdata_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_ben_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_rwb_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_en_o",
+              "direction": "output"
+            },
+            {
+              "name": "sram_rdata0_i",
+              "value": "32'b0",
+              "direction": "input"
+            },
+            {
+              "name": "sram_rdata1_i",
+              "value": "32'b0",
+              "direction": "input"
+            }
+          ]
         }
       ],
       "sram": {
@@ -628,14 +673,56 @@
         "define": "FFT_USE_SRAM_MACRO",
         "pin_cluster_edge": "N",
         "bus_ports": [
-          {"name": "sram_clk_o",    "direction": "output", "width": 1,  "role": "clk"},
-          {"name": "sram_rwb_o",    "direction": "output", "width": 1,  "role": "rwb"},
-          {"name": "sram_en_o",     "direction": "output", "width": 2,  "role": "en"},
-          {"name": "sram_addr_o",   "direction": "output", "width": 10, "role": "addr"},
-          {"name": "sram_wdata_o",  "direction": "output", "width": 32, "role": "wdata"},
-          {"name": "sram_ben_o",    "direction": "output", "width": 32, "role": "ben"},
-          {"name": "sram_rdata0_i", "direction": "input",  "width": 32, "role": "rdata", "bank": 0},
-          {"name": "sram_rdata1_i", "direction": "input",  "width": 32, "role": "rdata", "bank": 1}
+          {
+            "name": "sram_clk_o",
+            "direction": "output",
+            "width": 1,
+            "role": "clk"
+          },
+          {
+            "name": "sram_rwb_o",
+            "direction": "output",
+            "width": 1,
+            "role": "rwb"
+          },
+          {
+            "name": "sram_en_o",
+            "direction": "output",
+            "width": 2,
+            "role": "en"
+          },
+          {
+            "name": "sram_addr_o",
+            "direction": "output",
+            "width": 10,
+            "role": "addr"
+          },
+          {
+            "name": "sram_wdata_o",
+            "direction": "output",
+            "width": 32,
+            "role": "wdata"
+          },
+          {
+            "name": "sram_ben_o",
+            "direction": "output",
+            "width": 32,
+            "role": "ben"
+          },
+          {
+            "name": "sram_rdata0_i",
+            "direction": "input",
+            "width": 32,
+            "role": "rdata",
+            "bank": 0
+          },
+          {
+            "name": "sram_rdata1_i",
+            "direction": "input",
+            "width": 32,
+            "role": "rdata",
+            "bank": 1
+          }
         ]
       }
     }
