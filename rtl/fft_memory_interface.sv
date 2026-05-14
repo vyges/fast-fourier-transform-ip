@@ -110,8 +110,28 @@ module memory_interface #(
     output logic        sram_rwb_o,
     output logic [1:0]  sram_en_o,
     input  logic [31:0] sram_rdata0_i,
-    input  logic [31:0] sram_rdata1_i
+    input  logic [31:0] sram_rdata1_i,
+
+    // Generic bus master (FFT_USE_BUS_MASTER only) — wrapped by SoC-side
+    // bus protocol adapter (TL-UL, AXI-Lite, Wishbone, ...). See
+    // docs/bus-master-mode-design.md for the contract.
+    output logic        mem_req_valid_o,
+    input  logic        mem_req_ready_i,
+    output logic [10:0] mem_req_addr_o,
+    output logic        mem_req_we_o,
+    output logic [31:0] mem_req_wdata_o,
+    output logic [3:0]  mem_req_be_o,
+    input  logic        mem_rsp_valid_i,
+    input  logic [31:0] mem_rsp_rdata_i,
+    input  logic        mem_rsp_err_i
 );
+
+    // Compile-time mutual exclusion check on memory backend modes.
+`ifdef FFT_USE_SRAM_MACRO
+  `ifdef FFT_USE_BUS_MASTER
+    initial $fatal(1, "FFT memory backend: FFT_USE_SRAM_MACRO and FFT_USE_BUS_MASTER are mutually exclusive defines");
+  `endif
+`endif
 
     // Internal registers
     logic [31:0] fft_ctrl_reg;
@@ -318,7 +338,12 @@ module memory_interface #(
     //   - ASIC (any PDK): define FFT_USE_SRAM_MACRO at compile time to instantiate
     //     fft_data_sram, a technology-specific wrapper you provide in your SoC repo.
     //     The wrapper maps the 2048x32-bit interface to the PDK's hard SRAM macros.
+    //   - SoCs with a unified memory subsystem: define FFT_USE_BUS_MASTER instead;
+    //     working memory is reached via a generic bus master interface (see
+    //     docs/bus-master-mode-design.md). The FF / SRAM-bus blocks below are
+    //     skipped in that mode.
     //
+    `ifndef FFT_USE_BUS_MASTER
     `ifndef FFT_USE_SRAM_MACRO
     // ── Generic: FF-based / BRAM-inferred ────────────────────────────────────
     // External SRAM bus is unused in FF-based mode — tie off outputs.
@@ -386,8 +411,87 @@ module memory_interface #(
         .sram_rdata0_i (sram_rdata0_i),
         .sram_rdata1_i (sram_rdata1_i)
     );
-    `endif
-    
+    `endif // FFT_USE_SRAM_MACRO
+    `endif // !FFT_USE_BUS_MASTER
+
+`ifdef FFT_USE_BUS_MASTER
+    // ── Bus master mode: working memory lives behind a SoC-supplied bus slave ─
+    // The integrator wraps the master ports below with a thin protocol
+    // adapter (TL-UL, AXI-Lite, Wishbone, ...). See
+    // docs/bus-master-mode-design.md for the contract.
+    //
+    // Engine-facing memory interface signals (mem_addr_i / mem_data_i /
+    // mem_write_i / mem_data_o / mem_ready_o) are driven by fft_bus_master
+    // exactly as in the FF / SRAM-bus modes: address presented one cycle,
+    // read data + ready returned when the bus response arrives. When the
+    // bus is busy (outstanding budget saturated), mem_ready_o stays low
+    // and the engine pipeline stalls.
+    logic [10:0] bus_eng_addr;
+    logic        bus_eng_we;
+    logic        bus_eng_req;
+    logic [31:0] bus_eng_wdata;
+    logic        bus_eng_rvalid;
+    logic        bus_eng_err;
+
+    // Drive the bus master from the muxed engine / APB twiddle write stream
+    // (same priority muxing as the SRAM-bus mode above).
+    assign bus_eng_addr  = apb_twiddle_wr ? apb_twiddle_addr : mem_idx;
+    assign bus_eng_wdata = apb_twiddle_wr ? pwdata_i         : mem_data_i;
+    assign bus_eng_we    = apb_twiddle_wr | mem_write_i;
+    // Engine signals memory activity by either writing or by presenting an
+    // address change. Conservative: issue a bus access on every engine cycle
+    // where there's a write, or on every read attempt (the fft_bus_master
+    // backpressures via mem_ready_o when budget is exhausted).
+    assign bus_eng_req   = bus_eng_we | ~bus_eng_err;
+
+    // mem_data_o gets the latest read response; the bus master pulses
+    // bus_eng_rvalid for one cycle per response. mem_ready_o tracks the
+    // bus master's eng_ready_o (asserted when a request can fire).
+    logic [31:0] bus_rdata_q;
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            bus_rdata_q <= 32'h0;
+        end else if (bus_eng_rvalid) begin
+            bus_rdata_q <= mem_rsp_rdata_i;
+        end
+    end
+    assign mem_data_o = bus_rdata_q;
+
+    fft_bus_master #(
+        .ADDR_WIDTH       (11),
+        .DATA_WIDTH       (32),
+        .BE_WIDTH         (4),
+        .MAX_OUTSTANDING  (4),
+        .SCRATCHPAD_DEPTH (0)
+    ) u_fft_bus_master (
+        .clk_i           (clk_i),
+        .reset_n_i       (reset_n_i),
+        .eng_addr_i      (bus_eng_addr),
+        .eng_wdata_i     (bus_eng_wdata),
+        .eng_we_i        (bus_eng_we),
+        .eng_req_i       (bus_eng_req),
+        .eng_rdata_o     (/* unused — sampled into bus_rdata_q above */),
+        .eng_ready_o     (mem_ready_o),
+        .eng_rvalid_o    (bus_eng_rvalid),
+        .eng_err_o       (bus_eng_err),
+        .mem_req_valid_o (mem_req_valid_o),
+        .mem_req_ready_i (mem_req_ready_i),
+        .mem_req_addr_o  (mem_req_addr_o),
+        .mem_req_we_o    (mem_req_we_o),
+        .mem_req_wdata_o (mem_req_wdata_o),
+        .mem_req_be_o    (mem_req_be_o),
+        .mem_rsp_valid_i (mem_rsp_valid_i),
+        .mem_rsp_rdata_i (mem_rsp_rdata_i),
+        .mem_rsp_err_i   (mem_rsp_err_i)
+    );
+`else
+    // Bus master ports are unused — tie outputs off.
+    assign mem_req_valid_o = 1'b0;
+    assign mem_req_addr_o  = 11'h0;
+    assign mem_req_we_o    = 1'b0;
+    assign mem_req_wdata_o = 32'h0;
+    assign mem_req_be_o    = 4'h0;
+
     // Memory ready signal (pipelined for better performance)
     logic mem_ready_reg;
     always_ff @(posedge clk_i or negedge reset_n_i) begin
@@ -398,6 +502,7 @@ module memory_interface #(
         end
     end
     assign mem_ready_o = mem_ready_reg;
+`endif
 
     //=============================================================================
     // Security Assertions - Dual Mode (Yosys + Full SystemVerilog)
