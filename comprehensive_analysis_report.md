@@ -1,7 +1,7 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2026-05-14 07:26:25
+**Generated:** 2026-05-14 07:36:46
 **Project:** 
 
 ## 📊 Code KPIs Summary
@@ -10,7 +10,7 @@
 
 ### Code Metrics
 - **RTL Files:** 29
-- **RTL Lines:** 6,092
+- **RTL Lines:** 6,114
 - **RTL Modules:** 40
 - **Testbench Files:** 17
 - **Testbench Lines:** 4,419
