@@ -1,9 +1,10 @@
 {
   "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
   "x-version": "1.0.0",
+  "template": "vyges-ip-template@1.0.0",
   "name": "fast-fourier-transform-ip",
-  "version": "1.0.0",
-  "description": "Configurable 1024-point radix-2 decimation-in-frequency FFT accelerator with APB slave control interface, AXI data port (Phase 2), 2048x32-bit internal memory (data + twiddle), pipelined butterfly engine, auto-rescaling, and done/error interrupts. 16-bit fixed-point I/Q. Vyges-original IP.",
+  "version": "1.1.0",
+  "description": "Configurable 1024-point radix-2 decimation-in-frequency FFT accelerator with APB slave control interface, AXI data port (Phase 2), 2048x32-bit working memory (data + twiddle), pipelined butterfly engine, auto-rescaling, and done/error interrupts. 16-bit fixed-point I/Q. Three memory backend modes selectable by compile-time define: FF/BRAM (default), external SRAM bus (FFT_USE_SRAM_MACRO), and generic bus master (FFT_USE_BUS_MASTER) for SoCs with a unified memory subsystem. Vyges-original IP.",
   "license": "Apache-2.0",
   "maturity": "production",
   "target": [
@@ -14,7 +15,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-05-08T20:11:57Z",
+  "updated": "2026-05-14T07:26:05Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -319,6 +320,7 @@
     "rtl/fft_fft_engine.sv",
     "rtl/fft_fft_control.sv",
     "rtl/fft_memory_interface.sv",
+    "rtl/fft_bus_master.sv",
     "rtl/fft_rescale_unit.sv",
     "rtl/fft_scale_factor_tracker.sv",
     "rtl/fft_twiddle_rom.sv"
@@ -722,6 +724,70 @@
             "width": 32,
             "role": "rdata",
             "bank": 1
+          }
+        ]
+      },
+      "bus_master": {
+        "mem_depth": 2048,
+        "mem_data_width": 32,
+        "addr_width": 11,
+        "define": "FFT_USE_BUS_MASTER",
+        "protocol_neutral": true,
+        "description": "Generic bus master interface for SoCs with a unified memory subsystem. The integrator wraps these ports with a thin protocol adapter (TL-UL, AXI-Lite, Wishbone, OBI). See docs/bus-master-mode-design.md for the contract.",
+        "bus_ports": [
+          {
+            "name": "mem_req_valid_o",
+            "direction": "output",
+            "width": 1,
+            "role": "req_valid"
+          },
+          {
+            "name": "mem_req_ready_i",
+            "direction": "input",
+            "width": 1,
+            "role": "req_ready"
+          },
+          {
+            "name": "mem_req_addr_o",
+            "direction": "output",
+            "width": 11,
+            "role": "addr"
+          },
+          {
+            "name": "mem_req_we_o",
+            "direction": "output",
+            "width": 1,
+            "role": "we"
+          },
+          {
+            "name": "mem_req_wdata_o",
+            "direction": "output",
+            "width": 32,
+            "role": "wdata"
+          },
+          {
+            "name": "mem_req_be_o",
+            "direction": "output",
+            "width": 4,
+            "role": "be"
+          },
+          {
+            "name": "mem_rsp_valid_i",
+            "direction": "input",
+            "width": 1,
+            "role": "rsp_valid"
+          },
+          {
+            "name": "mem_rsp_rdata_i",
+            "direction": "input",
+            "width": 32,
+            "role": "rdata"
+          },
+          {
+            "name": "mem_rsp_err_i",
+            "direction": "input",
+            "width": 1,
+            "role": "rsp_err"
           }
         ]
       }
