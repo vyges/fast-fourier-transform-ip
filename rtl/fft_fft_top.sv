@@ -79,7 +79,17 @@ module fft_top #(
     output logic [3:0]  mem_req_be_o,
     input  logic        mem_rsp_valid_i,
     input  logic [31:0] mem_rsp_rdata_i,
-    input  logic        mem_rsp_err_i
+    input  logic        mem_rsp_err_i,
+
+    // Streaming bin output (active when FFT_USE_STREAM_OUT is defined;
+    // tied off otherwise). See docs/stream-out-mode-design.md for the
+    // protocol and the wrapper-scope wiring pattern.
+    output logic                              bin_valid_o,
+    input  logic                              bin_ready_i,
+    output logic [FFT_MAX_LENGTH_LOG2-1:0]    bin_index_o,
+    output logic                              bin_last_o,
+    output logic signed [FFT_DATA_WIDTH-1:0]  bin_re_o,
+    output logic signed [FFT_DATA_WIDTH-1:0]  bin_im_o
 );
 
     // Internal signals
@@ -105,12 +115,30 @@ module fft_top #(
     logic        saturation_en_i;
     logic        overflow_detect_i;
 
-    // Memory interface signals
+    // Memory interface signals (driven by the FFT engine during compute;
+    // optionally overridden by the bin streamer post-fft_done — see the
+    // FFT_USE_STREAM_OUT block below).
     logic [15:0] mem_addr_i;
     logic [31:0] mem_data_i;
     logic        mem_write_i;
     logic [31:0] mem_data_o;
     logic        mem_ready_o;
+
+    // Pre-mux engine memory outputs (renamed targets for the engine's
+    // mem_addr_i / mem_write_i ports so the streamer can override them).
+    logic [15:0] engine_mem_addr;
+    logic        engine_mem_write;
+
+    // Bin streamer signal declarations — guarded so they exist only in
+    // streaming builds. The else-branch below ties off any signals the
+    // post-streamer mux assigns to the shared mem ports.
+`ifdef FFT_USE_STREAM_OUT
+    logic        stream_enable;
+    logic        streamer_active;
+    logic [15:0] streamer_mem_addr;
+    logic        fft_done_pulse;
+    logic        fft_done_q;
+`endif
 
     // Buffer control signals
     logic        buffer_swap_i;
@@ -166,9 +194,9 @@ module fft_top #(
         .rounding_mode_i(rounding_mode_i),
         .saturation_en_i(saturation_en_i),
         .overflow_detect_i(overflow_detect_i),
-        .mem_addr_i(mem_addr_i),
+        .mem_addr_i(engine_mem_addr),
         .mem_data_i(mem_data_i),
-        .mem_write_i(mem_write_i),
+        .mem_write_i(engine_mem_write),
         .mem_data_o(mem_data_o),
         .mem_ready_o(mem_ready_o),
         .scale_factor_o(scale_factor_o),
@@ -228,6 +256,11 @@ module fft_top #(
         .buffer_swap_o(buffer_swap_i),
         .buffer_sel_o(buffer_sel_i),
         .int_enable_o(int_enable_i),
+`ifdef FFT_USE_STREAM_OUT
+        .stream_enable_o(stream_enable),
+`else
+        .stream_enable_o(/* unused: FFT_USE_STREAM_OUT not defined */),
+`endif
         .fft_busy_i(fft_busy_o),
         .fft_done_i(fft_done_o_internal),
         .fft_error_i(fft_error_o_internal),
@@ -262,6 +295,67 @@ module fft_top #(
     // Generate interrupt outputs
     assign fft_done_o = fft_done_o_internal & int_enable_i[0];
     assign fft_error_o = fft_error_o_internal & int_enable_i[1];
+
+    // ── Bin streamer integration ────────────────────────────────────────
+    //
+    // Convert the level-held fft_done_o_internal into a single-cycle pulse
+    // for the streamer's IDLE → REQ trigger. Mux the engine's memory port
+    // address / write strobe against the streamer's address; data and
+    // ready paths are shared (the engine is in its done state while the
+    // streamer runs, so there is no contention on the response path).
+
+`ifdef FFT_USE_STREAM_OUT
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) fft_done_q <= 1'b0;
+        else            fft_done_q <= fft_done_o_internal;
+    end
+    assign fft_done_pulse = fft_done_o_internal & ~fft_done_q;
+
+    // Bin streamer instance — guarded so non-streaming builds stay
+    // bit-identical to the legacy flow.
+    logic [FFT_MAX_LENGTH_LOG2:0] num_bins_for_streamer;
+    assign num_bins_for_streamer =
+        ({{FFT_MAX_LENGTH_LOG2{1'b0}}, 1'b1}) << fft_length_log2_i[$clog2(FFT_MAX_LENGTH_LOG2+1)-1:0];
+
+    fft_bin_streamer #(
+        .MAX_LENGTH_LOG2(FFT_MAX_LENGTH_LOG2),
+        .DATA_WIDTH     (FFT_DATA_WIDTH),
+        .INDEX_WIDTH    (FFT_MAX_LENGTH_LOG2),
+        .MEM_ADDR_WIDTH (16)
+    ) u_bin_streamer (
+        .clk_i             (clk_i),
+        .rst_ni            (reset_n_i),
+        .fft_done_pulse_i  (fft_done_pulse),
+        .stream_enable_i   (stream_enable),
+        .num_bins_i        (num_bins_for_streamer),
+        .mem_addr_o        (streamer_mem_addr),
+        .mem_read_o        (),  // streamer_active gates the mux directly
+        .mem_ready_i       (mem_ready_o),
+        .mem_data_i        (mem_data_o),
+        .streamer_active_o (streamer_active),
+        .bin_valid_o       (bin_valid_o),
+        .bin_ready_i       (bin_ready_i),
+        .bin_index_o       (bin_index_o),
+        .bin_last_o        (bin_last_o),
+        .bin_re_o          (bin_re_o),
+        .bin_im_o          (bin_im_o)
+    );
+
+    // Memory port mux: streamer wins when active.
+    assign mem_addr_i  = streamer_active ? streamer_mem_addr : engine_mem_addr;
+    assign mem_write_i = streamer_active ? 1'b0              : engine_mem_write;
+
+`else
+    // Non-streaming build: legacy flow. Engine drives the memory port
+    // directly and the top-level streaming ports are tied off.
+    assign mem_addr_i  = engine_mem_addr;
+    assign mem_write_i = engine_mem_write;
+    assign bin_valid_o = 1'b0;
+    assign bin_index_o = '0;
+    assign bin_last_o  = 1'b0;
+    assign bin_re_o    = '0;
+    assign bin_im_o    = '0;
+`endif
 
 endmodule
 

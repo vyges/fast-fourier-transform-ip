@@ -13,6 +13,7 @@ VERILOG_SOURCES := $(RTL)/fft_bin_streamer.sv
 
 EXTRA_ARGS += --trace --trace-structs --no-timing
 EXTRA_ARGS += -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND
+EXTRA_ARGS += +incdir+$(RTL)
 
 MODULE         ?= test_bin_streamer
 

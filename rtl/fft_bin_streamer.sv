@@ -20,6 +20,8 @@
 `ifndef FFT_BIN_STREAMER_SV
 `define FFT_BIN_STREAMER_SV
 
+`include "fft_timescale.vh"
+
 module fft_bin_streamer #(
   parameter int unsigned MAX_LENGTH_LOG2 = 12,
   parameter int unsigned DATA_WIDTH      = 16,

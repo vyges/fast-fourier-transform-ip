@@ -87,6 +87,7 @@ module memory_interface #(
     output logic        buffer_swap_o,
     output logic [1:0]  buffer_sel_o,
     output logic [7:0]  int_enable_o,
+    output logic        stream_enable_o,   // FFT_CTRL[8]: arm the bin streamer post-fft_done
     
     // Status Interface
     input  logic        fft_busy_i,
@@ -285,6 +286,10 @@ module memory_interface #(
     assign buffer_swap_o = fft_ctrl_reg[2];
     assign rescale_en_o = fft_ctrl_reg[4];
     assign scale_track_en_o = fft_ctrl_reg[5];
+    // FFT_CTRL[8] arms the post-completion bin streamer. Has no effect
+    // unless the design is compiled with FFT_USE_STREAM_OUT (in which
+    // case fft_top mirrors this bit to the streamer's stream_enable_i).
+    assign stream_enable_o = fft_ctrl_reg[8];
     
     assign fft_length_log2_o = fft_config_reg[11:0];
     assign rescale_mode_o = fft_config_reg[16];
