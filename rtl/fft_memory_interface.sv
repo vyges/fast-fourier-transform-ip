@@ -524,14 +524,13 @@ module memory_interface #(
         .mem_rsp_err_i   (mem_rsp_err_i)
     );
 `else
-    // Bus master ports are unused — tie outputs off.
-    assign mem_req_valid_o = 1'b0;
-    assign mem_req_addr_o  = 11'h0;
-    assign mem_req_we_o    = 1'b0;
-    assign mem_req_wdata_o = 32'h0;
-    assign mem_req_be_o    = 4'h0;
-
-    // Memory ready signal (pipelined for better performance)
+    // Bus master ports do not exist on the module port list when
+    // FFT_USE_BUS_MASTER is not defined (gated under `ifdef earlier in
+    // this file). The old tie-off assigns that targeted them are dead
+    // code in that build mode — removed to silence Yosys's
+    // "implicitly declared" errors under `default_nettype none.
+    //
+    // Memory ready signal (pipelined for better performance).
     logic mem_ready_reg;
     always_ff @(posedge clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
