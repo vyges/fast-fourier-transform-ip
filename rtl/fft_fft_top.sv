@@ -71,6 +71,7 @@ module fft_top #(
     // Generic bus master (FFT_USE_BUS_MASTER only) — passthrough to wrapper.
     // SoC integrator wraps these with a thin protocol adapter (TL-UL,
     // AXI-Lite, Wishbone, ...). See docs/bus-master-mode-design.md.
+`ifdef FFT_USE_BUS_MASTER
     output logic        mem_req_valid_o,
     input  logic        mem_req_ready_i,
     output logic [10:0] mem_req_addr_o,
@@ -80,6 +81,7 @@ module fft_top #(
     input  logic        mem_rsp_valid_i,
     input  logic [31:0] mem_rsp_rdata_i,
     input  logic        mem_rsp_err_i,
+`endif
 
     // Streaming bin output (active when FFT_USE_STREAM_OUT is defined;
     // tied off otherwise). See docs/stream-out-mode-design.md for the
@@ -280,7 +282,9 @@ module fft_top #(
         .sram_rwb_o(sram_rwb_o),
         .sram_en_o(sram_en_o),
         .sram_rdata0_i(sram_rdata0_i),
-        .sram_rdata1_i(sram_rdata1_i),
+        .sram_rdata1_i(sram_rdata1_i)
+`ifdef FFT_USE_BUS_MASTER
+        ,
         .mem_req_valid_o(mem_req_valid_o),
         .mem_req_ready_i(mem_req_ready_i),
         .mem_req_addr_o(mem_req_addr_o),
@@ -290,6 +294,7 @@ module fft_top #(
         .mem_rsp_valid_i(mem_rsp_valid_i),
         .mem_rsp_rdata_i(mem_rsp_rdata_i),
         .mem_rsp_err_i(mem_rsp_err_i)
+`endif
     );
 
     // Generate interrupt outputs

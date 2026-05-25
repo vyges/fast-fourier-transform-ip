@@ -111,11 +111,13 @@ module memory_interface #(
     output logic        sram_rwb_o,
     output logic [1:0]  sram_en_o,
     input  logic [31:0] sram_rdata0_i,
-    input  logic [31:0] sram_rdata1_i,
+    input  logic [31:0] sram_rdata1_i
 
     // Generic bus master (FFT_USE_BUS_MASTER only) — wrapped by SoC-side
     // bus protocol adapter (TL-UL, AXI-Lite, Wishbone, ...). See
     // docs/bus-master-mode-design.md for the contract.
+`ifdef FFT_USE_BUS_MASTER
+    ,
     output logic        mem_req_valid_o,
     input  logic        mem_req_ready_i,
     output logic [10:0] mem_req_addr_o,
@@ -125,6 +127,7 @@ module memory_interface #(
     input  logic        mem_rsp_valid_i,
     input  logic [31:0] mem_rsp_rdata_i,
     input  logic        mem_rsp_err_i
+`endif
 );
 
     // Compile-time mutual exclusion check on memory backend modes.
