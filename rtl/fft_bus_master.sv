@@ -27,8 +27,6 @@
 // design intent in their build configuration without re-eliding the
 // instance when the buffer lands.
 
-`default_nettype none
-
 module fft_bus_master #(
     parameter int unsigned ADDR_WIDTH       = 11,
     parameter int unsigned DATA_WIDTH       = 32,
@@ -134,5 +132,3 @@ module fft_bus_master #(
     assign eng_rvalid_o = mem_rsp_valid_i & ~mem_rsp_err_i;
 
 endmodule
-
-`default_nettype wire
