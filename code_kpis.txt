@@ -3,14 +3,14 @@ VYGES CODE KPIs ANALYSIS REPORT
 ============================================================
 
 📁 PROJECT: fast-fourier-transform-ip
-📅 Analysis Date: 2026-05-25T04:56:59.199524
+📅 Analysis Date: 2026-05-25T06:15:13.923031
 🔗 Git Status: dirty
 
 📊 OVERALL SCORE: 89.2/100
 
 💻 CODE METRICS:
    RTL Files: 30
-   RTL Lines: 6357
+   RTL Lines: 6353
    RTL Modules: 42
    Testbench Files: 18
    Testbench Lines: 4603
