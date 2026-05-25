@@ -1,16 +1,16 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-05-25T06:47:51.536667",
+    "analysis_date": "2026-05-25T07:56:02.104559",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 163,
+    "total_files": 164,
     "total_directories": 55,
     "file_types": {
-      ".md": 38,
+      ".md": 39,
       ".json": 3,
       "no_extension": 39,
       ".py": 14,
@@ -118,6 +118,7 @@
           "waveforms.md",
           "bus-master-mode-design.md",
           "api_reference.md",
+          "firmware-integration.md",
           "stream-out-mode-design.md",
           "design_specification.md",
           "architecture.md",
@@ -539,8 +540,8 @@
     "script_lines": 3196
   },
   "documentation_metrics": {
-    "documentation_files": 14,
-    "documentation_lines": 6931,
+    "documentation_files": 15,
+    "documentation_lines": 7144,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
