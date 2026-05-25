@@ -63,7 +63,11 @@ rtl/
 ├── scale_factor_tracker.sv # Scale factor tracking
 ├── memory_interface.sv     # Memory interface logic
 ├── fft_control.sv          # Control logic
-└── twiddle_rom.sv          # Twiddle factor ROM
+├── bin_streamer.sv         # FFT_USE_STREAM_OUT post-completion walker
+├── bus_master.sv           # FFT_USE_BUS_MASTER generic memory master
+└── twiddle_rom.sv          # DEPRECATED — dead code, retained for history.
+                            #   Twiddles are loaded by firmware at boot via
+                            #   APB writes. See docs/firmware-integration.md.
 ```
 
 ### Key Modules
@@ -350,6 +354,10 @@ void configure_fft_rescaling(void) {
 
 - [Design Specification](docs/design_specification.md) - Detailed design specification
 - [Architecture](docs/architecture.md) - Architectural details and implementation
+- [Firmware Integration Guide](docs/firmware-integration.md) - Host-side boot sequence (twiddle load, FFT_USE_APB_DATA sample window, register setup) and bring-up gotchas
+- [Integration Patterns](docs/integration-patterns.md) - SoC-side memory bus integration
+- [Stream-Out Mode Design](docs/stream-out-mode-design.md) - FFT_USE_STREAM_OUT post-completion bin streaming
+- [Bus-Master Mode Design](docs/bus-master-mode-design.md) - FFT_USE_BUS_MASTER memory access
 - [User Guide](docs/user_guide.md) - Integration and usage guide
 - [API Reference](docs/api_reference.md) - Register and interface specifications
 

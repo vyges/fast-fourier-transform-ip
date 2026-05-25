@@ -765,9 +765,12 @@ for (int i = 0; i < FFT_LENGTH; i++) {
            i, (int16_t)(data >> 16), (int16_t)(data & 0xFFFF));
 }
 
-// Check twiddle factor ROM
-uint32_t twiddle_test = read_memory(TWIDDLE_ROM_BASE);
-printf("Twiddle factor test: 0x%08X\n", twiddle_test);
+// Verify the twiddle table is loaded. The engine reads twiddles from
+// fft_memory[N/2..N-1], populated by firmware via APB writes to
+// paddr[11]=1 at boot. There is no ROM — see firmware-integration.md
+// for the load sequence. Reading back the APB twiddle window itself is
+// write-only; verify the load via a known-pattern FFT (constant input
+// produces a single impulse at bin 0).
 ```
 
 #### Issue: Interrupt Not Generated
