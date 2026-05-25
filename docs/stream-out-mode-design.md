@@ -177,6 +177,70 @@ A `stream_enable` bit in the `FFT_CTRL` register controls whether
 the post-done walker auto-fires. When zero, the engine behaves
 exactly as today.
 
+## Connecting downstream consumers
+
+The streaming output port set is bus-protocol-agnostic. Any consumer IP
+that exposes a matching `vyges-dsp-stream-v1` input port set can be
+wired directly at SoC wrapper scope without intermediate adapters.
+
+Typical wrapper-scope wiring, where `u_consumer` is any downstream IP
+(e.g. a magnitude/phase converter, peak detector, DMA, FIFO, or
+external bus adapter):
+
+```sv
+fft_top #(
+    .FFT_MAX_LENGTH_LOG2(12)
+) u_fft (
+    // ... clk / reset / APB / working-memory ports ...
+
+    // Streaming output
+    .bin_valid_o (fft_to_consumer_valid),
+    .bin_ready_i (fft_to_consumer_ready),
+    .bin_index_o (fft_to_consumer_index),
+    .bin_last_o  (fft_to_consumer_last),
+    .bin_re_o    (fft_to_consumer_re),
+    .bin_im_o    (fft_to_consumer_im)
+);
+
+downstream_consumer_ip #(
+    .DATA_WIDTH (16),
+    .INDEX_WIDTH(12)
+) u_consumer (
+    .stream_in_valid_i (fft_to_consumer_valid),
+    .stream_in_ready_o (fft_to_consumer_ready),
+    .stream_in_index_i (fft_to_consumer_index),
+    .stream_in_last_i  (fft_to_consumer_last),
+    .stream_in_re_i    (fft_to_consumer_re),
+    .stream_in_im_i    (fft_to_consumer_im)
+    // ... other consumer-specific ports ...
+);
+```
+
+Rules of thumb for the SoC integrator:
+
+- **Index width.** `INDEX_WIDTH` on every IP in the chain must equal
+  the producer's `INDEX_WIDTH` (default 12 here — fits N = 4096). A
+  chain that runs at a smaller fixed N can save flops by setting all
+  IPs to the matching narrower width.
+- **Backpressure.** The consumer's `stream_in_ready_o` drives the
+  producer's `bin_ready_i`. The streamer parks `valid + payload`
+  whenever `ready_i` is low, so a consumer that needs an extra cycle
+  to digest each beat can simply lower its ready line. If the
+  consumer cannot stall at all (a fixed-latency pipeline like a
+  CORDIC engine), tie its `stream_in_ready_o` to `1'b1` and ensure no
+  upstream stage that feeds it can stall the stream either.
+- **Multi-stage chains.** Cascading two consumers (`producer →
+  stage_A → stage_B`) is direct wiring — `stage_A.stream_out_*`
+  connects to `stage_B.stream_in_*`. The producer's `bin_last_o`
+  propagates through every stage; the final stage's `last` is the
+  spectrum-complete signal a capture or interrupt block can latch.
+- **N at runtime.** The streamer's `num_bins_i` is a runtime input
+  (driven from the FFT length register), so the same synthesized
+  chain handles every supported N (256 / 512 / 1024 / 2048 / 4096)
+  without re-build. Consumers that maintain per-bin state across a
+  spectrum should reset that state on the `last` beat, not on a
+  fixed bin count.
+
 ## Verification
 
 `tb/cocotb/bin_streamer/test_bin_streamer.py` exercises the streamer
