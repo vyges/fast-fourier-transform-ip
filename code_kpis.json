@@ -1,22 +1,22 @@
 {
   "project_info": {
     "project_name": "fast-fourier-transform-ip",
-    "analysis_date": "2026-05-14T07:36:46.194534",
+    "analysis_date": "2026-05-25T04:39:09.418725",
     "project_root": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_repo": "/home/runner/work/fast-fourier-transform-ip/fast-fourier-transform-ip",
     "git_status": "dirty"
   },
   "file_structure": {
-    "total_files": 159,
-    "total_directories": 54,
+    "total_files": 163,
+    "total_directories": 55,
     "file_types": {
-      ".md": 37,
+      ".md": 38,
       ".json": 3,
-      "no_extension": 38,
-      ".py": 13,
+      "no_extension": 39,
+      ".py": 14,
       ".test": 1,
       ".sh": 15,
-      ".sv": 29,
+      ".sv": 30,
       ".html": 3,
       ".txt": 9,
       ".css": 1,
@@ -118,6 +118,7 @@
           "waveforms.md",
           "bus-master-mode-design.md",
           "api_reference.md",
+          "stream-out-mode-design.md",
           "design_specification.md",
           "architecture.md",
           "memory_optimization.md",
@@ -390,6 +391,7 @@
           ".gitkeep",
           "fft_defines.vh",
           "fft_twiddle_rom.sv",
+          "fft_bin_streamer.sv",
           "fft_fft_control.sv",
           "fft_rescale_unit.sv",
           "fft_ctrl_tlul.sv",
@@ -435,6 +437,15 @@
           "test_example.py",
           "generate_coverage_report.py",
           "test_fft_basic.py"
+        ],
+        "subdirectories": [
+          "bin_streamer"
+        ]
+      },
+      "tb/cocotb/bin_streamer": {
+        "files": [
+          "Makefile",
+          "test_bin_streamer.py"
         ],
         "subdirectories": []
       },
@@ -517,19 +528,19 @@
     }
   },
   "code_metrics": {
-    "rtl_files": 29,
-    "rtl_lines": 6114,
-    "rtl_modules": 40,
-    "testbench_files": 17,
-    "testbench_lines": 4419,
+    "rtl_files": 30,
+    "rtl_lines": 6256,
+    "rtl_modules": 42,
+    "testbench_files": 18,
+    "testbench_lines": 4603,
     "constraint_files": 5,
     "constraint_lines": 450,
     "script_files": 7,
     "script_lines": 3196
   },
   "documentation_metrics": {
-    "documentation_files": 13,
-    "documentation_lines": 6669,
+    "documentation_files": 14,
+    "documentation_lines": 6867,
     "readme_exists": true,
     "developer_guide_exists": true,
     "architecture_docs": 1,
@@ -537,11 +548,11 @@
     "tutorial_docs": 0
   },
   "test_metrics": {
-    "test_files": 17,
-    "test_lines": 4419,
+    "test_files": 18,
+    "test_lines": 4603,
     "test_types": {
       "systemverilog": 12,
-      "cocotb": 5,
+      "cocotb": 6,
       "uvm": 0,
       "formal": 0
     },
