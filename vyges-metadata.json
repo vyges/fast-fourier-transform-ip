@@ -15,7 +15,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-05-14T07:26:05Z",
+  "updated": "2026-06-09T21:28:38Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -39,6 +39,10 @@
           "direction": "input",
           "type": "clock",
           "width": 1
+        },
+        {
+          "name": "axi_aclk_i",
+          "direction": "input"
         }
       ]
     },
@@ -47,11 +51,12 @@
       "name": "reset",
       "signals": [
         {
-          "name": "rst_ni",
-          "direction": "input",
-          "type": "reset",
-          "width": 1,
-          "active_level": "low"
+          "name": "axi_areset_n_i",
+          "direction": "input"
+        },
+        {
+          "name": "reset_n_i",
+          "direction": "input"
         }
       ]
     },
@@ -792,5 +797,6 @@
         ]
       }
     }
-  }
+  },
+  "top_module": "fft_top"
 }
