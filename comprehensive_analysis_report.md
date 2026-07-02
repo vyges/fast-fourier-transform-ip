@@ -1,7 +1,7 @@
 # FFT IP Comprehensive Analysis Report
 ==================================================
 
-**Generated:** 2026-06-09 21:52:48
+**Generated:** 2026-07-02 07:03:52
 **Project:** 
 
 ## 📊 Code KPIs Summary
