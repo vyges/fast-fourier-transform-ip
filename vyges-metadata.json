@@ -128,20 +128,91 @@
       "port": "axi",
       "description": "AXI4-Lite slave interface for high-throughput data access (parallel to the APB control window). Carries its own clock/reset (axi_aclk_i / axi_areset_n_i).",
       "signals": [
-        { "name": "axi_aclk_i", "direction": "input", "type": "clock", "width": 1 },
-        { "name": "axi_areset_n_i", "direction": "input", "type": "reset", "width": 1, "active_level": "low" },
-        { "name": "axi_awaddr_i", "direction": "input", "type": "address", "width": 32 },
-        { "name": "axi_awvalid_i", "direction": "input", "type": "control", "width": 1 },
-        { "name": "axi_awready_o", "direction": "output", "type": "control", "width": 1 },
-        { "name": "axi_wdata_i", "direction": "input", "type": "data", "width": 64 },
-        { "name": "axi_wvalid_i", "direction": "input", "type": "control", "width": 1 },
-        { "name": "axi_wready_o", "direction": "output", "type": "control", "width": 1 },
-        { "name": "axi_araddr_i", "direction": "input", "type": "address", "width": 32 },
-        { "name": "axi_arvalid_i", "direction": "input", "type": "control", "width": 1 },
-        { "name": "axi_arready_o", "direction": "output", "type": "control", "width": 1 },
-        { "name": "axi_rdata_o", "direction": "output", "type": "data", "width": 64 },
-        { "name": "axi_rvalid_o", "direction": "output", "type": "control", "width": 1 },
-        { "name": "axi_rready_i", "direction": "input", "type": "control", "width": 1 }
+        {
+          "name": "axi_aclk_i",
+          "direction": "input",
+          "type": "clock",
+          "width": 1
+        },
+        {
+          "name": "axi_areset_n_i",
+          "direction": "input",
+          "type": "reset",
+          "width": 1,
+          "active_level": "low"
+        },
+        {
+          "name": "axi_awaddr_i",
+          "direction": "input",
+          "type": "address",
+          "width": 32
+        },
+        {
+          "name": "axi_awvalid_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_awready_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_wdata_i",
+          "direction": "input",
+          "type": "data",
+          "width": 64
+        },
+        {
+          "name": "axi_wvalid_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_wready_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_araddr_i",
+          "direction": "input",
+          "type": "address",
+          "width": 32
+        },
+        {
+          "name": "axi_arvalid_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_arready_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_rdata_o",
+          "direction": "output",
+          "type": "data",
+          "width": 64
+        },
+        {
+          "name": "axi_rvalid_o",
+          "direction": "output",
+          "type": "control",
+          "width": 1
+        },
+        {
+          "name": "axi_rready_i",
+          "direction": "input",
+          "type": "control",
+          "width": 1
+        }
       ]
     },
     {
@@ -348,7 +419,8 @@
     "rtl/fft_bus_master.sv",
     "rtl/fft_rescale_unit.sv",
     "rtl/fft_scale_factor_tracker.sv",
-    "rtl/fft_twiddle_rom.sv"
+    "rtl/fft_twiddle_rom.sv",
+    "rtl/fft_bin_streamer.sv"
   ],
   "rtl_quality": {
     "module_prefixed": false,
