@@ -258,7 +258,7 @@
       "reset_style": "asynchronous",
       "period_ns": 25.0,
       "period_source": "assumed",
-      "description": "APB control interface clock. The IP does not specify a rate; 25 ns is a conservative placeholder equal to the core period. An integrator should override it."
+      "description": "APB control interface clock. This domain exists because the IP bundles an APB slave; the compute core itself is single-clock. The IP does not specify a rate, so 25 ns is a conservative placeholder equal to the core period and an integrator should override it."
     },
     {
       "name": "axi",
@@ -268,7 +268,7 @@
       "reset_style": "asynchronous",
       "period_ns": 25.0,
       "period_source": "assumed",
-      "description": "AXI data-port clock (Phase 2). Same conservative placeholder as the APB domain."
+      "description": "AXI data-port clock. The AXI interface is Phase 2 and is tied off in the default build (see integration.soc_generator_hints.unused_interfaces), so this domain carries NO registers in a current hardened netlist \u2014 it is declared because the RTL port exists and the domain becomes real when the interface is enabled. Same conservative placeholder period as the APB domain."
     }
   ],
   "clock_domain_relations": {
@@ -284,7 +284,7 @@
       ]
     ],
     "crossings_synchronized": false,
-    "notes": "The three domains are mutually asynchronous and the IP provides NO CDC synchronisers between them. A structural reset-domain-crossing check reports 175 unsynchronised crossings between preset_n_i and reset_n_i. The SDC declares the domains asynchronous so they are not timed against a meaningless edge relation; that is a timing statement, not a safety one. An integrator must provide synchronisers."
+    "notes": "The IP has three clock domains only because it bundles three bus interfaces; the FFT compute core itself is single-clock. Measured on a hardened sky130 netlist: 536 registers on clk_i, 194 on pclk_i, and 0 on axi_aclk_i (that interface is tied off by default). The domains are mutually asynchronous and the IP provides NO CDC synchronisers between them \u2014 a structural check reports 175 unsynchronised reset-domain crossings between preset_n_i and reset_n_i, which exist as a consequence of the APB bundling rather than of the compute. The SDC declares the domains asynchronous so they are not timed against a meaningless edge relation; that is a timing statement, not a safety one. An integrator must provide synchronisers."
   },
   "parameters": [
     {
