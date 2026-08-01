@@ -18,6 +18,8 @@
     "SYNTH_FLAT_TOP": false,
     "CLOCK_PORT": "clk_i",
     "CLOCK_PERIOD": 25.0,
+    "PNR_SDC_FILE": "dir::fft_top.sdc",
+    "SIGNOFF_SDC_FILE": "dir::fft_top.sdc",
     "RUN_LINTER": false,
     "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
     "pdk::sky130A": {
