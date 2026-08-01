@@ -239,6 +239,53 @@
       ]
     }
   ],
+  "clock_domains": [
+    {
+      "name": "core",
+      "clock": "clk_i",
+      "reset": "reset_n_i",
+      "reset_polarity": "active_low",
+      "reset_style": "asynchronous",
+      "period_ns": 25.0,
+      "period_source": "specified",
+      "description": "Core compute clock; the period matches CLOCK_PERIOD in flow/openlane/config.json."
+    },
+    {
+      "name": "apb",
+      "clock": "pclk_i",
+      "reset": "preset_n_i",
+      "reset_polarity": "active_low",
+      "reset_style": "asynchronous",
+      "period_ns": 25.0,
+      "period_source": "assumed",
+      "description": "APB control interface clock. The IP does not specify a rate; 25 ns is a conservative placeholder equal to the core period. An integrator should override it."
+    },
+    {
+      "name": "axi",
+      "clock": "axi_aclk_i",
+      "reset": "axi_areset_n_i",
+      "reset_polarity": "active_low",
+      "reset_style": "asynchronous",
+      "period_ns": 25.0,
+      "period_source": "assumed",
+      "description": "AXI data-port clock (Phase 2). Same conservative placeholder as the APB domain."
+    }
+  ],
+  "clock_domain_relations": {
+    "asynchronous_groups": [
+      [
+        "core"
+      ],
+      [
+        "apb"
+      ],
+      [
+        "axi"
+      ]
+    ],
+    "crossings_synchronized": false,
+    "notes": "The three domains are mutually asynchronous and the IP provides NO CDC synchronisers between them. A structural reset-domain-crossing check reports 175 unsynchronised crossings between preset_n_i and reset_n_i. The SDC declares the domains asynchronous so they are not timed against a meaningless edge relation; that is a timing statement, not a safety one. An integrator must provide synchronisers."
+  },
   "parameters": [
     {
       "name": "FFT_MAX_LENGTH_LOG2",
