@@ -15,7 +15,7 @@
     "digital"
   ],
   "created": "2025-11-01T00:00:00Z",
-  "updated": "2026-06-09T21:40:43Z",
+  "updated": "2026-08-01T18:32:57Z",
   "source": {
     "type": "git",
     "url": "https://github.com/vyges/fast-fourier-transform-ip",
@@ -545,7 +545,12 @@
       "sky130A"
     ],
     "estimated_area": "49,958 um2 (sky130_fd_sc_hd)",
-    "estimated_gate_count": "~13,322 GE"
+    "estimated_gate_count": "~13,322 GE",
+    "constraints": {
+      "constraints": [
+        "flow/openlane/fft_top.sdc"
+      ]
+    }
   },
   "fpga": {
     "toolchain": [
@@ -554,6 +559,10 @@
     ],
     "devices": [
       "Artix-7 (xc7a100t)"
+    ],
+    "constraints": [
+      "flow/fpga/openfpga/constraints/timing.sdc",
+      "flow/fpga/openfpga/constraints/hx8k-ct256.pcf"
     ]
   },
   "keywords": [
