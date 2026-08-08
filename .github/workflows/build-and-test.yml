@@ -7,11 +7,15 @@ name: Build and Test FFT IP
 # Configuration variables - modify these to change versions
 # These are used throughout the workflow for version consistency
 
+# Manual only, and the workflow is also disabled at the repo level.
+#
+# This pipeline was the first experiment in having an IP publish its own test
+# reports for customers (2025). The approach has been superseded, so the
+# per-push builds produce reports nobody reads while consuming Actions storage
+# and minutes. Re-enable with `gh workflow enable` and dispatch it if a run is
+# ever needed; restore the push/pull_request triggers only if per-commit signal
+# is wanted again.
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       design_type:
