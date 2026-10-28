@@ -34,6 +34,8 @@ module fft_control #(
     input  logic        rounding_mode_i,
     input  logic        saturation_en_i,
     input  logic        overflow_detect_i,
+    input  logic        overflow_detected_i,  // engine: an overflow occurred in this run
+    input  logic        rescaling_active_i,   // engine: a scaled stage is being computed
     
     // Buffer Control Interface
     input  logic        buffer_swap_i,
@@ -42,6 +44,7 @@ module fft_control #(
     
     // Interrupt Interface
     input  logic [7:0]  int_enable_i,
+    input  logic [7:0]  int_status_clear_i,   // write-1-to-clear strobe from INT_STATUS
     output logic [7:0]  int_status_o
 );
 
@@ -144,48 +147,29 @@ module fft_control #(
     end
     
     // Interrupt generation
+    //
+    // Each pending bit is set on its event's rising edge, when the event is
+    // enabled, and stays set until software writes 1 to that bit of INT_STATUS.
+    // An event in the same cycle as the clear keeps the bit set.
+    logic [4:0] int_event, int_event_q, int_rise;
+    assign int_event = {rescaling_active_i, overflow_detected_i, buffer_swap_i, fft_error_i, fft_done_i};
+    assign int_rise  = int_event & ~int_event_q;
+
     always_ff @(posedge clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
-            fft_done_pending <= 1'b0;
-            fft_error_pending <= 1'b0;
+            int_event_q         <= '0;
+            fft_done_pending    <= 1'b0;
+            fft_error_pending   <= 1'b0;
             buffer_swap_pending <= 1'b0;
-            overflow_pending <= 1'b0;
-            rescale_pending <= 1'b0;
+            overflow_pending    <= 1'b0;
+            rescale_pending     <= 1'b0;
         end else begin
-            // FFT completion interrupt
-            if (fft_done_i && int_enable_i[0]) begin
-                fft_done_pending <= 1'b1;
-            end else if (int_status_reg[0]) begin
-                fft_done_pending <= 1'b0;
-            end
-            
-            // FFT error interrupt
-            if (fft_error_i && int_enable_i[1]) begin
-                fft_error_pending <= 1'b1;
-            end else if (int_status_reg[1]) begin
-                fft_error_pending <= 1'b0;
-            end
-            
-            // Buffer swap interrupt
-            if (buffer_swap_i && int_enable_i[2]) begin
-                buffer_swap_pending <= 1'b1;
-            end else if (int_status_reg[2]) begin
-                buffer_swap_pending <= 1'b0;
-            end
-            
-            // Overflow interrupt
-            if (overflow_detect_i && int_enable_i[3]) begin
-                overflow_pending <= 1'b1;
-            end else if (int_status_reg[3]) begin
-                overflow_pending <= 1'b0;
-            end
-            
-            // Rescaling interrupt
-            if (rescale_en_i && int_enable_i[4]) begin
-                rescale_pending <= 1'b1;
-            end else if (int_status_reg[4]) begin
-                rescale_pending <= 1'b0;
-            end
+            int_event_q         <= int_event;
+            fft_done_pending    <= (int_rise[0] & int_enable_i[0]) | (fft_done_pending    & ~int_status_clear_i[0]);
+            fft_error_pending   <= (int_rise[1] & int_enable_i[1]) | (fft_error_pending   & ~int_status_clear_i[1]);
+            buffer_swap_pending <= (int_rise[2] & int_enable_i[2]) | (buffer_swap_pending & ~int_status_clear_i[2]);
+            overflow_pending    <= (int_rise[3] & int_enable_i[3]) | (overflow_pending    & ~int_status_clear_i[3]);
+            rescale_pending     <= (int_rise[4] & int_enable_i[4]) | (rescale_pending     & ~int_status_clear_i[4]);
         end
     end
     

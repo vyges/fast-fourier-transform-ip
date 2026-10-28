@@ -150,6 +150,7 @@ module fft_top #(
     // Interrupt control signals
     logic [7:0]  int_enable_i;
     logic [7:0]  int_status_o;
+    logic [7:0]  int_status_clear;
 
     // Instantiate FFT control unit
     fft_control #(
@@ -169,10 +170,13 @@ module fft_top #(
         .rounding_mode_i(rounding_mode_i),
         .saturation_en_i(saturation_en_i),
         .overflow_detect_i(overflow_detect_i),
+        .overflow_detected_i(overflow_detected_o),
+        .rescaling_active_i(rescaling_active_o),
         .buffer_swap_i(buffer_swap_i),
         .buffer_active_o(buffer_active_o),
         .buffer_sel_i(buffer_sel_i),
         .int_enable_i(int_enable_i),
+        .int_status_clear_i(int_status_clear),
         .int_status_o(int_status_o)
     );
 
@@ -258,6 +262,7 @@ module fft_top #(
         .buffer_swap_o(buffer_swap_i),
         .buffer_sel_o(buffer_sel_i),
         .int_enable_o(int_enable_i),
+        .int_status_clear_o(int_status_clear),
 `ifdef FFT_USE_STREAM_OUT
         .stream_enable_o(stream_enable),
 `else

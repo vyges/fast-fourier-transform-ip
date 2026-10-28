@@ -87,6 +87,7 @@ module memory_interface #(
     output logic        buffer_swap_o,
     output logic [1:0]  buffer_sel_o,
     output logic [7:0]  int_enable_o,
+    output logic [7:0]  int_status_clear_o, // INT_STATUS write-1-to-clear strobe
     output logic        stream_enable_o,   // FFT_CTRL[8]: arm the bin streamer post-fft_done
     
     // Status Interface
@@ -221,6 +222,24 @@ module memory_interface #(
         end
     end
     
+    // INT_STATUS (0x0018) is write-1-to-clear: a write clears the pending bits
+    // set in pwdata for that cycle (the pending bits live in fft_control).
+    assign int_status_clear_o = (apb_state == APB_ACCESS && pwrite_i && paddr_i[15:0] == 16'h0018)
+                                ? pwdata_i[7:0] : 8'h00;
+
+    // FFT_STATUS done / error hold from the engine's one-cycle event until the
+    // next run starts, so software polling FFT_STATUS sees them.
+    logic status_done_q, status_error_q;
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            status_done_q  <= 1'b0;
+            status_error_q <= 1'b0;
+        end else begin
+            status_done_q  <= fft_done_i  | (status_done_q  & ~fft_busy_i);
+            status_error_q <= fft_error_i | (status_error_q & ~fft_busy_i);
+        end
+    end
+
     // APB read data
     always_comb begin
         case (paddr_i[15:0])
@@ -258,8 +277,8 @@ module memory_interface #(
             overflow_detected_i,            // Overflow detected (1 bit)
             rescaling_active_i,             // Rescaling active (1 bit)
             buffer_active_i,                // Buffer active (1 bit)
-            fft_error_i,                    // FFT error (1 bit)
-            fft_done_i,                     // FFT done (1 bit)
+            status_error_q,                 // FFT error, held until the next run (1 bit)
+            status_done_q,                  // FFT done, held until the next run (1 bit)
             fft_busy_i                      // FFT busy (1 bit)
         };
         
