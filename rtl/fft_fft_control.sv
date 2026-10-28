@@ -131,13 +131,23 @@ module fft_control #(
         endcase
     end
     
-    // Buffer control
+    // Buffer control. A swap is the rising edge of FFT_CTRL[2]: software that
+    // writes the bit and leaves it set gets one swap, not one per cycle.
+    logic buffer_swap_q;
+    always_ff @(posedge clk_i or negedge reset_n_i) begin
+        if (!reset_n_i) begin
+            buffer_swap_q <= 1'b0;
+        end else begin
+            buffer_swap_q <= buffer_swap_i;
+        end
+    end
+
     always_ff @(posedge clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
             buffer_active_reg <= 2'b00;
         end else if (fft_reset_i) begin
             buffer_active_reg <= 2'b00;
-        end else if (buffer_swap_i) begin
+        end else if (buffer_swap_i && !buffer_swap_q) begin
             buffer_active_reg <= ~buffer_active_reg;
         end else if (buffer_sel_i[1]) begin
             buffer_active_reg <= 2'b10;  // Force buffer B

@@ -12,7 +12,8 @@
 //              fixed-point reference model. Also checks the software-visible
 //              completion contract: FFT_STATUS.done stays set after the run,
 //              INT_STATUS[0] stays set until written with 1, and the write
-//              clears it.
+//              clears it; FFT_CTRL[2] held over many cycles toggles the
+//              buffer-active status bit once.
 //
 //              Build with FFT_USE_APB_DATA and FFT_USE_STREAM_OUT.
 //              Plusargs: +case=<dir> reading <dir>/config.hex (log2(N),
@@ -93,7 +94,8 @@ module tb_fft_golden;
 
     string case_dir;
     int    n, fd, cycles, nbins, errors;
-    logic [31:0] status, int_status, scale;
+    logic [31:0] status, int_status, scale, swap_status;
+    logic        swap_before;
 
     // Collect streamed bins.
     always @(posedge clk) begin
@@ -151,6 +153,20 @@ module tb_fft_golden;
         if (int_status[0]) begin
             $display("ERROR: INT_STATUS[0] still set after write-1-to-clear");
             errors++;
+        end
+        // FFT_CTRL[2] held over many cycles is ONE swap: FFT_STATUS[3] toggles once per write
+        // of 1, whatever the hold. Two holds of different parity catch a per-cycle toggle.
+        for (int hold = 10; hold <= 11; hold++) begin
+            apb_read(16'h0004, swap_status);
+            swap_before = swap_status[3];
+            apb_write(16'h0000, 32'h0000_0004);
+            repeat (hold) @(posedge clk);
+            apb_write(16'h0000, 32'h0000_0000);
+            apb_read(16'h0004, swap_status);
+            if (swap_status[3] == swap_before) begin
+                $display("ERROR: FFT_CTRL[2] held %0d cycles did not toggle FFT_STATUS[3] once", hold);
+                errors++;
+            end
         end
         for (int i = 0; i < n; i++) begin
             if (seen[i] != 1) begin
