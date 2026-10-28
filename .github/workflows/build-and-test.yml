@@ -95,7 +95,7 @@ jobs:
       OPENFPGA_VERSION: "latest"       # OpenFPGA version (e.g., "latest", "1.0")
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup workflow for testing
         run: |
@@ -105,7 +105,7 @@ jobs:
           echo "This will install all tools to verify the build process"
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -1047,7 +1047,7 @@ jobs:
           echo "✅ GitHub Pages index created"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vyges-ip-template-build-artifacts
           path: |
