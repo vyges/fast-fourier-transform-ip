@@ -17,8 +17,8 @@ on `paddr_i`:
 | Window | Range (offset from FFT base) | Decode | Use |
 |---|---|---|---|
 | Registers | `0x0000 – 0x07FC` | `paddr[12]=0 && paddr[11]=0` | `FFT_CTRL`, `FFT_STATUS`, `FFT_CONFIG`, `FFT_LENGTH`, etc. |
-| Twiddle write | `0x0800 – 0x0BFC` | `paddr[11]=1` | Firmware loads twiddle factors at boot. Word index `k = paddr[10:2]` writes `fft_memory[1024 + k]`. |
-| Sample data write | `0x1000 – 0x1FFC` | `paddr[12]=1 && paddr[11]=0` (requires `FFT_USE_APB_DATA`) | Firmware loads samples per run. Word index `i = paddr[11:2]` writes `fft_memory[i]`. |
+| Twiddle write | `0x0800 – 0x0FFC` | `paddr[12]=0 && paddr[11]=1` | Firmware loads twiddle factors at boot. Word index `k = paddr[10:2]` (512 words) writes `fft_memory[1024 + k]`. |
+| Sample data write | `0x1000 – 0x1FFC` | `paddr[12]=1` (requires `FFT_USE_APB_DATA`) | Firmware loads samples per run. Word index `i = paddr[11:2]` (1024 words) writes `fft_memory[i]`. |
 
 If `FFT_USE_APB_DATA` is not defined the sample window is not present —
 samples must reach `fft_memory[0..N-1]` through some other path (DMA,
@@ -28,42 +28,61 @@ external SRAM bus, AXI port, etc., see `integration-patterns.md`).
 
 ```
 FFT_CTRL (0x0000, RW)
-  [0]  start          — pulse: write 1, then write 0 (see "Sticky-start" below).
-  [1]  reset
+  [0]  start          — a run launches when this is high while the engine is
+                        idle. Recommended: pulse (write 1, then write 0); see
+                        "Start is level-sensitive" below.
+  [1]  reset          — aborts a run; the engine is idle on the next cycle and
+                        issues no further memory write.
   [2]  buffer_swap
-  [4]  rescale_en     — enable per-butterfly auto-rescale. Requires FFT_CONFIG[19]=1
+  [4]  rescale_en     — enable per-stage rescaling. Requires FFT_CONFIG[19]=1
                         AND this bit set, both, for any rescaling to fire.
-  [5]  scale_track_en — accumulate the per-window rescale shift count into
-                        FFT_STATUS[13:6] for postprocessing.
+  [5]  scale_track_en — count the scaled stages into FFT_STATUS[13:6] for
+                        postprocessing.
+  The run bits [5:4] are latched at launch; writes during a run apply to
+  the next run.
   [8]  stream_enable  — gate the post-completion bin streamer. Has no effect
                         unless the IP is compiled with FFT_USE_STREAM_OUT.
 
 FFT_STATUS (0x0004, RO)
   [0]      fft_busy
-  [1]      fft_done
-  [2]      fft_error
+  [1]      fft_done          — held from the end of a run until the next run starts.
+  [2]      fft_error         — held from a rejected launch until the next run starts.
   [3]      buffer_active
   [4]      rescaling_active
   [5]      overflow_detected
-  [13:6]   scale_factor      — accumulated >>1 shifts (informational).
-  [21:14]  stage_count
-  [29:22]  overflow_count
+  [13:6]   scale_factor      — number of scaled stages; result = true FFT / 2^scale_factor.
+  [21:14]  stage_count       — stages completed in the run.
+  [29:22]  overflow_count    — butterflies with a component that did not fit
+                               16 bits (saturates at 255).
 
 FFT_CONFIG (0x0008, RW)
-  [11:0]   fft_length_log2   — log2(N), e.g. 8 for 256-pt, 10 for 1024-pt.
-  [16]     rescale_mode      — 0 = divide-by-2 per overflow, 1 = divide-by-N.
-  [17]     rounding_mode     — 0 = truncate, 1 = round-to-nearest.
-  [18]     saturation_en     — clamp instead of wrap on overflow.
+  [11:0]   fft_length_log2   — log2(N), 1 .. 10 (e.g. 8 for 256-pt, 10 for
+                               1024-pt). 0 or a value above the maximum is
+                               rejected at launch (FFT_STATUS[2] error).
+  [16]     rescale_mode      — 0 = block floating point (a stage is halved only
+                               when one of its inputs lies outside
+                               [-2^13, 2^13)), 1 = every stage halved (X/N).
+  [17]     rounding_mode     — 0 = truncate, 1 = add half an LSB before each shift.
+  [18]     saturation_en     — clamp to [-32768, 32767] instead of wrap on overflow.
   [19]     overflow_detect   — required prerequisite for rescaling. See FFT_CTRL[4].
+  FFT_CONFIG is latched at launch; writes during a run apply to the next run.
 
 FFT_LENGTH (0x000C, RW)
   [11:0]   N — absolute length (must match 1 << FFT_CONFIG[11:0]).
+
+INT_ENABLE (0x0014, RW)
+  [4:0]    enables for rescale, overflow, buffer swap, error, done (bit 0 = done).
+
+INT_STATUS (0x0018, RW1C)
+  [0] done  [1] error  [2] buffer swap  [3] overflow  [4] rescale — pending.
+  Each bit is set on its event while the matching INT_ENABLE bit is set and
+  stays set until software writes 1 to it.
 ```
 
 ## Boot sequence
 
-The engine reads twiddle factors from `fft_memory[N/2 .. N-1]`. **The
-twiddle table is not initialised in hardware.** Without firmware
+The engine reads twiddle factor `k` from `fft_memory[1024 + k]` (the
+twiddle window). **The twiddle table is not initialised in hardware.** Without firmware
 loading it, every FFT output is zero. The deprecated `twiddle_rom.sv`
 module that simulates with `$sin()` is not instantiated in any current
 build — see its own deprecation notice for history.
@@ -85,10 +104,12 @@ A correct boot sequence:
        word  = (cos_q[15:0] << 16) | ((-sin_q)[15:0])
        REG32(FFT_BASE + 0x0800 + 4*k) = word
    ```
-   Word layout matches what the butterfly stage captures (see
-   `fft_fft_engine.sv:372-373`): cos in the high half, `-sin` (already
-   negated) in the low half so the inner multiply is a plain
-   `(real, imag) * twiddle` complex product.
+   Word layout matches what the engine reads as `W_N^k = e^(-j·2π·k/N)`
+   (see the header of `rtl/fft_fft_engine.sv`): cos in the high half,
+   `-sin` (already negated) in the low half so the inner multiply is a
+   plain `(real, imag) * twiddle` complex product. The table for a
+   1024-point FFT (512 words) fills the window; shorter lengths load
+   `N/2` words.
 
 A reference iterative generator in Q1.15 fixed point (~30 lines of C,
 no FPU needed):
@@ -110,7 +131,7 @@ for (unsigned k = 0; k < N/2; k++) {
 ```
 
 Iterative rotation accumulates O(√(N/2) · 2⁻¹⁵) Q1.15 quantisation
-error over the loop — well under one Q1.15 LSB for N ≤ 4096. The
+error over the loop — well under one Q1.15 LSB for N ≤ 1024. The
 trade-off vs a pre-baked table is no ROM cost.
 
 ## Per-run sequence
@@ -132,36 +153,45 @@ Each FFT run:
    REG32(FFT_FFT_CTRL) = hold | 0x1u;      // start=1
    REG32(FFT_FFT_CTRL) = hold;             // start=0 (deassert)
    ```
-3. Wait for `FFT_STATUS[1]` (`fft_done`) — typical wallclock is N·log2(N)
-   cycles at the engine clock plus a few-cycle pipeline drain.
-4. Read results back through the configured backend, or use the
+3. Wait for `FFT_STATUS[1]` (`fft_done`), which holds until the next run
+   starts, or for `INT_STATUS[0]` / `fft_done_o` with `INT_ENABLE[0]` set.
+   The engine performs one memory access per cycle and a butterfly takes
+   6 cycles, so a run is about 6·(N/2)·log2(N) cycles for the butterflies
+   plus about 3N for the final bit-reverse pass (plus N+2 for the input
+   scan in rescale mode 0). Measured from start to the last streamed bin:
+   about 7.6k–7.9k cycles for 256 points, 17.3k for 512, 36.8k–37.8k for
+   1024. If `FFT_STATUS[2]` (`fft_error`) is set instead, the length in
+   `FFT_CONFIG[11:0]` was rejected and nothing was computed.
+4. If `INT_STATUS` bits are used, clear them by writing 1 to each bit
+   handled (`INT_STATUS` is write-1-to-clear).
+5. Read results back through the configured backend, or use the
    streaming bin output (`FFT_USE_STREAM_OUT`) — see
-   `stream-out-mode-design.md`.
+   `stream-out-mode-design.md`. Results are in natural order: bin `k` is
+   word `k`, packed `{imag[31:16], real[15:0]}`, and equal the true FFT
+   divided by `2^scale_factor`.
 
 ## Gotchas
 
 These each cost real bring-up time. Captured here so the next
 integrator avoids them.
 
-### Sticky-start
+### Start is level-sensitive
 
-`FFT_CTRL[0]` is **level-sensitive AND sticky**. The engine's
-`stage_counter` reset condition is `if (fft_start_i) stage_counter <= 0`
-(`fft_fft_engine.sv:445-447`). Setting start once and leaving it high
-holds the counter at zero forever — the engine sits in COMPUTE with
-`FFT_STATUS[0]=1` (busy) indefinitely.
-
-**Always** deassert start within a few cycles of asserting it. A
-two-write pulse (write 1, then write 0) is the standard pattern.
+`FFT_CTRL[0]` launches a run whenever it is high while the engine is
+idle. If it is left high, the next run starts as soon as the current one
+finishes, so the engine keeps re-running on the same memory. A
+two-write pulse (write 1, then write 0) is the standard pattern. The
+configuration is latched at launch, so changing `FFT_CONFIG` or the run
+bits of `FFT_CTRL` mid-run has no effect until the next run.
 
 ### Rescale gating
 
-`fft_rescale_unit.sv:93` gates the rescaling logic on
-`rescale_en_i && overflow_detect_i`. Setting just `FFT_CTRL[4]` is not
-enough — `FFT_CONFIG[19]` must also be high. Symptom of missing
-`FFT_CONFIG[19]`: every FFT output bin saturates at the 16-bit ceiling
-(`peak_mag ≈ 65500` if you're feeding a magnitude detector
-downstream).
+The engine (`rtl/fft_fft_engine.sv`) rescales only when
+`rescale_en && overflow_detect` are both set. Setting just `FFT_CTRL[4]`
+is not enough — `FFT_CONFIG[19]` must also be high. Symptom of missing
+`FFT_CONFIG[19]` with a full-scale input: large output bins clamp at the
+16-bit limits (with `saturation_en`) or wrap (without it), and
+`FFT_STATUS[13:6]` (scale factor) reads 0.
 
 ### Twiddles are not in hardware
 
@@ -188,15 +218,14 @@ write wins for that cycle and the engine loses a butterfly result.
 
 ## Worked example
 
-The `vyges/edge-sensor-pico-openframe` SoC drives a chain
-`u_fft → u_mag_phase → u_spectrum` on a 25 MHz PicoRV32 via the steps
-above. Its firmware emission template
-(`vyges/soc-generator/src/soc_generator/templates/firmware_main.c.j2`,
-the `dsp_chain_*` block) is a complete reference implementation in C.
+A PicoRV32 SoC at 25 MHz drives an FFT → magnitude/phase → spectrum
+chain with exactly the steps above: twiddle load at boot, a 1024-sample
+APB load per window, a start pulse, and the results consumed in natural
+order through the bin streamer.
 
 ## See also
 
 - `integration-patterns.md` — SoC-side memory bus integration.
 - `stream-out-mode-design.md` — post-completion bin streaming output.
 - `bus-master-mode-design.md` — `FFT_USE_BUS_MASTER` mode.
-- `architecture.md` — internal engine pipeline.
+- `architecture.md` — internal engine structure and sequencing.

@@ -20,36 +20,39 @@
 
 ## Overview
 
-A high-performance Fast Fourier Transform (FFT) hardware accelerator supporting configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture, memory-mapped interfaces, and automatic rescaling functionality to prevent overflow and maintain signal integrity.
+A Fast Fourier Transform (FFT) hardware accelerator supporting configurable power-of-two FFT lengths up to 1024 points, computed in place over a single shared working memory, with memory-mapped interfaces and per-stage rescaling to prevent overflow. Results are returned in natural order.
 
 ## Key Features
 
-- **Configurable FFT Length:** 256, 512, 1024, 2048, 4096 points
-- **Data Precision:** 16-bit fixed-point input/output data
-- **Double Buffering:** Background data transfer capability
-- **Memory Mapped:** APB and AXI interface support
-- **High Performance:** 6 cycles per butterfly operation
-- **Automatic Rescaling:** Prevents overflow during computation
-- **Scale Factor Tracking:** Enables proper signal reconstruction
+- **Configurable FFT Length:** 2 to 1024 points (log2(N) = 1 .. 10; the working memory holds at most 1024 samples)
+- **Data Precision:** 16-bit fixed-point (Q1.15) input/output data, packed `{imag[31:16], real[15:0]}`
+- **Buffer Select / Swap:** Buffer-active status bit and buffer-swap interrupt (one shared working memory)
+- **Memory Mapped:** APB register, twiddle and sample windows (the AXI port is tied off)
+- **Timing:** 6 cycles per butterfly, one memory access per cycle
+- **Natural-Order Output:** A final bit-reverse pass puts bin k in word k
+- **Automatic Rescaling:** Per-stage halving prevents overflow during computation
+- **Scale Factor Tracking:** Number of scaled stages, for signal reconstruction
 - **Interrupt Support:** Completion and error notification
 
 ## Architecture
 
-The FFT accelerator implements a 6-stage pipelined radix-2 decimation-in-frequency (DIF) algorithm with automatic rescaling:
+The FFT accelerator implements an in-place radix-2 decimation-in-frequency (DIF) algorithm with per-stage rescaling: log2(N) stages of N/2 butterflies, followed by a bit-reverse pass that leaves the results in natural order. The engine has one memory port and makes one access per cycle, so each butterfly takes 6 cycles, executed in sequence (butterflies are not overlapped):
 
-1. **Address Generation and Memory Read**
-2. **Data Alignment and Twiddle Factor Fetch**
-3. **Complex Addition**
-4. **Complex Subtraction**
-5. **Complex Multiplication**
-6. **Rescaling and Memory Write**
+1. **Read A**
+2. **Read B**
+3. **Read Twiddle W**
+4. **Wait for Read Data**
+5. **Write A' = (A + B) >> sh**
+6. **Write B' = ((A - B) × W) >> (15 + sh)**, where sh = 1 on a scaled stage, else 0
 
 ### Rescaling Subsystem
 
-- **Overflow Detection:** Monitors for overflow conditions
-- **Automatic Rescaling:** Divides by 2 when overflow detected
-- **Scale Factor Tracking:** Accumulates total scaling applied
-- **Configurable Modes:** Divide by 2 each stage or divide by N at end
+Rescaling is implemented inside the FFT engine and is active only when FFT_CTRL[4] (rescale_en) and FFT_CONFIG[19] (overflow_detect) are both set.
+
+- **Overflow Detection:** Counts butterflies with a component that does not fit 16 bits
+- **Automatic Rescaling:** A scaled stage halves its outputs
+- **Scale Factor Tracking:** Counts the scaled stages; output = true FFT / 2^scale_factor
+- **Configurable Modes:** Mode 1 halves every stage (result X/N, scale factor log2(N)); mode 0 (block floating point) halves a stage only when one of its inputs lies outside [-2^13, 2^13)
 
 ## Implementation
 
@@ -57,41 +60,36 @@ The FFT accelerator implements a 6-stage pipelined radix-2 decimation-in-frequen
 
 ```
 rtl/
-├── fft_top.sv              # Top-level module
-├── fft_engine.sv           # FFT computation engine
-├── rescale_unit.sv         # Rescaling logic
-├── scale_factor_tracker.sv # Scale factor tracking
-├── memory_interface.sv     # Memory interface logic
-├── fft_control.sv          # Control logic
-├── bin_streamer.sv         # FFT_USE_STREAM_OUT post-completion walker
-├── bus_master.sv           # FFT_USE_BUS_MASTER generic memory master
-└── twiddle_rom.sv          # DEPRECATED — dead code, retained for history.
-                            #   Twiddles are loaded by firmware at boot via
-                            #   APB writes. See docs/firmware-integration.md.
+├── fft_fft_top.sv              # Top-level module (fft_top)
+├── fft_fft_engine.sv           # FFT computation engine, including rescaling
+├── fft_memory_interface.sv     # APB registers, address decode, working memory
+├── fft_fft_control.sv          # Control and interrupt logic
+├── fft_bin_streamer.sv         # FFT_USE_STREAM_OUT post-completion walker
+├── fft_bus_master.sv           # FFT_USE_BUS_MASTER generic memory master
+├── fft_ctrl_tlul.sv            # TL-UL bus wrapper
+├── fft_rescale_unit.sv         # Not instantiated (dead code)
+├── fft_scale_factor_tracker.sv # Not instantiated (dead code)
+└── fft_twiddle_rom.sv          # DEPRECATED — dead code, retained for history.
+                                #   Twiddles are loaded by firmware at boot via
+                                #   APB writes. See docs/firmware-integration.md.
 ```
 
 ### Key Modules
 
-#### fft_top.sv
-- Top-level module with APB/AXI interfaces
+#### fft_fft_top.sv
+- Top-level module with APB/AXI interfaces (the AXI port is tied off)
 - Instantiates FFT engine, control unit, and memory interface
 - Generates interrupt signals
 
-#### fft_engine.sv
-- 6-stage pipelined FFT computation engine
-- Implements radix-2 DIF algorithm
-- Integrates rescaling functionality
+#### fft_fft_engine.sv
+- Sequential FFT computation engine: 6 cycles per butterfly, one memory access per cycle
+- Implements radix-2 DIF in place, then a bit-reverse pass for natural-order output
+- Latches the configuration at launch and rejects illegal lengths (error path)
+- Integrates rescaling, rounding and saturation, the scale factor and the overflow statistics
 - Address generation and memory interface
 
-#### rescale_unit.sv
-- Dedicated rescaling logic with overflow detection
-- Supports configurable rescaling modes
-- Implements rounding and saturation options
-
-#### scale_factor_tracker.sv
-- Accumulates scale factors during FFT computation
-- Tracks overflow statistics
-- Provides scale factor information for signal reconstruction
+#### fft_rescale_unit.sv, fft_scale_factor_tracker.sv
+- Not instantiated in any build; the engine performs rescaling and scale factor tracking itself
 
 ## Testing
 
@@ -115,6 +113,15 @@ The testbench includes comprehensive tests for:
 - **Rescaling Tests:** Overflow detection and rescaling
 - **Overflow Tests:** Overflow event detection and handling
 - **Performance Tests:** Timing and throughput verification
+
+### Verification
+
+`tb/golden/run_golden.py` builds `tb/golden/tb_fft_golden.sv` with Verilator, drives `fft_top` over APB the way firmware does, and compares every output bin word for word with a bit-exact fixed-point reference model, together with the scale factor and overflow count. It covers 8 configurations from 8 to 1024 points: plain, rounding, saturation, wrap, and both rescale modes. The reference model is itself checked against a floating-point FFT. The testbench also checks that FFT_STATUS.done holds and that INT_STATUS[0] holds until written with 1. With `--netlist` the same cases run on the Yosys-synthesized netlist.
+
+```bash
+make test-golden           # RTL against the reference model
+make test-golden-netlist   # the same cases on the synthesized netlist
+```
 
 ### Running Tests
 
@@ -262,21 +269,21 @@ make resources
 
 ### Throughput
 
-| FFT Length | Butterfly Count | Total Cycles | Latency (μs @ 1GHz) |
+| FFT Length | Butterfly Count | Total Cycles (approx.) | Latency (μs @ 1GHz) |
 |------------|----------------|--------------|---------------------|
-| 256 | 2,048 | 12,288 | 12.3 |
-| 512 | 4,608 | 27,648 | 27.6 |
-| 1024 | 10,240 | 61,440 | 61.4 |
-| 2048 | 22,528 | 135,168 | 135.2 |
-| 4096 | 49,152 | 294,912 | 294.9 |
+| 256 | 1,024 | 7,600-7,900 | 7.6-7.9 |
+| 512 | 2,304 | 17,300 | 17.3 |
+| 1024 | 5,120 | 36,800-37,800 | 36.8-37.8 |
+
+Total cycles are measured from the start pulse to the last streamed bin: about 6 × (N/2) × log2(N) for the butterflies, plus about 3N for the bit-reverse pass, plus N+2 for the input scan when rescale mode 0 is on.
 
 ### Resource Utilization
 
 | Resource | Count | Description |
 |----------|-------|-------------|
 | DSP Blocks | 4 | Complex multiplier (2) + Complex adder (2) |
-| BRAM | 8 | Input/Output buffers + Twiddle ROM |
-| Registers | ~5K | Pipeline registers and control logic |
+| BRAM | 8 | Working memory (data and twiddle words) |
+| Registers | ~5K | Datapath registers and control logic |
 | LUTs | ~15K | Address generation and control logic |
 | Scale Factor Logic | ~1K | Rescaling and scale factor tracking |
 
@@ -292,36 +299,39 @@ make resources
 | 0x000C | FFT_LENGTH | R/W | FFT Length Register |
 | 0x0010 | BUFFER_SEL | R/W | Buffer Selection Register |
 | 0x0014 | INT_ENABLE | R/W | Interrupt Enable Register |
-| 0x0018 | INT_STATUS | R | Interrupt Status Register |
+| 0x0018 | INT_STATUS | RW1C | Interrupt Status Register (write 1 to clear) |
 | 0x001C | SCALE_FACTOR | R | Output Scale Factor Register |
 | 0x0020 | RESCALE_CTRL | R/W | Rescaling Control Register |
 | 0x0024 | OVERFLOW_STATUS | R | Overflow Status Register |
+
+Registers decode at 0x0000-0x07FC. FFT_STATUS[1] (done) and FFT_STATUS[2] (error) hold from the end of a run until the next run starts. INT_STATUS bits [4:0] are the rescale, overflow, buffer swap, error and done pending bits; each is set on its event while the matching INT_ENABLE bit is set and stays set until software writes 1 to it. FFT_CONFIG and the FFT_CTRL run bits are latched at launch. A length outside log2(N) = 1 .. min(FFT_MAX_LENGTH_LOG2, 10) is rejected at launch and sets FFT_STATUS[2]. OVERFLOW_STATUS[23:16] (max overflow magnitude) is not measured and reads 0.
 
 ### Data Memory Map
 
 | Address Range | Memory | Description |
 |---------------|--------|-------------|
-| 0x1000-0x1FFF | Input Buffer A | Input data buffer A |
-| 0x2000-0x2FFF | Input Buffer B | Input data buffer B |
-| 0x3000-0x3FFF | Output Buffer A | Output data buffer A |
-| 0x4000-0x4FFF | Output Buffer B | Output data buffer B |
+| 0x0800-0x0FFC | Twiddle window | 512 twiddle words (write-only), word k = {cos(2πk/N), -sin(2πk/N)} in Q1.15 |
+| 0x1000-0x1FFC | Sample window | 1024 sample words (write-only, `FFT_USE_APB_DATA` only), word i = {imag, real} |
+
+Results are read through the configured memory backend or the stream-out port; there is no APB readback window.
 
 ## Usage Examples
 
 ### Basic FFT Operation
 
 ```c
-// Configure FFT for 1024 points
-write_reg(FFT_CONFIG, 10);  // log2(1024)
+// Configure FFT for 1024 points, overflow detection on (needed for rescaling)
+write_reg(FFT_CONFIG, 0x80000 | 10);  // overflow_detect | log2(1024)
 write_reg(FFT_LENGTH, 1024);
 
 // Enable rescaling
 write_reg(FFT_CTRL, 0x30);  // Enable rescaling and scale tracking
 
-// Start FFT computation
+// Start FFT computation: pulse start (configuration is latched here)
 write_reg(FFT_CTRL, 0x31);  // Start FFT
+write_reg(FFT_CTRL, 0x30);  // Deassert start
 
-// Wait for completion
+// Wait for completion (FFT_DONE holds until the next run starts)
 while (!(read_reg(FFT_STATUS) & 0x02)) {
     // Wait for FFT_DONE bit
 }
@@ -342,7 +352,7 @@ void configure_fft_rescaling(void) {
     // Enable scale factor tracking
     write_reg(FFT_CTRL, read_reg(FFT_CTRL) | 0x20);
     
-    // Set rescaling mode (0=divide by 2 each stage)
+    // Set rescaling mode (0 = halve a stage only when needed, 1 = halve every stage)
     write_reg(FFT_CONFIG, read_reg(FFT_CONFIG) & ~0x10000);
     
     // Enable overflow detection

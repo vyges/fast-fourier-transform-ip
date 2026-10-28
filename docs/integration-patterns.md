@@ -43,14 +43,14 @@ The bridge does not need to interpret the regions; it just routes accesses by ba
 
 ### Write port priority
 
-`memory_interface` muxes two write streams to a single bridge write port: APB-driven twiddle loads and engine-driven butterfly writes. APB twiddle writes take precedence; the two are mutually exclusive by host-firmware protocol (firmware completes twiddle loading before asserting `FFT_CTRL[0]=1` to start the engine).
+`memory_interface` muxes the write streams to a single bridge write port: APB-driven sample loads (only with `FFT_USE_APB_DATA`), APB-driven twiddle loads and engine-driven butterfly writes, in that priority order. They are mutually exclusive by host-firmware protocol (firmware completes its loads before asserting `FFT_CTRL[0]=1` to start the engine).
 
 The bridge sees a single combined write request and does not need to arbitrate.
 
 ### Timing
 
 - Synchronous read with **1-cycle latency** — same as the default FF-array mode. The bridge is expected to register the read into `sram_rdata{0,1}_i` on `posedge sram_clk_o` and have it valid one cycle after the address is presented.
-- Single outstanding access — engine does not pipeline multiple reads in flight.
+- Single outstanding access — the engine issues one access per cycle and does not keep multiple reads in flight. Because the engine registers its address, read data reaches the engine two cycles after it issues the address (one register stage plus the 1-cycle SRAM read); a bridge that adds latency breaks this contract.
 
 ### Bank selection muxing
 

@@ -94,7 +94,7 @@ When `FFT_USE_BUS_MASTER` is undefined, `mem_req_valid_o` and the other outputs 
 3. **Outstanding** — the IP issues up to `MEM_OUTSTANDING_MAX` requests without seeing responses. After saturating, `mem_req_valid_o` deasserts until a response is received.
 4. **Read response** — exactly one cycle of `mem_rsp_valid_i` per outstanding read. `mem_rsp_rdata_i` is sampled on that cycle.
 5. **Write response** — none required; writes are fire-and-forget. (If the SoC bus has write acks, the adapter sinks them.)
-6. **Errors** — if `mem_rsp_err_i` asserts on any response cycle, the IP raises a status bit (`fft_error_o`) and stalls further engine operation until reset. The IP does not retry — bus-level errors are SoC-integration bugs that should fail loud.
+6. **Errors** — if `mem_rsp_err_i` asserts on any response cycle, `fft_bus_master` latches a sticky error flag and stalls further engine operation (the engine sees `mem_ready_o` low) until reset. The flag is not currently reported in `FFT_STATUS` or on `fft_error_o`, which report only a rejected FFT length. The IP does not retry — bus-level errors are SoC-integration bugs that should fail loud.
 
 ## Local scratchpad (`MEM_SCRATCHPAD_DEPTH`)
 

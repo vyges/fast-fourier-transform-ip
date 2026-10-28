@@ -4,11 +4,13 @@
 
 This document outlines the memory optimizations implemented in the FFT IP to address the synthesis issues identified during development. The optimizations focus on proper memory macro instantiation and symmetry-based ROM reduction.
 
+Current state: the working memory is a single 2048×32 array (words 0–1023 sample data, 1024–1535 twiddle factors loaded by firmware over APB, the rest unused), so the largest FFT is 1024 points. There is no separate double buffer. The twiddle ROM described below (`rtl/fft_twiddle_rom.sv`) is no longer instantiated; it is kept for history.
+
 ## Memory Requirements Analysis
 
 ### Original Requirements (Your Analysis - CORRECT)
 - **1024-point FFT input**: 1024 complex words × 2 × 16-bits = **32K bits**
-- **Double buffering needed**: 32K × 2 = **64K bits total**
+- **Double buffering needed**: 32K × 2 = **64K bits total** (not implemented; the IP has one 1024-word data region)
 - **Twiddle ROM**: 512 values × 16-bits × 2 (cos/sin) = **16K bits minimum**
 - **With symmetry optimization**: **4K bits + extra logic**
 
@@ -125,17 +127,17 @@ endcase
 
 ### Memory Usage Verification
 - **FFT Data**: 1024 complex × 2 × 16-bit = 32K bits ✓
-- **Double Buffering**: 32K × 2 = 64K bits ✓
-- **Twiddle ROM**: 512 × 16 × 2 = 16K bits → 4K bits + logic ✓
+- **Double Buffering**: not implemented; the 64K-bit array holds 32K bits of data plus 16K bits of twiddles
+- **Twiddle table**: 512 × 16 × 2 = 16K bits, held in the working memory (the symmetry-reduced ROM is not instantiated)
 
 ## Implementation Files
 
 ### 1. Optimized Memory Interface
-- **File**: `rtl/memory_interface.sv` (updated)
+- **File**: `rtl/fft_memory_interface.sv` (updated)
 - **File**: `flow/synthesis/memory_interface_synth.sv` (new, synthesis-optimized)
 
 ### 2. Optimized Twiddle ROM
-- **File**: `rtl/twiddle_rom.sv` (updated)
+- **File**: `rtl/fft_twiddle_rom.sv` (updated; no longer instantiated)
 - **File**: `flow/synthesis/twiddle_rom_synth_opt.sv` (new, symmetry-optimized)
 
 ### 3. Key Changes Made

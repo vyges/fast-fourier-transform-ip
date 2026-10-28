@@ -14,7 +14,7 @@
 //              Twiddle factor initialization:
 //              Firmware loads twiddle factors at boot via APB writes to the
 //              twiddle window (paddr[12:11]=01, 0x0800–0x0FFC). This covers 512
-//              packed {cos16,sin16} words needed for a 1024-point FFT.
+//              packed {cos[31:16], -sin[15:0]} words needed for a 1024-point FFT.
 //              The FFT engine must not be started until twiddle loading is
 //              complete (firmware writes FFT_CTRL[0]=1 only after the load
 //              loop finishes).

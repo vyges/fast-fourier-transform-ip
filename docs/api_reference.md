@@ -8,15 +8,15 @@
 
 ## 1. Overview
 
-This API reference provides detailed specifications for the Fast Fourier Transform (FFT) hardware accelerator interfaces, registers, and programming model. The FFT accelerator supports configurable FFT lengths from 256 to 4096 points with double-buffered memory architecture and automatic rescaling functionality to prevent overflow and maintain signal integrity.
+This API reference provides detailed specifications for the Fast Fourier Transform (FFT) hardware accelerator interfaces, registers, and programming model. The FFT accelerator supports power-of-two FFT lengths up to 1024 points (the working memory holds 1024 data words and 512 twiddle words), a single shared working memory with buffer-select status, and optional per-stage rescaling to prevent overflow.
 
 ### 1.1 Interface Summary
 
 | Interface | Protocol | Data Width | Max Frequency | Purpose |
 |-----------|----------|------------|---------------|---------|
 | APB | APB3 | 32-bit | 100 MHz | Control and configuration |
-| AXI | AXI4 | 64-bit | 1 GHz | High-bandwidth data transfer |
-| Interrupt | Level | 1-bit | - | Event notification |
+| AXI | AXI4 | 64-bit | 1 GHz | Port present but tied off (ready high, no read data); not used for data transfer |
+| Interrupt | Pulse | 1-bit | - | Event notification (one-cycle pulse gated by INT_ENABLE) |
 
 ## 2. Module Interface
 
@@ -25,11 +25,11 @@ This API reference provides detailed specifications for the Fast Fourier Transfo
 ```verilog
 module fft_top #(
     parameter int FFT_MAX_LENGTH_LOG2 = 12,    // Maximum FFT length (log2)
-    parameter int DATA_WIDTH = 16,             // Input/output data width
-    parameter int TWIDDLE_WIDTH = 16,          // Twiddle factor width
-    parameter int APB_ADDR_WIDTH = 16,         // APB address width
-    parameter int AXI_ADDR_WIDTH = 32,         // AXI address width
-    parameter int AXI_DATA_WIDTH = 64          // AXI data width
+    parameter int FFT_DATA_WIDTH = 16,         // Input/output data width
+    parameter int FFT_TWIDDLE_WIDTH = 16,      // Twiddle factor width
+    parameter int FFT_APB_ADDR_WIDTH = 16,     // APB address width
+    parameter int FFT_AXI_ADDR_WIDTH = 32,     // AXI address width
+    parameter int FFT_AXI_DATA_WIDTH = 64      // AXI data width
 ) (
     // Clock and Reset
     input  logic        clk_i,                 // System clock
@@ -41,7 +41,7 @@ module fft_top #(
     input  logic        psel_i,                // APB select
     input  logic        penable_i,             // APB enable
     input  logic        pwrite_i,              // APB write enable
-    input  logic [APB_ADDR_WIDTH-1:0] paddr_i, // APB address
+    input  logic [FFT_APB_ADDR_WIDTH-1:0] paddr_i, // APB address
     input  logic [31:0] pwdata_i,              // APB write data
     output logic [31:0] prdata_o,              // APB read data
     output logic        pready_o,              // APB ready
@@ -49,22 +49,25 @@ module fft_top #(
     // AXI Interface
     input  logic        axi_aclk_i,            // AXI clock
     input  logic        axi_areset_n_i,        // AXI reset
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_awaddr_i,   // AXI write address
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_awaddr_i,   // AXI write address
     input  logic        axi_awvalid_i,         // AXI write address valid
     output logic        axi_awready_o,         // AXI write address ready
-    input  logic [AXI_DATA_WIDTH-1:0] axi_wdata_i,    // AXI write data
+    input  logic [FFT_AXI_DATA_WIDTH-1:0] axi_wdata_i,    // AXI write data
     input  logic        axi_wvalid_i,          // AXI write data valid
     output logic        axi_wready_o,          // AXI write data ready
-    input  logic [AXI_ADDR_WIDTH-1:0] axi_araddr_i,   // AXI read address
+    input  logic [FFT_AXI_ADDR_WIDTH-1:0] axi_araddr_i,   // AXI read address
     input  logic        axi_arvalid_i,         // AXI read address valid
     output logic        axi_arready_o,         // AXI read address ready
-    output logic [AXI_DATA_WIDTH-1:0] axi_rdata_o,    // AXI read data
+    output logic [FFT_AXI_DATA_WIDTH-1:0] axi_rdata_o,    // AXI read data
     output logic        axi_rvalid_o,          // AXI read data valid
     input  logic        axi_rready_i,          // AXI read data ready
     
     // Interrupt Interface
     output logic        fft_done_o,            // FFT completion interrupt
     output logic        fft_error_o            // FFT error interrupt
+    // Further ports (SRAM macro bus, bus-master port, streaming bin
+    // output) are present depending on compile-time defines; see
+    // rtl/fft_fft_top.sv.
 );
 ```
 
@@ -72,12 +75,12 @@ module fft_top #(
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `FFT_MAX_LENGTH_LOG2` | int | 12 | 8-12 | Maximum FFT length as log2 |
-| `DATA_WIDTH` | int | 16 | 8-32 | Input/output data width in bits |
-| `TWIDDLE_WIDTH` | int | 16 | 8-32 | Twiddle factor width in bits |
-| `APB_ADDR_WIDTH` | int | 16 | 8-32 | APB address bus width |
-| `AXI_ADDR_WIDTH` | int | 32 | 16-64 | AXI address bus width |
-| `AXI_DATA_WIDTH` | int | 64 | 32-512 | AXI data bus width |
+| `FFT_MAX_LENGTH_LOG2` | int | 12 | 1-12 | Maximum FFT length as log2. The working memory supports at most 1024 points, so values above 10 add no capacity |
+| `FFT_DATA_WIDTH` | int | 16 | 8-32 | Input/output data width in bits |
+| `FFT_TWIDDLE_WIDTH` | int | 16 | 8-32 | Twiddle factor width in bits |
+| `FFT_APB_ADDR_WIDTH` | int | 16 | 8-32 | APB address bus width |
+| `FFT_AXI_ADDR_WIDTH` | int | 32 | 16-64 | AXI address bus width |
+| `FFT_AXI_DATA_WIDTH` | int | 64 | 32-512 | AXI data bus width |
 
 ## 3. Register Map
 
@@ -91,25 +94,26 @@ module fft_top #(
 | 0x000C | FFT_LENGTH | R/W | 0x00000400 | FFT Length Register |
 | 0x0010 | BUFFER_SEL | R/W | 0x00000000 | Buffer Selection Register |
 | 0x0014 | INT_ENABLE | R/W | 0x00000000 | Interrupt Enable Register |
-| 0x0018 | INT_STATUS | R | 0x00000000 | Interrupt Status Register |
+| 0x0018 | INT_STATUS | RW1C | 0x00000000 | Interrupt Status Register (write 1 to clear) |
 | 0x001C | SCALE_FACTOR | R | 0x00000000 | Output Scale Factor Register |
 | 0x0020 | RESCALE_CTRL | R/W | 0x00000000 | Rescaling Control Register |
 | 0x0024 | OVERFLOW_STATUS | R | 0x00000000 | Overflow Status Register |
-| 0x0028 | ERROR_CODE | R | 0x00000000 | Error Code Register |
-| 0x002C | CYCLE_COUNT | R | 0x00000000 | Cycle Count Register |
-| 0x0030 | POWER_CTRL | R/W | 0x00000000 | Power Control Register |
-| 0x0034 | DEBUG_CTRL | R/W | 0x00000000 | Debug Control Register |
-| 0x0038 | DEBUG_DATA | R/W | 0x00000000 | Debug Data Register |
+| 0x0028 | ERROR_CODE | - | - | Not implemented (reads 0) |
+| 0x002C | CYCLE_COUNT | - | - | Not implemented (reads 0) |
+| 0x0030 | POWER_CTRL | - | - | Not implemented (reads 0, writes ignored) |
+| 0x0034 | DEBUG_CTRL | - | - | Not implemented (reads 0, writes ignored) |
+| 0x0038 | DEBUG_DATA | - | - | Not implemented (reads 0, writes ignored) |
+
+The register window is 0x0000-0x07FC (`paddr[12:11] = 00`); only the offsets 0x0000-0x0024 are decoded. FFT_CONFIG and the run bits of FFT_CTRL are latched when a run launches; writes during a run apply to the next run.
 
 ### 3.2 Memory Address Map
 
 | Address Range | Memory | Access | Size | Description |
 |---------------|--------|--------|------|-------------|
-| 0x1000-0x1FFF | Input Buffer A | R/W | 4 KB | Input data buffer A |
-| 0x2000-0x2FFF | Input Buffer B | R/W | 4 KB | Input data buffer B |
-| 0x3000-0x3FFF | Output Buffer A | R | 4 KB | Output data buffer A |
-| 0x4000-0x4FFF | Output Buffer B | R | 4 KB | Output data buffer B |
-| 0x5000-0x5FFF | Twiddle ROM | R | 4 KB | Twiddle factor ROM |
+| 0x0800-0x0FFC | Twiddle table | W | 2 KB (512 words) | `paddr[12:11] = 01`; word `k = paddr[10:2]`. Firmware loads N/2 twiddle words at boot; there is no ROM |
+| 0x1000-0x1FFC | Sample data | W | 4 KB (1024 words) | `paddr[12] = 1`, only when compiled with `FFT_USE_APB_DATA`; word `i = paddr[11:2]` |
+
+Both windows are write-only from APB: reads return 0, and there is no APB readback of results. Addresses 0x2000 and above are not decoded. Results stay in the working memory (words 0..N-1) and are read through the memory backend or the streaming bin output (`FFT_USE_STREAM_OUT`).
 
 ## 4. Register Definitions
 
@@ -120,26 +124,25 @@ module fft_top #(
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [0] | FFT_START | R/W | Start FFT computation (auto-cleared) |
-| [1] | FFT_RESET | R/W | Reset FFT engine (auto-cleared) |
-| [2] | BUFFER_SWAP | R/W | Swap input/output buffers |
-| [3] | MODE_SEL | R/W | Mode selection (0=APB, 1=AXI) |
-| [4] | RESCALE_EN | R/W | Enable automatic rescaling |
+| [0] | FFT_START | R/W | Start FFT computation (level; not auto-cleared) |
+| [1] | FFT_RESET | R/W | Abort the run and hold the engine idle (level; not auto-cleared) |
+| [2] | BUFFER_SWAP | R/W | Toggle the buffer-active status bit |
+| [3] | - | R/W | Stored, no effect |
+| [4] | RESCALE_EN | R/W | Enable rescaling (requires FFT_CONFIG[19]) |
 | [5] | SCALE_TRACK_EN | R/W | Enable scale factor tracking |
-| [6] | DEBUG_EN | R/W | Enable debug mode |
-| [7] | POWER_DOWN | R/W | Power down FFT engine |
-| [31:8] | RESERVED | R | Reserved bits (read as 0) |
+| [7:6] | - | R/W | Stored, no effect |
+| [8] | STREAM_ENABLE | R/W | Arm the post-completion bin streamer (`FFT_USE_STREAM_OUT` builds only) |
+| [31:9] | - | R/W | Stored, no effect |
 
 **Bit Descriptions:**
 
-- **FFT_START (bit 0):** When set to 1, starts FFT computation. This bit is automatically cleared when FFT computation begins.
-- **FFT_RESET (bit 1):** When set to 1, resets the FFT engine. This bit is automatically cleared after reset is complete.
-- **BUFFER_SWAP (bit 2):** When set to 1, swaps the active input/output buffer pair.
-- **MODE_SEL (bit 3):** Selects interface mode (0=APB interface active, 1=AXI interface active).
-- **RESCALE_EN (bit 4):** When set to 1, enables automatic rescaling to prevent overflow.
-- **SCALE_TRACK_EN (bit 5):** When set to 1, enables scale factor tracking for proper signal reconstruction.
-- **DEBUG_EN (bit 6):** When set to 1, enables debug mode for performance monitoring.
-- **POWER_DOWN (bit 7):** When set to 1, powers down the FFT engine to save power.
+- **FFT_START (bit 0):** A run launches when this bit is high while the engine is idle. The bit is not cleared by hardware; if it stays high, the next run starts as soon as one finishes. The recommended start is a pulse (write 1, then write 0).
+- **FFT_RESET (bit 1):** When set to 1, aborts a run: the engine is idle on the next cycle and issues no further memory write. Software clears it.
+- **BUFFER_SWAP (bit 2):** A write of 1 toggles FFT_STATUS[3] (buffer active) and, on the rising edge, raises the buffer-swap interrupt if enabled. There is one working memory; the bit does not select a different data buffer.
+- **RESCALE_EN (bit 4):** When set to 1 together with FFT_CONFIG[19], enables per-stage rescaling (see FFT_CONFIG[16]).
+- **SCALE_TRACK_EN (bit 5):** When set to 1, the scale factor counts the scaled stages.
+- **STREAM_ENABLE (bit 8):** Arms the post-completion bin streamer; no effect unless compiled with `FFT_USE_STREAM_OUT`.
+- Bits [5:4] are latched at launch; writes during a run apply to the next run.
 
 ### 4.2 FFT_STATUS Register (0x0004)
 
@@ -149,29 +152,27 @@ module fft_top #(
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
 | [0] | FFT_BUSY | R | FFT computation in progress |
-| [1] | FFT_DONE | R | FFT computation complete |
-| [2] | FFT_ERROR | R | FFT computation error |
-| [3] | BUFFER_ACTIVE | R | Active buffer indicator (0=A, 1=B) |
-| [4] | RESCALE_ACTIVE | R | Rescaling in progress |
-| [5] | OVERFLOW_DETECTED | R | Overflow detected during computation |
-| [6] | PIPELINE_VALID | R | Pipeline valid signal |
-| [7] | MEMORY_READY | R | Memory interface ready |
-| [15:8] | STAGE_COUNT | R | Current pipeline stage |
-| [23:16] | BUTTERFLY_COUNT | R | Current butterfly count |
-| [31:24] | RESERVED | R | Reserved bits (read as 0) |
+| [1] | FFT_DONE | R | FFT computation complete (held until the next run starts) |
+| [2] | FFT_ERROR | R | Run rejected (held until the next run starts) |
+| [3] | BUFFER_ACTIVE | R | Buffer-active status bit |
+| [4] | RESCALE_ACTIVE | R | A scaled stage is being computed |
+| [5] | OVERFLOW_DETECTED | R | Overflow detected during the run |
+| [13:6] | SCALE_FACTOR | R | Number of scaled stages |
+| [21:14] | STAGE_COUNT | R | Stages completed in the run |
+| [29:22] | OVERFLOW_COUNT | R | Overflowing butterflies (saturates at 255) |
+| [31:30] | RESERVED | R | Reserved bits (read as 0) |
 
 **Bit Descriptions:**
 
-- **FFT_BUSY (bit 0):** Set to 1 when FFT computation is in progress.
-- **FFT_DONE (bit 1):** Set to 1 when FFT computation is complete.
-- **FFT_ERROR (bit 2):** Set to 1 when an error occurs during FFT computation.
-- **BUFFER_ACTIVE (bit 3):** Indicates which buffer pair is currently active (0=buffer A, 1=buffer B).
-- **RESCALE_ACTIVE (bit 4):** Set to 1 when rescaling is currently being performed.
-- **OVERFLOW_DETECTED (bit 5):** Set to 1 when overflow is detected during computation.
-- **PIPELINE_VALID (bit 6):** Set to 1 when the pipeline is valid and processing data.
-- **MEMORY_READY (bit 7):** Set to 1 when the memory interface is ready for access.
-- **STAGE_COUNT (bits 15:8):** Current pipeline stage number (0-5).
-- **BUTTERFLY_COUNT (bits 23:16):** Current butterfly operation count within the stage.
+- **FFT_BUSY (bit 0):** High from launch until done.
+- **FFT_DONE (bit 1):** Set at the end of a run and held until the next run starts, so polling firmware does not miss it.
+- **FFT_ERROR (bit 2):** Set when a launch is rejected because FFT_CONFIG[11:0] is not a legal length (0, or above min(FFT_MAX_LENGTH_LOG2, 10)); no computation runs. Held until the next run starts.
+- **BUFFER_ACTIVE (bit 3):** Status bit toggled by FFT_CTRL[2] and set by BUFFER_SEL; it does not select a different data buffer.
+- **RESCALE_ACTIVE (bit 4):** High while a scaled stage is being computed.
+- **OVERFLOW_DETECTED (bit 5):** Set once any butterfly in the run overflowed.
+- **SCALE_FACTOR (bits 13:6):** Same value as SCALE_FACTOR[7:0].
+- **STAGE_COUNT (bits 21:14):** Number of stages completed in the run.
+- **OVERFLOW_COUNT (bits 29:22):** Same value as OVERFLOW_STATUS[7:0].
 
 ### 4.3 FFT_CONFIG Register (0x0008)
 
@@ -180,29 +181,22 @@ module fft_top #(
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [11:0] | FFT_LENGTH_LOG2 | R/W | Log2 of FFT length (8-12) |
-| [15:12] | RESERVED | R | Reserved bits |
-| [16] | RESCALE_MODE | R/W | Rescaling mode (0=divide by 2, 1=divide by N) |
+| [11:0] | FFT_LENGTH_LOG2 | R/W | Log2 of FFT length (1-10) |
+| [15:12] | - | R/W | Stored, no effect |
+| [16] | RESCALE_MODE | R/W | Rescaling mode (0=block floating point per stage, 1=every stage) |
 | [17] | ROUNDING_MODE | R/W | Rounding mode (0=truncate, 1=round) |
 | [18] | SATURATION_EN | R/W | Enable saturation arithmetic |
 | [19] | OVERFLOW_DETECT | R/W | Enable overflow detection |
-| [20] | PIPELINE_FLUSH | R/W | Flush pipeline (auto-cleared) |
-| [21] | MEMORY_OPTIMIZE | R/W | Enable memory access optimization |
-| [22] | CLOCK_GATE_EN | R/W | Enable clock gating |
-| [23] | DEBUG_TRACE | R/W | Enable debug trace output |
-| [31:24] | RESERVED | R | Reserved bits (read as 0) |
+| [31:20] | - | R/W | Stored, no effect |
 
 **Bit Descriptions:**
 
-- **FFT_LENGTH_LOG2 (bits 11:0):** Logarithm base 2 of the FFT length. Valid values are 8-12 (256-4096 points).
-- **RESCALE_MODE (bit 16):** Selects rescaling mode (0=divide by 2 each stage, 1=divide by N at end).
-- **ROUNDING_MODE (bit 17):** Selects rounding mode (0=truncate, 1=round to nearest).
-- **SATURATION_EN (bit 18):** When set to 1, enables saturation arithmetic to prevent overflow.
-- **OVERFLOW_DETECT (bit 19):** When set to 1, enables overflow detection and reporting.
-- **PIPELINE_FLUSH (bit 20):** When set to 1, flushes the pipeline. This bit is automatically cleared.
-- **MEMORY_OPTIMIZE (bit 21):** When set to 1, enables memory access optimization for better performance.
-- **CLOCK_GATE_EN (bit 22):** When set to 1, enables clock gating for power savings.
-- **DEBUG_TRACE (bit 23):** When set to 1, enables debug trace output for performance analysis.
+- **FFT_LENGTH_LOG2 (bits 11:0):** Logarithm base 2 of the FFT length. Legal values are 1 to min(FFT_MAX_LENGTH_LOG2, 10), i.e. 2 to 1024 points with the default parameter. Any other value is rejected at launch: FFT_STATUS[2] is set, the error interrupt fires if enabled, and no computation runs.
+- **RESCALE_MODE (bit 16):** Takes effect only when FFT_CTRL[4] and FFT_CONFIG[19] are both set. 1: every stage is scaled by 1/2; the result is X/N and the scale factor is log2(N). 0 (block floating point): before stage 0 the engine reads the input once, and a stage is scaled only if one of its input components lies outside [-2^13, 2^13).
+- **ROUNDING_MODE (bit 17):** 0 = truncate; 1 = add half an LSB before each shift.
+- **SATURATION_EN (bit 18):** 1 = clamp results to [-32768, 32767]; 0 = wrap (low 16 bits kept).
+- **OVERFLOW_DETECT (bit 19):** When set to 1, enables overflow counting and is required, with FFT_CTRL[4], for rescaling.
+- The register is latched at launch; writes during a run apply to the next run.
 
 ### 4.4 SCALE_FACTOR Register (0x001C)
 
@@ -211,16 +205,16 @@ module fft_top #(
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [7:0] | SCALE_FACTOR | R | Total scale factor applied (log2) |
-| [15:8] | STAGE_COUNT | R | Number of stages processed |
+| [7:0] | SCALE_FACTOR | R | Number of scaled stages (log2 of the total scaling) |
+| [15:8] | STAGE_COUNT | R | Number of stages completed |
 | [23:16] | RESERVED | R | Reserved bits (read as 0) |
-| [31:24] | OVERFLOW_COUNT | R | Number of overflow events |
+| [31:24] | OVERFLOW_COUNT | R | Number of overflowing butterflies |
 
 **Bit Descriptions:**
 
-- **SCALE_FACTOR (bits 7:0):** Total scale factor applied during FFT computation in log2 format.
-- **STAGE_COUNT (bits 15:8):** Number of FFT stages that have been processed.
-- **OVERFLOW_COUNT (bits 31:24):** Number of overflow events detected during computation.
+- **SCALE_FACTOR (bits 7:0):** Number of stages that were scaled by 1/2, counted when FFT_CTRL[5] is set. It never exceeds log2(N). The output equals the true FFT divided by 2^SCALE_FACTOR.
+- **STAGE_COUNT (bits 15:8):** Number of FFT stages completed in the run.
+- **OVERFLOW_COUNT (bits 31:24):** Number of butterflies with a component that did not fit 16 bits (counted when FFT_CONFIG[19] is set), saturating at 255.
 
 ### 4.5 RESCALE_CTRL Register (0x0020)
 
@@ -229,22 +223,11 @@ module fft_top #(
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [0] | RESCALE_EN | R/W | Enable rescaling after each stage |
-| [1] | SCALE_TRACK_EN | R/W | Enable scale factor tracking |
-| [2] | OVERFLOW_INT_EN | R/W | Enable overflow interrupt |
-| [3] | RESCALE_INT_EN | R/W | Enable rescaling interrupt |
-| [7:4] | RESCALE_THRESHOLD | R/W | Rescaling threshold (bits) |
-| [15:8] | RESERVED | R | Reserved bits (read as 0) |
-| [23:16] | RESERVED | R | Reserved bits (read as 0) |
-| [31:24] | RESERVED | R | Reserved bits (read as 0) |
+| [31:0] | RESCALE_CTRL | R/W | Stored and readable; no effect on the engine |
 
 **Bit Descriptions:**
 
-- **RESCALE_EN (bit 0):** When set to 1, enables automatic rescaling after each FFT stage.
-- **SCALE_TRACK_EN (bit 1):** When set to 1, enables scale factor tracking.
-- **OVERFLOW_INT_EN (bit 2):** When set to 1, enables overflow interrupt generation.
-- **RESCALE_INT_EN (bit 3):** When set to 1, enables rescaling interrupt generation.
-- **RESCALE_THRESHOLD (bits 7:4):** Threshold for triggering rescaling (number of bits).
+- The register is stored and reads back what was written, but the engine does not use it. Rescaling is controlled by FFT_CTRL[4], FFT_CTRL[5] and FFT_CONFIG[19:16]; the overflow and rescale interrupts are enabled by INT_ENABLE[3] and [4].
 
 ### 4.6 OVERFLOW_STATUS Register (0x0024)
 
@@ -255,14 +238,14 @@ module fft_top #(
 |------|------|--------|-------------|
 | [7:0] | OVERFLOW_COUNT | R | Total overflow count |
 | [15:8] | LAST_OVERFLOW_STAGE | R | Stage where last overflow occurred |
-| [23:16] | MAX_OVERFLOW_MAGNITUDE | R | Maximum overflow magnitude |
+| [23:16] | MAX_OVERFLOW_MAGNITUDE | R | Not measured; reads 0 |
 | [31:24] | RESERVED | R | Reserved bits (read as 0) |
 
 **Bit Descriptions:**
 
-- **OVERFLOW_COUNT (bits 7:0):** Total number of overflow events detected.
-- **LAST_OVERFLOW_STAGE (bits 15:8):** FFT stage where the last overflow occurred.
-- **MAX_OVERFLOW_MAGNITUDE (bits 23:16):** Maximum magnitude of overflow detected.
+- **OVERFLOW_COUNT (bits 7:0):** Number of butterflies with a component that did not fit 16 bits, saturating at 255.
+- **LAST_OVERFLOW_STAGE (bits 15:8):** FFT stage of the last overflowing butterfly.
+- **MAX_OVERFLOW_MAGNITUDE (bits 23:16):** Not measured; always reads 0.
 
 ### 4.7 FFT_LENGTH Register (0x000C)
 
@@ -276,7 +259,7 @@ module fft_top #(
 
 **Bit Descriptions:**
 
-- **FFT_LENGTH (bits 15:0):** The number of points in the FFT. Must be a power of 2 between 256 and 4096.
+- **FFT_LENGTH (bits 15:0):** The number of points in the FFT, for software reference. The register is stored and readable, but the engine takes the length from FFT_CONFIG[11:0]; keep the two consistent (N = 1 << FFT_CONFIG[11:0], at most 1024).
 
 ### 4.8 BUFFER_SEL Register (0x0010)
 
@@ -285,22 +268,13 @@ module fft_top #(
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [0] | BUFFER_SWAP_EN | R/W | Enable automatic buffer swapping |
-| [1] | BUFFER_A_ACTIVE | R/W | Force buffer A as active |
-| [2] | BUFFER_B_ACTIVE | R/W | Force buffer B as active |
-| [3] | DOUBLE_BUFFER_EN | R/W | Enable double buffering mode |
-| [4] | BACKGROUND_LOAD | R/W | Enable background data loading |
-| [5] | ATOMIC_SWAP | R/W | Enable atomic buffer swapping |
-| [31:6] | RESERVED | R | Reserved bits (read as 0) |
+| [0] | BUFFER_A_SEL | R/W | Force the buffer-active status to A |
+| [1] | BUFFER_B_SEL | R/W | Force the buffer-active status to B (takes priority over bit 0) |
+| [31:2] | - | R/W | Stored, no effect |
 
 **Bit Descriptions:**
 
-- **BUFFER_SWAP_EN (bit 0):** When set to 1, enables automatic buffer swapping on FFT completion.
-- **BUFFER_A_ACTIVE (bit 1):** When set to 1, forces buffer A to be the active buffer.
-- **BUFFER_B_ACTIVE (bit 2):** When set to 1, forces buffer B to be the active buffer.
-- **DOUBLE_BUFFER_EN (bit 3):** When set to 1, enables double buffering mode.
-- **BACKGROUND_LOAD (bit 4):** When set to 1, enables background data loading into inactive buffer.
-- **ATOMIC_SWAP (bit 5):** When set to 1, enables atomic buffer swapping to prevent data corruption.
+- **BUFFER_A_SEL (bit 0) / BUFFER_B_SEL (bit 1):** Set the internal buffer-active state reported in FFT_STATUS[3]; FFT_CTRL[2] and FFT_CTRL[1] take priority. The IP has a single working memory; these bits do not select a different data buffer, and there is no background loading or automatic swap.
 
 ### 4.9 INT_ENABLE Register (0x0014)
 
@@ -314,45 +288,40 @@ module fft_top #(
 | [2] | BUFFER_SWAP_EN | R/W | Enable buffer swap interrupt |
 | [3] | OVERFLOW_EN | R/W | Enable overflow interrupt |
 | [4] | RESCALE_EN | R/W | Enable rescaling interrupt |
-| [5] | TIMEOUT_EN | R/W | Enable timeout interrupt |
-| [6] | DEBUG_EN | R/W | Enable debug interrupt |
-| [31:7] | RESERVED | R | Reserved bits (read as 0) |
+| [7:5] | - | R/W | Stored, no effect |
+| [31:8] | - | R/W | Stored, not used |
 
 **Bit Descriptions:**
 
-- **FFT_DONE_EN (bit 0):** When set to 1, enables FFT completion interrupt.
-- **FFT_ERROR_EN (bit 1):** When set to 1, enables FFT error interrupt.
-- **BUFFER_SWAP_EN (bit 2):** When set to 1, enables buffer swap interrupt.
-- **OVERFLOW_EN (bit 3):** When set to 1, enables overflow interrupt.
-- **RESCALE_EN (bit 4):** When set to 1, enables rescaling interrupt.
-- **TIMEOUT_EN (bit 5):** When set to 1, enables timeout interrupt.
-- **DEBUG_EN (bit 6):** When set to 1, enables debug interrupt.
+- **FFT_DONE_EN (bit 0):** When set to 1, enables the completion pending bit and the `fft_done_o` pulse.
+- **FFT_ERROR_EN (bit 1):** When set to 1, enables the error pending bit and the `fft_error_o` pulse.
+- **BUFFER_SWAP_EN (bit 2):** When set to 1, enables the buffer swap pending bit.
+- **OVERFLOW_EN (bit 3):** When set to 1, enables the overflow pending bit.
+- **RESCALE_EN (bit 4):** When set to 1, enables the rescaling pending bit.
 
 ### 4.10 INT_STATUS Register (0x0018)
 
-**Access:** Read/Write  
+**Access:** Read / Write-1-to-Clear (RW1C)  
 **Reset Value:** 0x00000000
 
 | Bits | Name | Access | Description |
 |------|------|--------|-------------|
-| [0] | FFT_DONE_PENDING | R/W | FFT completion interrupt pending |
-| [1] | FFT_ERROR_PENDING | R/W | FFT error interrupt pending |
-| [2] | BUFFER_SWAP_PENDING | R/W | Buffer swap interrupt pending |
-| [3] | OVERFLOW_PENDING | R/W | Overflow interrupt pending |
-| [4] | RESCALE_PENDING | R/W | Rescaling interrupt pending |
-| [5] | TIMEOUT_PENDING | R/W | Timeout interrupt pending |
-| [6] | DEBUG_PENDING | R/W | Debug interrupt pending |
-| [31:7] | RESERVED | R | Reserved bits (read as 0) |
+| [0] | FFT_DONE_PENDING | RW1C | FFT completion interrupt pending |
+| [1] | FFT_ERROR_PENDING | RW1C | FFT error interrupt pending |
+| [2] | BUFFER_SWAP_PENDING | RW1C | Buffer swap interrupt pending |
+| [3] | OVERFLOW_PENDING | RW1C | Overflow interrupt pending |
+| [4] | RESCALE_PENDING | RW1C | Rescaling interrupt pending |
+| [31:5] | RESERVED | R | Reserved bits (read as 0) |
 
 **Bit Descriptions:**
 
-- **FFT_DONE_PENDING (bit 0):** Set to 1 when FFT completion interrupt is pending. Write 1 to clear.
-- **FFT_ERROR_PENDING (bit 1):** Set to 1 when FFT error interrupt is pending. Write 1 to clear.
-- **BUFFER_SWAP_PENDING (bit 2):** Set to 1 when buffer swap interrupt is pending. Write 1 to clear.
-- **OVERFLOW_PENDING (bit 3):** Set to 1 when overflow interrupt is pending. Write 1 to clear.
-- **RESCALE_PENDING (bit 4):** Set to 1 when rescaling interrupt is pending. Write 1 to clear.
-- **TIMEOUT_PENDING (bit 5):** Set to 1 when timeout interrupt is pending. Write 1 to clear.
-- **DEBUG_PENDING (bit 6):** Set to 1 when debug interrupt is pending. Write 1 to clear.
+Each pending bit is set on the rising edge of its event while the matching INT_ENABLE bit is set, and stays set until software writes 1 to that bit. Writing 0 leaves a bit unchanged.
+
+- **FFT_DONE_PENDING (bit 0):** Set at the end of a run.
+- **FFT_ERROR_PENDING (bit 1):** Set when a launch is rejected for an illegal length.
+- **BUFFER_SWAP_PENDING (bit 2):** Set on a rising edge of FFT_CTRL[2].
+- **OVERFLOW_PENDING (bit 3):** Set on the first overflow of a run.
+- **RESCALE_PENDING (bit 4):** Set when a scaled stage starts.
 
 ## 5. Memory Interface
 
@@ -360,23 +329,25 @@ module fft_top #(
 
 #### Input Data Format
 
-Input data is stored in 32-bit words with the following format:
+Input data is stored in 32-bit words with the following format (Q1.15):
 
 ```
-[31:16] - Real component (16-bit signed)
-[15:0]  - Imaginary component (16-bit signed)
+[31:16] - Imaginary component (16-bit signed)
+[15:0]  - Real component (16-bit signed)
 ```
+
+Twiddle word `k` (written to 0x0800 + 4k) is `{cos(2*pi*k/N)[31:16], -sin(2*pi*k/N)[15:0]}`, i.e. W_N^k = e^(-j*2*pi*k/N), in Q1.15. Firmware loads N/2 words for the N it runs.
 
 #### Output Data Format
 
 Output data is stored in 32-bit words with the same format as input data:
 
 ```
-[31:16] - Real component (16-bit signed)
-[15:0]  - Imaginary component (16-bit signed)
+[31:16] - Imaginary component (16-bit signed)
+[15:0]  - Real component (16-bit signed)
 ```
 
-**Note:** The output data has been rescaled according to the scale factor tracked in the SCALE_FACTOR register.
+Results are in natural order: bin `k` is word `k` (the engine runs a bit-reverse pass after the last stage). The output equals the true FFT divided by 2^SCALE_FACTOR.
 
 ### 5.2 Memory Access Patterns
 
@@ -385,17 +356,19 @@ Output data is stored in 32-bit words with the same format as input data:
 For sequential data loading and reading:
 
 ```c
-// Load input data sequentially
+// Load input data sequentially (sample window, FFT_USE_APB_DATA builds)
 for (int i = 0; i < fft_length; i++) {
-    uint32_t addr = INPUT_BUFFER_A_BASE + (i * 4);
-    uint32_t data = (input_real[i] << 16) | (input_imag[i] & 0xFFFF);
-    write_memory(addr, data);
+    uint32_t addr = FFT_BASE + 0x1000 + (i * 4);
+    uint32_t data = ((uint32_t)(uint16_t)input_imag[i] << 16) | (uint16_t)input_real[i];
+    write_reg(addr, data);
 }
 ```
 
 #### Burst Access
 
 For high-performance burst transfers:
+
+**Note:** BURST_CONFIG and burst transfers are not implemented in the current RTL: reads of an unmapped register offset return 0 and writes are ignored. The example is kept for reference only.
 
 ```c
 // Burst load input data
@@ -498,6 +471,8 @@ void apb_write(uint32_t address, uint32_t data) {
 
 ### 7.1 AXI Write Transfer
 
+**Note:** In the current RTL the AXI port is tied off: the ready outputs are held high, `axi_rvalid_o` stays low and `axi_rdata_o` reads 0, and writes are discarded. The examples below show generic AXI handshakes only.
+
 The AXI interface supports burst transfers for high-bandwidth data transfer:
 
 ```c
@@ -557,14 +532,12 @@ void axi_read_burst(uint32_t address, uint32_t *data, uint32_t length) {
 
 ### 8.1 Interrupt Generation
 
-Interrupts are generated based on the INT_ENABLE register settings:
+Interrupts are generated based on the INT_ENABLE register settings. The top-level outputs are one-cycle pulses; the latched record of each event is the matching INT_STATUS pending bit:
 
 ```c
 // Interrupt generation logic
-always_comb begin
-    fft_done_o = (fft_done && int_enable[0]) || int_status[0];
-    fft_error_o = (fft_error && int_enable[1]) || int_status[1];
-end
+assign fft_done_o  = fft_done  & int_enable[0];  // one-cycle pulse at end of run
+assign fft_error_o = fft_error & int_enable[1];  // one-cycle pulse on a rejected launch
 ```
 
 ### 8.2 Interrupt Handling
@@ -619,7 +592,7 @@ void configure_rescaling(void) {
     // Enable scale factor tracking
     write_reg(FFT_CTRL, read_reg(FFT_CTRL) | 0x20);  // Set SCALE_TRACK_EN
     
-    // Set rescaling mode (0=divide by 2, 1=divide by N)
+    // Set rescaling mode (0=block floating point per stage, 1=every stage, X/N)
     write_reg(FFT_CONFIG, read_reg(FFT_CONFIG) & ~0x10000);  // Mode 0
     
     // Enable overflow detection
@@ -637,30 +610,29 @@ void read_scale_factor_info(void) {
     uint8_t stage_count = (scale_factor_reg >> 8) & 0xFF;
     uint8_t overflow_count = (scale_factor_reg >> 24) & 0xFF;
     
-    printf("Scale Factor: %d (2^%d)\n", 1 << total_scale, total_scale);
+    printf("Scaled stages: %d (output = FFT / %d)\n", total_scale, 1 << total_scale);
     printf("Stages Processed: %d\n", stage_count);
-    printf("Overflow Events: %d\n", overflow_count);
+    printf("Overflowing butterflies: %d\n", overflow_count);
 }
 ```
 
 ### 9.3 Output Data Reconstruction
 
 ```c
-// Reconstruct original signal magnitude
-void reconstruct_signal(uint32_t *output_data, uint32_t length) {
+// Reconstruct original signal magnitude (needs more than 16 bits)
+void reconstruct_signal(const uint32_t *output_data, int32_t *re, int32_t *im,
+                        uint32_t length) {
     uint32_t scale_factor_reg = read_reg(SCALE_FACTOR);
     uint8_t total_scale = scale_factor_reg & 0xFF;
     
-    // Apply inverse scaling to restore original magnitude
+    // Output = true FFT / 2^total_scale
     for (int i = 0; i < length; i++) {
-        int16_t real_part = (output_data[i] >> 16) & 0xFFFF;
-        int16_t imag_part = output_data[i] & 0xFFFF;
+        int16_t real_part = (int16_t)(output_data[i] & 0xFFFF);
+        int16_t imag_part = (int16_t)(output_data[i] >> 16);
         
         // Scale back by the accumulated scale factor
-        real_part = real_part << total_scale;
-        imag_part = imag_part << total_scale;
-        
-        output_data[i] = (real_part << 16) | (imag_part & 0xFFFF);
+        re[i] = (int32_t)real_part * (1 << total_scale);
+        im[i] = (int32_t)imag_part * (1 << total_scale);
     }
 }
 ```
@@ -668,6 +640,10 @@ void reconstruct_signal(uint32_t *output_data, uint32_t length) {
 ## 10. Error Handling
 
 ### 10.1 Error Codes
+
+The only error the engine reports is a rejected length: when a run is launched with FFT_CONFIG[11:0] equal to 0 or above min(FFT_MAX_LENGTH_LOG2, 10), the engine enters ERROR for one cycle, FFT_STATUS[2] is set and held until the next run starts, INT_STATUS[1] and `fft_error_o` fire if INT_ENABLE[1] is set, and no computation runs. Recovery is to write a legal length to FFT_CONFIG[11:0] and start again.
+
+**Note:** The ERROR_CODE register and the codes in the table below are not implemented in the current RTL: reads of an unmapped register offset return 0 and writes are ignored. The example is kept for reference only.
 
 | Error Code | Description | Recovery Action |
 |------------|-------------|-----------------|
@@ -730,7 +706,7 @@ void handle_fft_error(void) {
 
 ### 11.1 Performance Counters
 
-The FFT accelerator includes performance monitoring registers:
+**Note:** CYCLE_COUNT, POWER_MONITOR and MEMORY_BANDWIDTH are not implemented in the current RTL: reads of an unmapped register offset return 0 and writes are ignored. The example is kept for reference only. A run takes about 6 * (N/2) * log2(N) cycles for the butterflies (one memory access per cycle, 6 cycles per butterfly, not pipelined), plus about 3N for the bit-reverse pass, plus N+2 for the input scan in rescale mode 0. Measured from the start pulse to the last streamed bin: about 7.6k-7.9k cycles for 256 points, 17.3k for 512 and 36.8k-37.8k for 1024.
 
 ```c
 // Performance monitoring functions
@@ -761,6 +737,8 @@ void print_performance_stats(void) {
 
 ### 11.2 Debug Interface
 
+**Note:** DEBUG_CTRL, DEBUG_BREAKPOINT, DEBUG_ADDR and DEBUG_DATA are not implemented in the current RTL: reads of an unmapped register offset return 0 and writes are ignored. The example is kept for reference only.
+
 ```c
 // Debug interface functions
 void enable_debug_mode(void) {
@@ -788,6 +766,8 @@ uint32_t read_debug_data(uint32_t address) {
 | Sleep | Power-down mode | 1% | 100 cycles |
 
 ### 12.2 Power Control
+
+**Note:** POWER_CTRL, the FFT_CTRL[7] power-down bit and the FFT_CONFIG[22] clock-gate bit are not implemented in the current RTL: reads of an unmapped register offset return 0 and writes are ignored. The example is kept for reference only.
 
 ```c
 // Power management functions

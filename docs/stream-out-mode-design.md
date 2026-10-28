@@ -1,6 +1,6 @@
 # `FFT_USE_STREAM_OUT` Output Streaming Mode — Design
 
-**Status:** module landed (`fft_bin_streamer`), top-level mux pending.
+**Status:** module (`fft_bin_streamer`) and top-level mux in `fft_top.sv` both landed.
 
 A post-completion output streaming mode for `fft_top.sv` that, after
 the engine asserts `fft_done`, walks the scratchpad bin-by-bin and
@@ -122,11 +122,10 @@ The streamer assumes 32-bit memory words with the standard packing:
 | `[31:16]` | signed imaginary part |
 
 Output bins reside at memory addresses `0..N-1` in natural order.
-Engines that produce bit-reversed output should run a bit-reverse
-pass before raising `fft_done`, or wrap this module with a small
-address-mapping shim that translates the streamer's
-`mem_addr_o[INDEX_WIDTH-1:0]` through a bit-reverse before
-forwarding to memory.
+The engine runs a bit-reverse pass after its last stage and before
+raising `fft_done`, so bin `k` is word `k` and the streamer emits
+bins in order with no address-mapping shim. Each bin equals the true
+FFT divided by `2^scale_factor` (`FFT_STATUS[13:6]`).
 
 ## Parameters
 
@@ -137,12 +136,14 @@ forwarding to memory.
 | `INDEX_WIDTH`     | 12      | Width of `bin_index_o`. Typically equals `MAX_LENGTH_LOG2`. |
 | `MEM_ADDR_WIDTH`  | 16      | Width of `mem_addr_o`. Sized to match the engine's port. |
 
-## Integration with `fft_top.sv` (pending)
+## Integration with `fft_top.sv`
 
 The top-level mux that hooks the streamer into the engine's memory
-port is the remaining piece of the integration. It will be guarded
-by `\`ifdef FFT_USE_STREAM_OUT` so non-streaming builds are
-bit-identical to the existing flow. Sketch:
+port is guarded by `\`ifdef FFT_USE_STREAM_OUT` so non-streaming
+builds are bit-identical to the existing flow. `fft_top.sv` derives a
+one-cycle done pulse from the engine's done output and drives
+`num_bins_i` from the live `FFT_CONFIG[11:0]` register (so leave
+`FFT_CONFIG` unchanged until the stream has drained). Simplified sketch:
 
 ```
 `ifdef FFT_USE_STREAM_OUT
@@ -219,7 +220,8 @@ downstream_consumer_ip #(
 Rules of thumb for the SoC integrator:
 
 - **Index width.** `INDEX_WIDTH` on every IP in the chain must equal
-  the producer's `INDEX_WIDTH` (default 12 here — fits N = 4096). A
+  the producer's `INDEX_WIDTH` (default 12 here; the largest
+  supported N is 1024, which needs 10). A
   chain that runs at a smaller fixed N can save flops by setting all
   IPs to the matching narrower width.
 - **Backpressure.** The consumer's `stream_in_ready_o` drives the
@@ -236,7 +238,7 @@ Rules of thumb for the SoC integrator:
   spectrum-complete signal a capture or interrupt block can latch.
 - **N at runtime.** The streamer's `num_bins_i` is a runtime input
   (driven from the FFT length register), so the same synthesized
-  chain handles every supported N (256 / 512 / 1024 / 2048 / 4096)
+  chain handles every supported N (2 to 1024 points)
   without re-build. Consumers that maintain per-bin state across a
   spectrum should reset that state on the `last` beat, not on a
   fixed bin count.
@@ -257,6 +259,8 @@ cases:
 
 All four pass on Verilator with cocotb 1.9.
 
-The integration-level test (driving real samples through the FFT
-engine and checking the output stream against a Python reference)
-lands together with the `fft_top.sv` mux.
+The integration-level test is `tb/golden/run_golden.py` (`make
+test-golden`): it builds `fft_top` with `FFT_USE_APB_DATA` and
+`FFT_USE_STREAM_OUT`, loads samples and twiddles over APB, and
+compares every streamed bin word for word with a fixed-point
+reference model.
