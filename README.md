@@ -269,23 +269,17 @@ make resources
 
 ### Throughput
 
-| FFT Length | Butterfly Count | Total Cycles (approx.) | Latency (μs @ 1GHz) |
+| FFT Length | Butterfly Count | Total Cycles (approx.) | Latency (μs @ 50 MHz) |
 |------------|----------------|--------------|---------------------|
-| 256 | 1,024 | 7,600-7,900 | 7.6-7.9 |
-| 512 | 2,304 | 17,300 | 17.3 |
-| 1024 | 5,120 | 36,800-37,800 | 36.8-37.8 |
+| 256 | 1,024 | 7,600-7,900 | 152-158 |
+| 512 | 2,304 | 17,300 | 346 |
+| 1024 | 5,120 | 36,800-37,800 | 736-756 |
 
 Total cycles are measured from the start pulse to the last streamed bin: about 6 × (N/2) × log2(N) for the butterflies, plus about 3N for the bit-reverse pass, plus N+2 for the input scan when rescale mode 0 is on.
 
 ### Resource Utilization
 
-| Resource | Count | Description |
-|----------|-------|-------------|
-| DSP Blocks | 4 | Complex multiplier (2) + Complex adder (2) |
-| BRAM | 8 | Working memory (data and twiddle words) |
-| Registers | ~5K | Datapath registers and control logic |
-| LUTs | ~15K | Address generation and control logic |
-| Scale Factor Logic | ~1K | Rescaling and scale factor tracking |
+The compute core (`fft_engine`, twiddle ROM excluded) synthesizes to about 10K gate equivalents in sky130 and closes timing at 50 MHz (typical corner). The working memory is an SoC-supplied SRAM. See [docs/synthesis_characterization.md](docs/synthesis_characterization.md) for the numbers and how they were measured. FPGA resource use has not been characterized.
 
 ## Memory Map
 

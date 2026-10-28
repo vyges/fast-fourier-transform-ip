@@ -12,10 +12,10 @@ This API reference provides detailed specifications for the Fast Fourier Transfo
 
 ### 1.1 Interface Summary
 
-| Interface | Protocol | Data Width | Max Frequency | Purpose |
+| Interface | Protocol | Data Width | Clock | Purpose |
 |-----------|----------|------------|---------------|---------|
-| APB | APB3 | 32-bit | 100 MHz | Control and configuration |
-| AXI | AXI4 | 64-bit | 1 GHz | Port present but tied off (ready high, no read data); not used for data transfer |
+| APB | APB3 signals (no PSLVERR) | 32-bit | APB clock | Control and configuration |
+| AXI | AXI4 signal names | 64-bit | - | Port present but tied off (ready high, no read data); not used for data transfer |
 | Interrupt | Pulse | 1-bit | - | Event notification (one-cycle pulse gated by INT_ENABLE) |
 
 ## 2. Module Interface
@@ -126,7 +126,7 @@ Both windows are write-only from APB: reads return 0, and there is no APB readba
 |------|------|--------|-------------|
 | [0] | FFT_START | R/W | Start FFT computation (level; not auto-cleared) |
 | [1] | FFT_RESET | R/W | Abort the run and hold the engine idle (level; not auto-cleared) |
-| [2] | BUFFER_SWAP | R/W | Toggle the buffer-active status bit |
+| [2] | BUFFER_SWAP | R/W | Toggle the buffer-active status bit on a 0-to-1 transition |
 | [3] | - | R/W | Stored, no effect |
 | [4] | RESCALE_EN | R/W | Enable rescaling (requires FFT_CONFIG[19]) |
 | [5] | SCALE_TRACK_EN | R/W | Enable scale factor tracking |
@@ -138,7 +138,7 @@ Both windows are write-only from APB: reads return 0, and there is no APB readba
 
 - **FFT_START (bit 0):** A run launches when this bit is high while the engine is idle. The bit is not cleared by hardware; if it stays high, the next run starts as soon as one finishes. The recommended start is a pulse (write 1, then write 0).
 - **FFT_RESET (bit 1):** When set to 1, aborts a run: the engine is idle on the next cycle and issues no further memory write. Software clears it.
-- **BUFFER_SWAP (bit 2):** A write of 1 toggles FFT_STATUS[3] (buffer active) and, on the rising edge, raises the buffer-swap interrupt if enabled. There is one working memory; the bit does not select a different data buffer.
+- **BUFFER_SWAP (bit 2):** Edge-triggered and not auto-cleared. When the stored bit goes from 0 to 1, FFT_STATUS[3] (buffer active) toggles once and the buffer-swap interrupt is raised if enabled, however long the bit then stays set. Writing 1 while the bit is already 1 does nothing; to swap again, write 0 and then 1. There is one working memory; the bit does not select a different data buffer.
 - **RESCALE_EN (bit 4):** When set to 1 together with FFT_CONFIG[19], enables per-stage rescaling (see FFT_CONFIG[16]).
 - **SCALE_TRACK_EN (bit 5):** When set to 1, the scale factor counts the scaled stages.
 - **STREAM_ENABLE (bit 8):** Arms the post-completion bin streamer; no effect unless compiled with `FFT_USE_STREAM_OUT`.
@@ -387,7 +387,7 @@ void burst_load_data(uint32_t *data, uint32_t length) {
 
 ### 6.1 APB Transfer Timing
 
-The APB interface follows the APB3 protocol specification:
+The APB slave uses PSEL, PENABLE, PWRITE, PADDR, PWDATA, PRDATA and PREADY; it has no PSLVERR. Every transfer takes one wait state: PREADY is high in the cycle after the access phase starts. The slave assumes a protocol-compliant master; it completes an access it has started even if the master drops PSEL early.
 
 ```
 PCLK:     ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐
@@ -789,25 +789,11 @@ void enable_clock_gating(void) {
 }
 ```
 
-## 13. Compliance and Standards
+## 13. Verification Status
 
-### 13.1 Interface Compliance
-
-- **APB Interface:** Compliant with AMBA APB3 specification
-- **AXI Interface:** Compliant with AMBA AXI4 specification
-- **Reset Interface:** Compliant with AMBA reset specification
-
-### 13.2 Timing Compliance
-
-- **Setup Time:** 1.0 ns minimum
-- **Hold Time:** 0.5 ns minimum
-- **Clock-to-Q:** 2.0 ns maximum
-- **Maximum Frequency:** 1 GHz
-
-### 13.3 Power Compliance
-
-- **Static Power:** < 1 mW
-- **Dynamic Power:** < 50 mW at 1 GHz
-- **Leakage Current:** < 1 μA
+- **APB:** the slave was checked by formal property proofs against a protocol-compliant master, and by the bit-exact golden regression (`tb/golden/`). No third-party protocol certification has been done.
+- **AXI:** the port is tied off; there is nothing to check.
+- **Timing:** the compute core closes timing at 50 MHz in sky130 (typical corner); see `docs/synthesis_characterization.md`. Other clock rates and process nodes have not been characterized.
+- **Power:** not characterized.
 
 This API reference provides comprehensive information for programming and interfacing with the FFT hardware accelerator with automatic rescaling and scale factor tracking. For additional details, please refer to the user guide and architecture documents. 

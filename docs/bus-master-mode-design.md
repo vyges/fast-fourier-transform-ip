@@ -1,6 +1,6 @@
 # `FFT_USE_BUS_MASTER` Memory Backend — Design
 
-**Status:** design draft, not yet implemented.
+**Status:** partly implemented. `rtl/fft_bus_master.sv` is wired into `fft_memory_interface.sv` under `FFT_USE_BUS_MASTER` with scratchpad depth 0: every engine access is one bus round trip, with up to `MAX_OUTSTANDING` requests in flight and a sticky error flag. The local scratchpad (prefetch and write-back) described below is not implemented. No testbench in this repository exercises this mode yet, so treat it as unverified.
 
 A third memory backend mode for `fft_memory_interface.sv`, alongside the default FF/BRAM mode and the existing `FFT_USE_SRAM_MACRO` external SRAM bus mode. In this mode the FFT's working memory lives behind a SoC-supplied bus slave anywhere in the SoC's address space, and the FFT engine accesses it through a **generic, bus-protocol-agnostic master request/response interface** that the SoC integrator wraps with a thin adapter for the target bus protocol (TL-UL, AXI-Lite, Wishbone, OBI, custom).
 

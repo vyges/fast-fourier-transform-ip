@@ -23,10 +23,10 @@ This user guide provides practical information for integrating and using the Fas
 
 ### 1.2 System Requirements
 
-- **Clock Frequency:** Up to 1 GHz
+- **Clock Frequency:** timing closes at 50 MHz in sky130 (typical corner); other targets not characterized
 - **Memory:** 2048 × 32-bit working memory (1024 data words + 512 twiddle words used) for a 1024-point FFT
-- **Interface:** APB or AXI bus support
-- **Power:** < 50 mW typical at 1 GHz
+- **Interface:** APB control and data access (the AXI port is tied off)
+- **Power:** not characterized
 
 ## 2. Integration Guide
 
@@ -106,7 +106,7 @@ fft_top #(
 
 #### Clock Requirements
 
-- **System Clock:** 100 MHz to 1 GHz
+- **System Clock:** 50 MHz characterized in sky130 (typical corner)
 - **Clock Stability:** ±100 ppm maximum
 - **Clock Duty Cycle:** 45% to 55%
 - **Clock Jitter:** < 100 ps RMS
@@ -847,7 +847,7 @@ printf("Power consumption: %u mW\n", power_consumption);
 |----------|---------|------|-------------|
 | FFT_CTRL | 0x0000 | [0] | FFT_START - Start FFT computation |
 | | | [1] | FFT_RESET - Reset FFT engine |
-| | | [2] | BUFFER_SWAP - Swap input/output buffers |
+| | | [2] | BUFFER_SWAP - Toggle the buffer_active status bit on a 0-to-1 transition |
 | | | [3] | RESERVED - Not used |
 | | | [4] | RESCALE_EN - Enable automatic rescaling (with FFT_CONFIG[19]) |
 | | | [5] | SCALE_TRACK_EN - Enable scale factor tracking |
@@ -876,37 +876,20 @@ FFT_START launches a run when it is high while the engine is idle. FFT_RESET abo
 
 #### FFT Computation Timing
 
-| FFT Length | Butterfly Count | Total Cycles (approx.) | Latency (μs @ 1GHz) |
+| FFT Length | Butterfly Count | Total Cycles (approx.) | Latency (μs @ 50 MHz) |
 |------------|----------------|--------------|---------------------|
-| 256 | 1,024 | 7,600-7,900 | 7.6-7.9 |
-| 512 | 2,304 | 17,300 | 17.3 |
-| 1024 | 5,120 | 36,800-37,800 | 36.8-37.8 |
+| 256 | 1,024 | 7,600-7,900 | 152-158 |
+| 512 | 2,304 | 17,300 | 346 |
+| 1024 | 5,120 | 36,800-37,800 | 736-756 |
 
 Total cycles are measured from the start pulse to the last streamed bin: about 6 × (N/2) × log2(N) for the butterflies, plus about 3N for the bit-reverse pass, plus N+2 for the input scan when rescale mode 0 is on. Butterflies are executed one after another, 6 cycles each; they are not overlapped.
 
 #### Interface Timing
 
-| Interface | Clock Frequency | Data Width | Bandwidth |
-|-----------|----------------|------------|-----------|
-| APB | Up to 100 MHz | 32-bit | 400 MB/s |
-| AXI | Up to 1 GHz | 64-bit | 8 GB/s |
+The APB slave transfers one 32-bit word per access with one wait state. The AXI port is tied off.
 
 ### 8.3 Power Specifications
 
-#### Power Consumption
-
-| Operating Mode | Power Consumption | Conditions |
-|----------------|-------------------|------------|
-| Active | 50 mW | 1 GHz, 1024-point FFT |
-| Idle | 5 mW | Clock gated, memory active |
-| Sleep | 0.5 mW | All domains powered down |
-
-#### Thermal Specifications
-
-| Parameter | Value | Unit |
-|-----------|-------|------|
-| Junction Temperature | -40 to +125 | °C |
-| Thermal Resistance | 50 | °C/W |
-| Power Dissipation | 50 | mW |
+Power has not been characterized. Use the SoC's own power analysis on the synthesized netlist.
 
 This user guide provides comprehensive information for integrating and using the FFT hardware accelerator. For additional support, please refer to the architecture document and design specification, or contact the Vyges IP development team. 
