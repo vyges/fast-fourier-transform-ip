@@ -13,7 +13,7 @@
 //
 //              Twiddle factor initialization:
 //              Firmware loads twiddle factors at boot via APB writes to the
-//              twiddle window (paddr[11]=1, 0x0800–0x0FFC). This covers 512
+//              twiddle window (paddr[12:11]=01, 0x0800–0x0FFC). This covers 512
 //              packed {cos16,sin16} words needed for a 1024-point FFT.
 //              The FFT engine must not be started until twiddle loading is
 //              complete (firmware writes FFT_CTRL[0]=1 only after the load
@@ -23,7 +23,7 @@
 //              Engine addresses are translated to unified fft_memory indices:
 //                data   0x0000–0x03FF → fft_memory[    0 – 1023]
 //                twiddle 0x1000–0x11FF → fft_memory[ 1024 – 1535]
-//              APB twiddle writes (paddr 0x0800–0x0BFC) go to the same
+//              APB twiddle writes (paddr 0x0800–0x0FFC) go to the same
 //              fft_memory[1024 – 1535] region.
 //
 // Author:      Vyges IP Development Team
@@ -317,9 +317,11 @@ module memory_interface #(
     //   data   : 0x0000–0x03FF  → fft_memory[    0 – 1023]
     //   twiddle: 0x1000–0x11FF  → fft_memory[ 1024 – 1535]
     //
-    // APB twiddle write window (paddr[11]=1):
-    //   0x0800–0x0BFC  word offset paddr[10:2] ∈ [0..511]
+    // APB twiddle write window (paddr[12:11]=01):
+    //   0x0800–0x0FFC  word offset paddr[10:2] ∈ [0..511]
     //                  → fft_memory[1024 + paddr[10:2]]
+    // The sample window (FFT_USE_APB_DATA) is paddr[12]=1, 0x1000–0x1FFC; its
+    // upper half has paddr[11]=1 too, so the twiddle decode must check bit 12.
     //
     // Assumes pclk_i == clk_i (single clock domain in current integrations).
     // If clocks differ, add CDC synchronisation on apb_twiddle_wr.
@@ -335,12 +337,12 @@ module memory_interface #(
                                : mem_addr_i[10:0];
 
     // APB twiddle write: active only during APB_ACCESS phase on twiddle window
-    assign apb_twiddle_wr   = (apb_state == APB_ACCESS) && pwrite_i && paddr_i[11];
+    assign apb_twiddle_wr   = (apb_state == APB_ACCESS) && pwrite_i && !paddr_i[12] && paddr_i[11];
     assign apb_twiddle_addr = 11'd1024 + {2'b00, paddr_i[10:2]};
 
 `ifdef FFT_USE_APB_DATA
-    // APB data write window (paddr[12]=1, paddr[11]=0): 0x1000–0x1FFC
-    // covers 1024 packed {imag[15:0], real[15:0]} samples that the engine
+    // APB data write window (paddr[12]=1): 0x1000–0x1FFC
+    // covers 1024 packed {imag[31:16], real[15:0]} samples that the engine
     // consumes from fft_memory[0..1023]. Gated by FFT_USE_APB_DATA so SoCs
     // with a DMA / external master path keep the default no-extra-decode
     // build. Mux precedence in the write port below: apb_data_wr beats
@@ -350,7 +352,7 @@ module memory_interface #(
     logic        apb_data_wr;
     logic [10:0] apb_data_addr;
     assign apb_data_wr   = (apb_state == APB_ACCESS) && pwrite_i
-                           && paddr_i[12] && !paddr_i[11];
+                           && paddr_i[12];
     assign apb_data_addr = {1'b0, paddr_i[11:2]};
 `endif
 
