@@ -15,30 +15,33 @@ RTL_DIR = ../../rtl
 TB_DIR = .
 WORK_DIR = work
 COVERAGE = 1
+# The IP's own RTL. fft_ctrl_tlul.sv is the SoC's TL-UL wrapper: it imports the SoC's
+# tlul_pkg and is compiled by the SoC, not by this testbench.
+RTL_FILES = $(filter-out $(RTL_DIR)/fft_ctrl_tlul.sv,$(wildcard $(RTL_DIR)/*.sv))
 
 # Simulator-specific settings
 ifeq ($(SIMULATOR),verilator)
     SIM_CMD = verilator
-    SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint -Wno-MULTITOP --top-module tb_simple
-    SIM_FILES = $(RTL_DIR)/*.sv tb_simple.sv verilator_tb_simple.cpp
+    SIM_FLAGS = --cc --exe --build --trace --coverage --timing -Wno-lint -Wno-MULTITOP --top-module tb_simple -I$(RTL_DIR)
+    SIM_FILES = $(RTL_FILES) tb_simple.sv verilator_tb_simple.cpp
     SIM_TARGET = obj_dir/Vtb_simple
     RUN_CMD = ./obj_dir/Vtb_simple
 else ifeq ($(SIMULATOR),iverilog)
     SIM_CMD = iverilog
     SIM_FLAGS = -g2012 -Wall -I$(RTL_DIR) -I$(TB_DIR)
-    SIM_FILES = $(RTL_DIR)/*.sv $(TB_DIR)/*.sv
+    SIM_FILES = $(RTL_FILES) $(TB_DIR)/*.sv
     SIM_TARGET = $(WORK_DIR)/$(TOP_MODULE)
     RUN_CMD = vvp $(SIM_TARGET)
 else ifeq ($(SIMULATOR),vcs)
     SIM_CMD = vcs
     SIM_FLAGS = -full64 -sverilog -debug_all +v2k
-    SIM_FILES = $(RTL_DIR)/*.sv $(TB_DIR)/*.sv
+    SIM_FILES = $(RTL_FILES) $(TB_DIR)/*.sv
     SIM_TARGET = simv
     RUN_CMD = ./$(SIM_TARGET)
 else ifeq ($(SIMULATOR),modelsim)
     SIM_CMD = vlog
     SIM_FLAGS = -work $(WORK_DIR) -sv
-    SIM_FILES = $(RTL_DIR)/*.sv $(TB_DIR)/*.sv
+    SIM_FILES = $(RTL_FILES) $(TB_DIR)/*.sv
     SIM_TARGET = $(WORK_DIR)/$(TOP_MODULE)
     RUN_CMD = vsim -c -do "run -all; quit" $(SIM_TARGET)
 endif
@@ -103,18 +106,22 @@ clean:
 	rm -f *.log
 	rm -f *.coverage
 
-# Test targets
-test_basic: compile
-	$(RUN_CMD) +test=basic
+# Test targets. tb_simple (compile / run) only elaborates the core; the named tests run the
+# bit-exact golden regression (../golden), which checks every output word against a fixed-point
+# model, on the cases each name covers.
+GOLDEN = python3 ../golden/run_golden.py
 
-test_rescaling: compile
-	$(RUN_CMD) +test=rescaling
+test_basic:
+	$(GOLDEN) n8_small_plain n16_impulse n256_small_round_sat
 
-test_overflow: compile
-	$(RUN_CMD) +test=overflow
+test_rescaling:
+	$(GOLDEN) n256_full_rescale n512_mid_rescale_rnd n1024_divide_by_n
 
-test_performance: compile
-	$(RUN_CMD) +test=performance
+test_overflow:
+	$(GOLDEN) n1024_wrap_overflow
+
+test_performance:
+	$(GOLDEN) n1024_firmware_sine
 
 # Individual module tests with VCD generation
 test_twiddle_rom:
@@ -153,9 +160,9 @@ endif
 # Lint check
 lint:
 ifeq ($(SIMULATOR),verilator)
-	verilator --lint-only -Wno-MULTITOP $(RTL_DIR)/*.sv
+	verilator --lint-only -Wno-MULTITOP -I$(RTL_DIR) $(RTL_FILES)
 else ifeq ($(SIMULATOR),vcs)
-	$(SIM_CMD) -full64 -sverilog -lint-only $(RTL_DIR)/*.sv
+	$(SIM_CMD) -full64 -sverilog -lint-only $(RTL_FILES)
 endif
 
 # Help
@@ -165,10 +172,10 @@ help:
 	@echo "  compile      - Compile the design"
 	@echo "  run          - Run simulation"
 	@echo "  clean        - Clean generated files"
-	@echo "  test_basic   - Run basic FFT test"
-	@echo "  test_rescaling - Run rescaling test"
-	@echo "  test_overflow - Run overflow test"
-	@echo "  test_performance - Run performance test"
+	@echo "  test_basic   - Golden regression: small transforms (8, 16, 256 points)"
+	@echo "  test_rescaling - Golden regression: scaled transforms (256 to 1024 points)"
+	@echo "  test_overflow - Golden regression: unscaled 1024 points that overflow"
+	@echo "  test_performance - Golden regression: 1024-point sine, with its cycle count"
 	@echo "  coverage     - Generate coverage report"
 	@echo "  waves        - View waveforms"
 	@echo "  lint         - Run linting"
