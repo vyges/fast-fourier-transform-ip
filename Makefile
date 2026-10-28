@@ -57,6 +57,8 @@ help:
 	@echo "  make test_all TESTBENCH_TYPE=cocotb SIM=verilator"
 	@echo "  make test_both_simulators          # Run tests with both Icarus and Verilator"
 	@echo "  make test_all_simulators           # Run all testbench types with all simulators"
+	@echo "  make test-golden                   # Core vs fixed-point reference model, word for word (Verilator)"
+	@echo "  make test-golden-netlist           # The same cases on the Yosys-synthesized netlist"
 	@echo ""
 	@echo "Memory Optimization Testing:"
 	@echo "  make test-memory-opt               # Test memory interface optimizations"
@@ -159,6 +161,14 @@ test_all: validate_testbench_type validate_simulator
 	@echo "All tests completed successfully!"
 
 # Memory Optimization Testing Targets
+# Golden-model regression: fft_top driven over APB as firmware does, every output
+# bin compared with a bit-exact fixed-point model (tb/golden/run_golden.py).
+test-golden:
+	$(PYTHON) tb/golden/run_golden.py
+
+test-golden-netlist:
+	$(PYTHON) tb/golden/run_golden.py --netlist
+
 test-memory-opt: test-memory-interface test-twiddle-rom
 	@echo "✅ Memory optimization tests completed"
 
@@ -599,4 +609,4 @@ generate-security-docs: create_dirs
 	@echo "Generated: $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")" >> docs/security/security_analysis.md
 	@echo "✅ Security documentation generated"
 
-.PHONY: all help test_basic test_random test_all test_both_simulators test_all_simulators coverage gui waves compile run clean test_all_types benchmark status fpga_synth fpga_analysis fpga_report fpga_clean fpga_all test-memory-opt test-memory-interface test-twiddle-rom test-synth-verify test-memory-interface-synth test-twiddle-rom-synth test-verilator-advanced test-verilator-memory test-verilator-rom test-memory-size test-synthesis-attributes test-code-quality test-performance test-report test-verification test-comprehensive quick test-vcd test-vcd-memory test-vcd-rom test-security test-security-yosys test-security-verilator test-security-synthesis test-security-synthesis-full test-security-coverage generate-security-docs 
+.PHONY: all help test-golden test-golden-netlist test_basic test_random test_all test_both_simulators test_all_simulators coverage gui waves compile run clean test_all_types benchmark status fpga_synth fpga_analysis fpga_report fpga_clean fpga_all test-memory-opt test-memory-interface test-twiddle-rom test-synth-verify test-memory-interface-synth test-twiddle-rom-synth test-verilator-advanced test-verilator-memory test-verilator-rom test-memory-size test-synthesis-attributes test-code-quality test-performance test-report test-verification test-comprehensive quick test-vcd test-vcd-memory test-vcd-rom test-security test-security-yosys test-security-verilator test-security-synthesis test-security-synthesis-full test-security-coverage generate-security-docs 
